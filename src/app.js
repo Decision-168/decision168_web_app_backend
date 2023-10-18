@@ -1,15 +1,18 @@
-// app.js
-const http = require("http");
+require("dotenv").config();
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const User = require("./routes/UserRouter");
 
-const hostname = "127.0.0.1";
-const port = 3000;
+const PORT = process.env.PORT || 3000;
+const bodyParser = require("body-parser");
 
-const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "text/plain");
-  res.end("Hello, World!\n");
-});
+require("./database/connection");
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+app.use(express.json());
+app.use(cors());
+app.use(User);
+app.use(bodyParser.json({ limit: "500mb" }));
+app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
+
+app.listen(PORT);
