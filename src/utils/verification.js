@@ -1,7 +1,6 @@
 require("dotenv").config();
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const OTPModel = require("../models/otp_model");
 
 const transporter = nodemailer.createTransport({
   host: "mail.oxcytech.com",
@@ -21,34 +20,34 @@ const generateOTP = () => {
   return OTP;
 };
 
-const insertOTP = async (email, otp) => {
-  try {
-    const expiryDate = new Date();
-     expiryDate.setHours(expiryDate.getHours() + 1);
-    const otpData = {
-      email,
-      otp: otp.toString(),
-      expiryDate,
-    };
-    await OTPModel.create(otpData);
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
+// const insertOTP = async (email, otp) => {
+//   try {
+//     const expiryDate = new Date();
+//      expiryDate.setHours(expiryDate.getHours() + 1);
+//     const otpData = {
+//       email,
+//       otp: otp.toString(),
+//       expiryDate,
+//     };
+//     await OTPModel.create(otpData);
+//     return true;
+//   } catch (error) {
+//     return false;
+//   }
+// };
 
-const verifyOTP = async (email, otp) => {
-  try {
-    const storedOTP = await OTPModel.findOne({ email });
-    if (storedOTP) {
-      return storedOTP.otp === otp;
-    } else {
-      throw new Error("OTP not found for the given email");
-    }
-  } catch (error) {
-    throw new Error("Failed to verify OTP");
-  }
-};
+// const verifyOTP = async (email, otp) => {
+//   try {
+//     const storedOTP = await OTPModel.findOne({ email });
+//     if (storedOTP) {
+//       return storedOTP.otp === otp;
+//     } else {
+//       throw new Error("OTP not found for the given email");
+//     }
+//   } catch (error) {
+//     throw new Error("Failed to verify OTP");
+//   }
+// };
 
 
 const generateVerificationToken = () => {
@@ -58,7 +57,7 @@ const generateVerificationToken = () => {
 module.exports = {
   transporter,
   generateOTP,
-  insertOTP,
-  verifyOTP,
+  // insertOTP,
+  // verifyOTP,
   generateVerificationToken,
 };
