@@ -4,15 +4,15 @@ const pool = require("../database/connection"); // Import the database connectio
 const bcrypt = require("bcrypt");
 const { default: isEmail } = require("validator/lib/isemail");
 
-// router.get("/user/get-user", async (req, res) => {
-//   try {
-//     const [rows, fields] = await pool.execute("CALL getRegUsers()");
-//     res.json(rows);
-//   } catch (error) {
-//     console.error("Error executing stored procedure:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
+router.get("/user/get-user", async (req, res) => {
+  try {
+    const [rows, fields] = await pool.execute("CALL getRegUsers()");
+    res.json(rows);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 // router.get("/user/get-user/:id", async (req, res) => {
 //     const {id} = req.params
@@ -28,17 +28,17 @@ const { default: isEmail } = require("validator/lib/isemail");
 router.post("/user/register", async (req, res) => {
   try {
     const { param_names, param_values } = req.body;
-    const paramNamesArray = param_names.split(",");
-    const paramValuesArray = param_values.split(",");
-    const emailIndex = paramNamesArray.indexOf("email_address");
-    const emailAddress = paramValuesArray[emailIndex].trim().replace(/'/g, "");
-    if (!isEmail(emailAddress)) {
-      return res.status(400).json({ error: "Invalid email address." });
-    }
-     const passIndex = paramNamesArray.indexOf("password");
-     const Password = paramValuesArray[passIndex].trim().replace(/'/g, "");
-      const hashedPassword = await bcrypt.hash(Password, 10);
-    console.log(emailAddress);
+    // const paramNamesArray = param_names.split(",");
+    // const paramValuesArray = param_values.split(",");
+    // const emailIndex = paramNamesArray.indexOf("email_address");
+    // const emailAddress = paramValuesArray[emailIndex].trim().replace(/'/g, "");
+    // if (!isEmail(emailAddress)) {
+    //   return res.status(400).json({ error: "Invalid email address." });
+    // }
+    // const passIndex = paramNamesArray.indexOf("password");
+    // const Password = paramValuesArray[passIndex].trim().replace(/'/g, "");
+    // const hashedPassword = await bcrypt.hash(Password, 10);
+    // console.log(emailAddress);
     console.log(param_values);
     // Construct the stored procedure call
     const callProcedureSQL = `CALL InsertRegistration(?, ?)`;
@@ -74,6 +74,20 @@ router.post("/user/checkLogin", async (req, res) => {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+});
+
+router.post("/user/add-user", async (req, res) => {
+  const {first_name, last_name} = req.body
+
+try {
+    const paramNames = 'first_name, last_name';
+    const paramValues = `"${first_name}", "${last_name}"`;
+    const [rows, fields] = await pool.execute("CALL InsertRegistration(?, ?)", [paramNames, paramValues]);
+  res.json(rows);
+} catch (error) {
+  console.error("Error executing stored procedure:", error);
+  res.status(500).json({ error: "Internal Server Error" });
+}
 });
 
 module.exports = router;
