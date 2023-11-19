@@ -81,7 +81,7 @@ router.post("/user/register", async (req, res) => {
     const callProcedureSQL = `CALL InsertRegistration(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
-    const verificationLink = `http://localhost:3000/user/verify/${verificationToken}`;
+    const verificationLink = `http://localhost:5173/account-verification/${verificationToken}`;
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email_address,
@@ -139,14 +139,15 @@ router.get("/user/verify/:token", async (req, res) => {
 //User Login
 router.post("/user/login", async (req, res) => {
   const { email_address, password } = req.body;
+
   try {
-    const [data] = await pool.execute("CALL selectLogin(?)", [email_address]);
-    if (data[0][0]?.verified === "no") {
+    const [rows] = await pool.execute("CALL selectLogin(?)", [email_address]);
+    if (rows[0][0]?.verified === "no") {
       return res.status(401).json({ error: "Email not verified." });
     }
-    const passwordMatch = await bcrypt.compare(password, data[0][0]?.password);
+    const passwordMatch = await bcrypt.compare(password, rows[0][0]?.password);
     if (passwordMatch) {
-      const token = generateToken(data[0][0].reg_id);
+      const token = generateToken(rows[0][0].reg_id);
       await pool.execute("CALL checkLogin(?,?)", [
         email_address,
         passwordMatch,
@@ -160,7 +161,7 @@ router.post("/user/login", async (req, res) => {
   }
 });
 
-//User Reset-Password
+//User Forgot Password
 router.post("/user/forgot-password", async (req, res) => {
   const { email_address } = req.body;
   try {
@@ -169,7 +170,7 @@ router.post("/user/forgot-password", async (req, res) => {
     ]);
     const userId = rows[0][0]?.reg_id;
     const userName = rows[0][0]?.first_name;
-    const resetPasswordLink = `http://localhost:3000/user/change-password/${userId}`;
+    const resetPasswordLink = `http://localhost:5173/change-password/${userId}`;
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email_address,
@@ -194,6 +195,7 @@ router.post("/user/forgot-password", async (req, res) => {
   }
 });
 
+//User Change Password
 router.patch("/user/change-password/:id", async (req, res) => {
   const { password } = req.body;
   try {
