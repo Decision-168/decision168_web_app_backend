@@ -1,13 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
+const { convertObjectToProcedureParams } = require("../utils/verification");
+const moment = require("moment");
 
 //get user details by user id
-router.post("/user/get-user/:id", async (req, res) => {
+router.get("/user/get-user/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getStudentById(?)", [id]);
-    res.status(200).json({ result: rows });
+    res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -15,75 +17,55 @@ router.post("/user/get-user/:id", async (req, res) => {
 });
 
 //get package details by pack id
-router.post("/user/get-package/:pack_id", async (req, res) => {
+router.get("/user/get-package/:pack_id", async (req, res) => {
   const { pack_id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getPackDetail(?)", [
       pack_id,
     ]);
-    res.status(200).json({ result: rows });
+    res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-//get user portfolio counts by email id
-router.post("/user/get-portfolio-count/:email_id", async (req, res) => {
-  const { email_id } = req.params;
+//get user all counts by email id and user id
+router.get("/user/get-all-counts/:email_id/:id", async (req, res) => {
+  const email_id = req.params.email_id;
+  const id = req.params.id;
   try {
-    const [rows, fields] = await pool.execute("CALL count_total_portfolio(?)", [
+    //get user portfolio count
+    const [rows1] = await pool.execute("CALL count_total_portfolio(?)", [
       email_id,
     ]);
-    res.status(200).json({ result: rows });
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+    const portfolioCount = rows1[0][0].count_rows;
 
-//get user projects(created+member) counts by user id
-router.post("/user/get-projects-count/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows1, fields1] = await pool.execute(
-      "CALL view_member_project_count(?)",
-      [id]
-    );
-    const [rows2, fields2] = await pool.execute(
-      "CALL view_created_project_count(?)",
-      [id]
-    );
-    const count1 = rows1[0][0].count_rows;
-    const count2 = rows2[0][0].count_rows;
+    //get user projects(created+member) counts
+    const [rows2] = await pool.execute("CALL view_member_project_count(?)", [
+      id,
+    ]);
+    const [rows3] = await pool.execute("CALL view_created_project_count(?)", [
+      id,
+    ]);
+    const count1 = rows2[0][0].count_rows;
+    const count2 = rows3[0][0].count_rows;
 
-    const totalCount = count1 + count2;
+    const projectCount = count1 + count2;
 
-    res.status(200).json({ result: totalCount });
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+    //get user tasks(tasks+subtasks) counts
+    const [rows4] = await pool.execute("CALL view_left_task_count(?)", [id]);
+    const [rows5] = await pool.execute("CALL view_left_subtask_count(?)", [id]);
+    const count3 = rows4[0][0].count_rows;
+    const count4 = rows5[0][0].count_rows;
 
-//get user tasks(tasks+subtasks) counts by user id
-router.post("/user/get-tasks-count/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows1, fields1] = await pool.execute(
-      "CALL view_left_task_count(?)",
-      [id]
-    );
-    const [rows2, fields2] = await pool.execute(
-      "CALL view_left_subtask_count(?)",
-      [id]
-    );
-    const count1 = rows1[0][0].count_rows;
-    const count2 = rows2[0][0].count_rows;
+    const tasksCount = count3 + count4;
 
-    const totalCount = count1 + count2;
-
-    res.status(200).json({ result: totalCount });
+    res.status(200).json({
+      portfolioResult: portfolioCount,
+      projectResult: projectCount,
+      tasksResult: tasksCount,
+    });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -91,11 +73,11 @@ router.post("/user/get-tasks-count/:id", async (req, res) => {
 });
 
 //get motivator
-router.post("/user/get-motivator", async (req, res) => {
+router.get("/user/get-motivator", async (req, res) => {
   const { id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL Motivator()");
-    res.status(200).json({ result: rows });
+    res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -103,29 +85,98 @@ router.post("/user/get-motivator", async (req, res) => {
 });
 
 //get countries
-router.post("/user/get-countries", async (req, res) => {
-    const { id } = req.params;
-    try {
-      const [rows, fields] = await pool.execute("CALL getCountries()");
-      res.status(200).json({ result: rows });
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
+router.get("/user/get-countries", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL getCountries()");
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //get country by country code
-router.post("/user/get-country/:code", async (req, res) => {
-    const { code } = req.params;
-    try {
-      const [rows, fields] = await pool.execute("CALL getCountryByCode(?)", [code]);
-      res.status(200).json({ result: rows });
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
+router.get("/user/get-country/:code", async (req, res) => {
+  const { code } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL getCountryByCode(?)", [
+      code,
+    ]);
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
-  
+//update profile
+router.patch("/user/update-profile/:id", async (req, res) => {
+  const reg_id = req.params.id;
+  const dynamicObject = req.body;
+  try {
+    // Convert dynamicObject to the format 'key1 = "value1", key2 = "value2", ...'
+    const formattedParams = convertObjectToProcedureParams(dynamicObject);
+
+    const storedProcedure = `CALL UpdateRegistration('${formattedParams}', 'reg_id = ${reg_id}')`;
+
+    const [results] = await pool.execute(storedProcedure);
+
+    res.json({ message: "Profile updated successfully", results });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//get dashboard(my day + my next168) recent 5 notifications by user id
+router.get("/user/get-recent-notifications/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    //my day section
+    const currentDate = new Date();
+    const due_date = currentDate.toISOString().split("T")[0];
+    const [rows1] = await pool.execute("CALL TodayTasksDashboardLimit(?,?)", [
+      id,
+      due_date,
+    ]);
+    const TodayTasks = rows1;
+
+    const [rows2] = await pool.execute(
+      "CALL TodaySubtasksDashboardLimit(?,?)",
+      [id, due_date]
+    );
+    const TodaySubtasks = rows2;
+
+    //my next168 section
+    const today = moment();
+    const firstDay = today.add(1, "days").format("Y-MM-DD");
+    const lastDay = today.add(6, "days").format("Y-MM-DD");
+
+    const [rows3] = await pool.execute("CALL WeekTasksDashboardLimit(?,?,?)", [
+      id,
+      firstDay,
+      lastDay,
+    ]);
+    const WeekTasks = rows3;
+
+    const [rows4] = await pool.execute(
+      "CALL WeekSubtasksDashboardLimit(?,?,?)",
+      [id, firstDay, lastDay]
+    );
+    const WeekSubtasks = rows4;
+
+    const MyDay = [...TodayTasks[0], ...TodaySubtasks[0]];
+    const MyNext168 = [...WeekTasks[0], ...WeekSubtasks[0]];
+
+    res.status(200).json({
+      MyDayResult: MyDay,
+      MyNext168Result: MyNext168,
+    });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 module.exports = router;
