@@ -8,7 +8,9 @@ const generateEmailTemplate = require("../utils/emailTemplate");
 const {
   generateVerificationToken,
   transporter,
-} = require("../utils/verification");
+  nameSplit,
+  dateConversion,
+} = require("../utils/common-functions");
 const generateToken = require("../utils/auth");
 
 //User RegistrationSS
@@ -19,36 +21,19 @@ router.post("/user/register", async (req, res) => {
     if (!isEmail(email_address)) {
       return res.status(400).json({ error: "Invalid email address." });
     }
-    const nameParts = full_name.split(" ");
-    let first_name = "";
-    let middle_name = "";
-    let last_name = "";
-
-    if (nameParts.length === 1) {
-      first_name = nameParts[0];
-    } else if (nameParts.length === 2) {
-      first_name = nameParts[0];
-      last_name = nameParts[1];
-    } else if (nameParts.length >= 3) {
-      first_name = nameParts[0];
-      middle_name = nameParts.slice(1, -1).join(" ");
-      last_name = nameParts[nameParts.length - 1];
-    }
 
     delete req.body.full_name;
     const verificationToken = generateVerificationToken();
-    const currentDate = new Date();
-    const formattedDate = currentDate
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
+
+    const name = nameSplit(full_name);
+    const formattedDate = dateConversion();
 
     const additionalFields = {
       verification_code: verificationToken,
       verified: "no",
-      first_name,
-      middle_name,
-      last_name,
+      first_name: name.first_name,
+      middle_name: name.middle_name,
+      last_name: name.last_name,
       login_password: password,
       reg_date: formattedDate,
       msg_flag: 0,
