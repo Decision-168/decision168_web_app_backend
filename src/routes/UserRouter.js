@@ -130,6 +130,9 @@ router.post("/user/login", async (req, res) => {
     if (rows[0][0]?.verified === "no") {
       return res.status(401).json({ error: "Email not verified." });
     }
+    if (rows[0][0]?.email_address !== email_address) {
+      return res.status(401).json({ error: "Invalid credentials." });
+    }
     const passwordMatch = await bcrypt.compare(password, rows[0][0]?.password);
     if (passwordMatch) {
       const token = generateToken(rows[0][0].reg_id);
@@ -139,7 +142,7 @@ router.post("/user/login", async (req, res) => {
       ]);
       res.status(201).json({ message: "Login successful.", token });
     } else {
-      res.status(401).json({ error: "Incorrect password." });
+      res.status(401).json({ error: "Invalid credentials." });
     }
   } catch (error) {
     res.status(500).json({ error: "Internal server error." });
