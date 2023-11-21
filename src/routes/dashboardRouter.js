@@ -309,17 +309,18 @@ router.get("/user/get-alert-notifications/:id", async (req, res) => {
     const [aprojects] = await pool.execute("CALL AcceptedProjectList(?)", [id]);
     const aprojectsRes = aprojects[0];
 
-    //My pending projects
-    const [pprojects] = await pool.execute("CALL PendingProjectList(?)", [id]);
-    const pprojectsRes = pprojects[0];
+    // //My pending projects
+    // const [pprojects] = await pool.execute("CALL PendingProjectList(?)", [id]);
+    // const pprojectsRes = pprojects[0];
 
-    //My readmore projects
-    const [rprojects] = await pool.execute("CALL ReadMoreProjectList(?)", [id]);
-    const rprojectsRes = rprojects[0];
+    // //My readmore projects
+    // const [rprojects] = await pool.execute("CALL ReadMoreProjectList(?)", [id]);
+    // const rprojectsRes = rprojects[0];
 
     let ProjectFiles = [];
     let TasksFiles = [];
     let SubtasksFiles = [];
+    let NewProjectComment = [];
 
     if (cprojectsRes) {
       await Promise.all(
@@ -361,6 +362,62 @@ router.get("/user/get-alert-notifications/:id", async (req, res) => {
 
               if (c_ptnew.includes(id)) {
                 TasksFiles.push(CTasksFile);
+              }
+            }
+          } catch (error) {
+            console.error("Error executing stored procedure:", error);
+          }
+
+          // Subtask file notify
+          try {
+            const [rows23] = await pool.execute(
+              "CALL getSubtasksProject_clear(?)",
+              [pid]
+            );
+            const CSubtasksFile = rows23[0];
+
+            if (
+              CSubtasksFile &&
+              CSubtasksFile[0] &&
+              CSubtasksFile[0].stfnotify_clear
+            ) {
+              const c_pstnew = CSubtasksFile[0].stfnotify_clear.split(",");
+
+              if (c_pstnew.includes(id)) {
+                SubtasksFiles.push(CSubtasksFile);
+              }
+            }
+          } catch (error) {
+            console.error("Error executing stored procedure:", error);
+          }
+
+          // New Comment in Project - incomplete
+          try {
+            const [rows25] = await pool.execute(
+              "CALL ProjectComment_clear(?)",
+              [pid]
+            );
+            const CProjectComment = rows25[0];
+            let check_proj = "";
+
+            if (
+              CProjectComment.length > 0 &&
+              CProjectComment[0] &&
+              CProjectComment[0].c_notify_clear
+            ) {
+             // console.log("CProjectComment",CProjectComment);
+              const c_pcn = CProjectComment[0].c_notify_clear.split(",");
+              // console.log(c_pcn);
+              // console.log("id", id);
+              if (c_pcn.filter((i) => i===id)) {
+                 console.log(c_pcn);
+                if (check_proj != CProjectComment[0].project_id) {
+                   console.log("id", id);
+                  console.log("CProjectComment",CProjectComment);
+                  NewProjectComment.push(CProjectComment);
+                  check_proj = CProjectComment[0].project_id;
+                }
+                //console.log("2",check_proj);
               }
             }
           } catch (error) {
@@ -415,6 +472,29 @@ router.get("/user/get-alert-notifications/:id", async (req, res) => {
           } catch (error) {
             console.error("Error executing stored procedure:", error);
           }
+
+          // Subtask file notify
+          try {
+            const [rows24] = await pool.execute(
+              "CALL getSubtasksProject_clear(?)",
+              [pid]
+            );
+            const ASubtasksFile = rows24[0];
+
+            if (
+              ASubtasksFile &&
+              ASubtasksFile[0] &&
+              ASubtasksFile[0].stfnotify_clear
+            ) {
+              const a_pstnew = ASubtasksFile[0].stfnotify_clear.split(",");
+
+              if (a_pstnew.includes(id)) {
+                SubtasksFiles.push(ASubtasksFile);
+              }
+            }
+          } catch (error) {
+            console.error("Error executing stored procedure:", error);
+          }
         })
       );
     }
@@ -423,33 +503,31 @@ router.get("/user/get-alert-notifications/:id", async (req, res) => {
     ProjectFiles = ProjectFiles.filter((array) => array.length > 0);
     TasksFiles = TasksFiles.filter((array) => array.length > 0);
     SubtasksFiles = SubtasksFiles.filter((array) => array.length > 0);
-
-    const MyAlerts = [
-      ...NewTasks,
-      ...NewSubtask,
-      ...OverdueTasks,
-      ...OverdueSubtask,
-      ...SentToReviewTasks,
-      ...ReviewDeniedTasks,
-      ...ReviewApprovedTasks,
-      ...SentToReviewSubtasks,
-      ...ReviewDeniedSubtasks,
-      ...ReviewApprovedSubtasks,
-      ...ReviewArriveTasks,
-      ...ReviewArriveSubtasks,
-      ...PendingProjectRequest,
-      ...PortfolioAccepted,
-      ...ProjectAccepted,
-      ...ProjectAcceptedInvite,
-      ...MembershipRequested,
-      ...PendingGoalRequest,
-      ...ProjectFiles.flat(),
-      ...TasksFiles.flat(),
-      ...SubtasksFiles.flat(),
-    ];
+    NewProjectComment = NewProjectComment.filter((array) => array.length > 0);
 
     res.status(200).json({
-      MyAlertsResult: MyAlerts,
+      NewTasksResult: NewTasks,
+      NewSubtaskResult: NewSubtask,
+      OverdueTasksResult: OverdueTasks,
+      OverdueSubtaskResult: OverdueSubtask,
+      SentToReviewTasksResult: SentToReviewTasks,
+      ReviewDeniedTasksResult: ReviewDeniedTasks,
+      ReviewApprovedTasksResult: ReviewApprovedTasks,
+      SentToReviewSubtasksResult: SentToReviewSubtasks,
+      ReviewDeniedSubtasksResult: ReviewDeniedSubtasks,
+      ReviewApprovedSubtasksResult: ReviewApprovedSubtasks,
+      ReviewArriveTasksResult: ReviewArriveTasks,
+      ReviewArriveSubtasksResult: ReviewArriveSubtasks,
+      PendingProjectRequestResult: PendingProjectRequest,
+      PortfolioAcceptedResult: PortfolioAccepted,
+      ProjectAcceptedResult: ProjectAccepted,
+      ProjectAcceptedInviteResult: ProjectAcceptedInvite,
+      MembershipRequestedResult: MembershipRequested,
+      PendingGoalRequestResult: PendingGoalRequest,
+      ProjectFilesResult: ProjectFiles.flat(),
+      TasksFilesResult: TasksFiles.flat(),
+      SubtasksFilesResult: SubtasksFiles.flat(),
+      NewProjectCommentResult: NewProjectComment.flat(),
     });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
