@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
-const { convertObjectToProcedureParams } = require("../utils/verification");
+const { convertObjectToProcedureParams } = require("../utils/common-functions");
 const moment = require("moment");
 
 //get user details by user id
@@ -166,12 +166,11 @@ router.get("/user/get-recent-notifications/:id", async (req, res) => {
     );
     const WeekSubtasks = rows4;
 
-    const MyDay = [...TodayTasks[0], ...TodaySubtasks[0]];
-    const MyNext168 = [...WeekTasks[0], ...WeekSubtasks[0]];
-
     res.status(200).json({
-      MyDayResult: MyDay,
-      MyNext168Result: MyNext168,
+      TodayTasksResult: TodayTasks[0],
+      TodaySubtasksResult: TodaySubtasks[0],
+      WeekTasksResult: WeekTasks[0],
+      WeekSubtasksResult: WeekSubtasks[0],
     });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
