@@ -13,7 +13,7 @@ const {
 } = require("../utils/common-functions");
 const generateToken = require("../utils/auth");
 
-//User RegistrationSS
+//User Registration
 router.post("/user/register", async (req, res) => {
   try {
     let { full_name, email_address, password } = req.body;
@@ -156,28 +156,38 @@ router.post("/user/forgot-password", async (req, res) => {
     const [rows] = await pool.execute("CALL forgotPassword(?)", [
       email_address,
     ]);
-    const userId = rows[0][0]?.reg_id;
-    const userName = rows[0][0]?.first_name;
-    const resetPasswordLink = `http://localhost:5173/change-password/${userId}`;
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: email_address,
-      subject: "Reset Password",
-      html: generateEmailTemplate(
-        `Hello ${userName}! Your Decision168 account's Reset Password link is provided below:`,
-        `Click <a href="${resetPasswordLink}">here</a> to Reset your password.`
-      ),
-    };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        res.status(500).json({ error: "Failed to send verification email." });
-      } else {
-        res.status(201).json({
-          message: "Reset Link has been send on your Registered Email Address.",
-        });
-      }
-    });
+    // Check if the user with the specified email address is found
+    const userFound = rows[0].length > 0;
+
+    if (userFound) {
+      const userId = rows[0][0]?.reg_id;
+      const userName = rows[0][0]?.first_name;
+      const resetPasswordLink = `http://localhost:5173/change-password/${userId}`;
+      const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: email_address,
+        subject: "Reset Password",
+        html: generateEmailTemplate(
+          `Hello ${userName}! Your Decision168 account's Reset Password link is provided below:`,
+          `Click <a href="${resetPasswordLink}">here</a> to Reset your password.`
+        ),
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          res.status(500).json({ error: "Failed to send verification email." });
+        } else {
+
+          res.status(201).json({
+            message: "Reset Link has been sent to your Registered Email Address.",
+          });
+        }
+      });
+    } else {
+      // User not found
+      res.status(404).json({ error: "Email address not registered." });
+    }
   } catch (err) {
     res.status(500).json({ error: "Internal server error." });
   }
