@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
-const { convertObjectToProcedureParams } = require("../utils/verification");
+const { convertObjectToProcedureParams } = require("../utils/common-functions");
 const moment = require("moment");
 
 //get user details by user id
