@@ -7,22 +7,18 @@ const generateEmailTemplate = require("../utils/emailTemplate");
 const router = express.Router();
 
 //get_SideBar_Portfolio;
-router.get(
-  "/portfolio/get-all-portfolio/:email_address",
-  async (req, res) => {
-    const { email_address } = req.params;
-    try {
-      const [rows] = await pool.execute("CALL get_SideBar_Portfolio(?)", [
-        email_address,
-      ]);
-      return res.status(200).json(rows[0]);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error." });
-    }
+router.get("/portfolio/get-all-portfolio/:email_address", async (req, res) => {
+  const { email_address } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL get_SideBar_Portfolio(?)", [
+      email_address,
+    ]);
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
   }
-);
-
+});
 
 //getAll_Accepted_PortTM;
 router.get(
@@ -468,7 +464,6 @@ router.get(
   async (req, res) => {
     const { portfolio_id, pim_id, flag } = req.params;
     try {
-      console.log(portfolio_id, pim_id, flag);
       if (flag == 1) {
         const [getportd] = await pool.execute("CALL getPortfolioMember(?,?)", [
           pim_id,
@@ -482,16 +477,57 @@ router.get(
             [email_address]
           );
           if (status == "pending") {
-           if (check_if_registered[0].length > 0) {
-
-           }
+            if (check_if_registered[0].length > 0) {
+              const formattedDate = dateConversion();
+              const dynamicFieldsValues = `status = 'accepted',
+                     working_status = 'active',
+                     status_date = '${formattedDate}',
+                     status_notify = 'yes',
+                     status_notify_clear = 'no'`;
+              const id = `pim_id  = '${pim_id}'`;
+              await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+                dynamicFieldsValues,
+                id,
+              ]);
+              res.status(200).json({ user_status: "registered" });
+            } else {
+              res.status(400).json({ user_status: "not_registered." });
+            }
+          } else {
+            res.status(400).json({ user_status: status });
           }
+        } else {
+          res.status(400).json({ user_status: "pages-404" });
         }
       } else if (flag == 2) {
+        const [getportd] = await pool.execute("CALL getPortfolioMember(?,?)", [
+          pim_id,
+          portfolio_id,
+        ]);
+        if (getportd[0].length > 0) {
+          const status = getportd[0][0]?.status;
+          if (status == "pending") {
+            const formattedDate = dateConversion();
+            const dynamicFieldsValues = `status = 'rejected',status_date = '${formattedDate}'`;
+            const id = `pim_id  = '${pim_id}'`;
+            await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+              dynamicFieldsValues,
+              id,
+            ]);
+            res.status(200).json({ user_status: "rejected_request" });
+          } else {
+            res.status(400).json({ user_status: status });
+          }
+        } else {
+          res.status(400).json({ user_status: "pages-404" });
+        }
       } else {
+        res.status(400).json({ user_status: "pages-404" });
       }
     } catch (err) {
-      res.status(500).json({ error: "Internal server error." });
+      res
+        .status(500)
+        .json({ error: "Internal Server Error", details: err.message });
     }
   }
 );
