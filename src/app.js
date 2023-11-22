@@ -4,6 +4,7 @@ const app = express();
 const cors = require("cors");
 const Dummy = require("./routes/dummyRouter")
 const FileCabinet = require("./routes/FileCabinetRouter")
+const Archive = require("./routes/ArchiveRouter")
 
 const PORT = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
@@ -17,4 +18,5 @@ app.use(bodyParser.json({ limit: "500mb" }));
 app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(Dummy);
 app.use(FileCabinet);
+app.use(Archive);
 app.listen(PORT);
