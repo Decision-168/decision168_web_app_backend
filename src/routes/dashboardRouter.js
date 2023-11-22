@@ -5,10 +5,12 @@ const { convertObjectToProcedureParams } = require("../utils/common-functions");
 const moment = require("moment");
 
 //get user details by user id
-router.get("/user/get-user/:id", async (req, res) => {
-  const { id } = req.params;
+router.get("/user/get-user/:reg_id", async (req, res) => {
+  const { reg_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL getStudentById(?)", [id]);
+    const [rows, fields] = await pool.execute("CALL getStudentById(?)", [
+      reg_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
