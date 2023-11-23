@@ -530,4 +530,22 @@ router.get(
     }
   }
 );
+
+//change_portfolio_member_status
+router.patch("/user/change-portfolio-member-status/:pim_id", async (req, res) => {
+  const pim_id = req.params.pim_id;
+  const status = req.body.status;
+  try {
+    if(status === "active")
+    {
+      
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
