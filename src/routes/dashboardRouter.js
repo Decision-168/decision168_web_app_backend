@@ -91,7 +91,7 @@ router.get("/user/get-countries", async (req, res) => {
   const { id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getCountries()");
-    res.status(200).json(rows[0][0]);
+    res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -401,25 +401,39 @@ router.get("/user/get-alert-notifications/:id", async (req, res) => {
             );
             const CProjectComment = rows25[0];
             let check_proj = "";
-
             if (
               CProjectComment.length > 0 &&
               CProjectComment[0] &&
               CProjectComment[0].c_notify_clear
             ) {
-             // console.log("CProjectComment",CProjectComment);
               const c_pcn = CProjectComment[0].c_notify_clear.split(",");
-              // console.log(c_pcn);
-              // console.log("id", id);
-              if (c_pcn.filter((i) => i===id)) {
-                 console.log(c_pcn);
-                if (check_proj != CProjectComment[0].project_id) {
-                   console.log("id", id);
-                  console.log("CProjectComment",CProjectComment);
-                  NewProjectComment.push(CProjectComment);
-                  check_proj = CProjectComment[0].project_id;
+
+              if (c_pcn.includes(id.toString())) {
+                const filteredComments = CProjectComment.filter((comment) =>
+                  comment.c_notify_clear.includes(id.toString())
+                );
+
+                if (
+                  filteredComments.length > 0 &&
+                  check_proj != CProjectComment[0].project_id
+                ) {
+                  // Additional condition to check if project_id is the same
+                  const uniqueProjectComment = filteredComments.reduce(
+                    (acc, comment) => {
+                      if (
+                        !acc.some((c) => c.project_id === comment.project_id)
+                      ) {
+                        acc.push(comment);
+                      }
+                      return acc;
+                    },
+                    []
+                  );
+                  console.log(uniqueProjectComment);
+
+                  NewProjectComment.push(uniqueProjectComment);
+                  // check_proj = CProjectComment[0].project_id;
                 }
-                //console.log("2",check_proj);
               }
             }
           } catch (error) {
