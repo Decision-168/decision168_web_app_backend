@@ -5,7 +5,6 @@ const { dateConversion, transporter } = require("../utils/common-functions");
 const { isEmail } = require("validator");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const router = express.Router();
-const moment = require("moment-timezone");
 //get_SideBar_Portfolio;
 router.get("/portfolio/get-all-portfolio/:email_address", async (req, res) => {
   const { email_address } = req.params;
@@ -531,16 +530,4 @@ router.get(
     }
   }
 );
-
-const dateString = "1997-02-02T18:30:00.000Z";
-const dateObject = new Date(dateString);
-
-const timeZone = "Asia/Kolkata"; // Set your desired time zone
-const longFormName = new Intl.DateTimeFormat("en-US", {
-  timeZoneName: "long",
-  timeZone,
-}).format(dateObject);
-
-console.log(longFormName);
-
 module.exports = router;
