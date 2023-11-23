@@ -532,18 +532,701 @@ router.get(
 );
 
 //change_portfolio_member_status
-router.patch("/user/change-portfolio-member-status/:pim_id", async (req, res) => {
-  const pim_id = req.params.pim_id;
-  const status = req.body.status;
-  try {
-    if(status === "active")
-    {
-      
-    }
+router.patch(
+  "/user/change-portfolio-member-status/:pim_id/:portfolio_id",
+  async (req, res) => {
+    const pim_id = req.params.pim_id;
+    const portfolio_id = req.params.portfolio_id;
+    const status = req.body.status;
+    try {
+      const [check_ppm] = await pool.execute("CALL check_PPMToClear(?)", [
+        pim_id,
+      ]);
+      const check = check_ppm[0][0];
 
-    res.status(200).json(rows[0]);
+      if (check) {
+        if (status === "active") {
+          const updateFieldsValues1 = `working_status = 'active'`;
+          const upid = `pim_id  = '${pim_id}'`;
+          await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+            updateFieldsValues1,
+            upid,
+          ]);
+
+          res.status(200).json({ message: "status changed successfully" });
+        }
+        if (status === "inactive") {
+          const [getpm] = await pool.execute("CALL selectLogin(?)", [
+            check.sent_to,
+          ]);
+          const pm = getpm[0][0];
+          if (pm) {
+            const reg_id = pm.reg_id;
+
+            const [getGoals] = await pool.execute("CALL TMOpenGoals(?,?)", [
+              reg_id,
+              portfolio_id,
+            ]);
+            let goal_count = 0;
+            if (getGoals[0]) {
+              goal_count = getGoals[0].length;
+            }
+
+            const [getGoalTM] = await pool.execute("CALL getGoalOpenTM(?,?)", [
+              reg_id,
+              portfolio_id,
+            ]);
+            let goal_tm_count = 0;
+            if (getGoalTM[0]) {
+              goal_tm_count = getGoalTM[0].length;
+            }
+
+            const [getStrategies] = await pool.execute(
+              "CALL TMOpenStrategies(?,?)",
+              [reg_id, portfolio_id]
+            );
+            let strategies_count = 0;
+            if (getStrategies[0]) {
+              strategies_count = getStrategies[0].length;
+            }
+
+            const [getProjects] = await pool.execute(
+              "CALL TMOpenProjects(?,?)",
+              [reg_id, portfolio_id]
+            );
+            let pro_count = 0;
+            let only_pro_count = 0;
+            if (getProjects[0]) {
+              pro_count = getProjects[0].length;
+              getProjects[0].forEach((gp) => {
+                if (gp.pmanager !== reg_id && gp.pcreated_by === reg_id) {
+                  only_pro_count++;
+                } else if (
+                  gp.pmanager === reg_id &&
+                  gp.pcreated_by === reg_id
+                ) {
+                  only_pro_count++;
+                }
+              });
+            }
+
+            const [getTasks] = await pool.execute("CALL TMOpenTasks(?,?)", [
+              reg_id,
+              portfolio_id,
+            ]);
+            let task_count = 0;
+            if (getTasks[0]) {
+              task_count = getTasks[0].length;
+            }
+
+            const [getSubtasks] = await pool.execute(
+              "CALL TMOpenSubtasks(?,?)",
+              [reg_id, portfolio_id]
+            );
+            let subtask_count = 0;
+            if (getSubtasks[0]) {
+              subtask_count = getSubtasks[0].length;
+            }
+
+            const [getProjectTM] = await pool.execute(
+              "CALL getProjectOpenTM(?,?)",
+              [reg_id, portfolio_id]
+            );
+            let pro_tm_count = 0;
+            if (getProjectTM[0]) {
+              pro_tm_count = getProjectTM[0].length;
+            }
+
+            if (
+              goal_count === 0 &&
+              strategies_count === 0 &&
+              pro_count === 0 &&
+              task_count === 0 &&
+              subtask_count === 0 &&
+              pro_tm_count === 0 &&
+              goal_tm_count === 0
+            ) {
+              const updateFieldsValues1 = `working_status = 'inactive'`;
+              const upid = `pim_id  = '${pim_id}'`;
+              await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+                updateFieldsValues1,
+                upid,
+              ]);
+
+              res.status(200).json({ message: "status changed successfully" });
+            } else {
+              res.status(200).json({
+                goal_countResult: goal_count,
+                goal_tm_countResult: goal_tm_count,
+                strategies_countResult: strategies_count,
+                only_pro_countResult: only_pro_count,
+                task_countResult: task_count,
+                subtask_countResult: subtask_count,
+                pro_tm_countResult: pro_tm_count,
+              });
+            }
+          }
+        }
+      } else {
+        res.status(200).json({ message: "member not found" });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+//open_work_new_assignee
+router.patch(
+  "/user/open-work-new-assignee/:reg_id/:new_reg_id/:old_reg_id/:pim_id/:portfolio_id",
+  async (req, res) => {
+    const reg_id = req.params.reg_id;
+    const new_reg_id = req.params.new_reg_id;
+    const old_reg_id = req.params.old_reg_id;
+    const pim_id = req.params.pim_id;
+    const portfolio_id = req.params.portfolio_id;
+    try {
+      const [check_ppm] = await pool.execute("CALL check_PPMToClear(?)", [
+        pim_id,
+      ]);
+      const check = check_ppm[0][0];
+
+      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+        reg_id,
+      ]);
+      const powner = check_powner[0][0];
+
+      const [check_new_mem] = await pool.execute("CALL getStudentById(?)", [
+        new_reg_id,
+      ]);
+      const new_mem = check_new_mem[0][0];
+
+      if (check) {
+        //console.log("check",check);
+        const formattedDate = dateConversion();
+
+        const [getGoalsRes] = await pool.execute("CALL TMOpenGoals(?,?)", [
+          old_reg_id,
+          portfolio_id,
+        ]);
+        const getGoals = getGoalsRes[0];
+        if (getGoals) {
+          // console.log("getGoals",getGoals);
+          for (const gg of getGoals) {
+            if (gg.gcreated_by == old_reg_id) {
+              const [checkIfGoalTM] = await pool.execute(
+                "CALL TMOpenGoals(?,?)",
+                [new_reg_id, gg.gid]
+              );
+              //console.log("checkIfGoalTM",checkIfGoalTM[0]);
+              if (checkIfGoalTM[0]) {
+                const del1 = `gmember = '${new_reg_id}' AND gid = '${gg.gid}'`;
+                await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
+              }
+
+              const updateFieldsValues = `gcreated_by = '${new_reg_id}'`;
+              const upid = `gid  = '${gg.gid}'`;
+              await pool.execute("CALL UpdateGoals(?, ?)", [
+                updateFieldsValues,
+                upid,
+              ]);
+
+              const hdata = {
+                gid: gg.gid,
+                h_date: formattedDate,
+                h_resource_id: powner.reg_id,
+                h_resource: `${powner.first_name} ${powner.last_name}`,
+                h_description: `${powner.first_name} ${powner.last_name} Transfer Goal ${gg.gname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
+              };
+
+              const paramNamesString1 = Object.keys(hdata).join(", ");
+              const paramValuesString1 = Object.values(hdata)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+              await pool.execute(callProcedureSQL1, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
+
+              const data2 = {
+                gid: gg.gid,
+                portfolio_id: portfolio_id,
+                gmember: new_reg_id,
+                status: "accepted",
+                gcreated_by: new_reg_id,
+                sent_date: formattedDate,
+                sent_notify_clear: "yes",
+              };
+
+              const paramNamesString2 = Object.keys(data2).join(", ");
+              const paramValuesString2 = Object.values(data2)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL2 = `CALL InsertGoalsMembers(?, ?)`;
+              await pool.execute(callProcedureSQL2, [
+                paramNamesString2,
+                paramValuesString2,
+              ]);
+            }
+
+            if (gg.gmanager == old_reg_id) {
+              console.log("yes");
+              const updateFieldsValues = `gmanager = '${new_reg_id}'`;
+              const upid = `gid  = '${gg.gid}'`;
+              await pool.execute("CALL UpdateGoals(?, ?)", [
+                updateFieldsValues,
+                upid,
+              ]);
+
+              const hdata = {
+                gid: gg.gid,
+                h_date: formattedDate,
+                h_resource_id: powner.reg_id,
+                h_resource: `${powner.first_name} ${powner.last_name}`,
+                h_description: `${powner.first_name} ${powner.last_name} Transfer Goal ${gg.gname} Manager to ${new_mem.first_name} ${new_mem.last_name}`,
+              };
+              const paramNamesString1 = Object.keys(hdata).join(", ");
+              const paramValuesString1 = Object.values(hdata)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL = `CALL InsertProjectHistory(?, ?)`;
+              await pool.execute(callProcedureSQL, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
+            }
+
+            // Check if team member in any goal
+            const [checkTM] = await pool.execute("CALL checkOpenGoalTM(?,?)", [
+              old_reg_id,
+              gg.gid,
+            ]);
+
+            if (checkTM[0][0]) {
+              const del2 = `gmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
+              await pool.execute("CALL DeleteGoalsMembers(?)", [del2]);
+            }
+          }
+        }
+
+        const [getGoalTMRes] = await pool.execute("CALL getGoalOpenTM(?,?)", [
+          old_reg_id,
+          portfolio_id,
+        ]);
+        const getGoalTM = getGoalTMRes[0];
+        if (getGoalTM) {
+          for (const ggtm of getGoalTM) {
+            const [check_if_already_goaltmRes] = await pool.execute(
+              "CALL check_if_already_goaltm(?,?,?)",
+              [new_reg_id, ggtm.gid, portfolio_id]
+            );
+
+            const check_if_already_goaltm = check_if_already_goaltmRes[0];
+            if (check_if_already_goaltm.length == 0) {
+              const [check_if_goalownerRes] = await pool.execute(
+                "CALL check_if_goalowner(?,?)",
+                [new_reg_id, ggtm.gid]
+              );
+
+              const check_if_goalowner = check_if_goalownerRes[0];
+              if (check_if_goalowner.length == 0) {
+                const data2 = {
+                  gid: ggtm.gid,
+                  portfolio_id: portfolio_id,
+                  gmember: new_reg_id,
+                  status: ggtm.status,
+                  gcreated_by: reg_id,
+                  sent_date: formattedDate,
+                  sent_notify_clear: ggtm.sent_notify_clear,
+                };
+
+                const paramNamesString2 = Object.keys(data2).join(", ");
+                const paramValuesString2 = Object.values(data2)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL2 = `CALL InsertGoalsMembers(?, ?)`;
+                await pool.execute(callProcedureSQL2, [
+                  paramNamesString2,
+                  paramValuesString2,
+                ]);
+
+                const hdata = {
+                  gid: ggtm.gid,
+                  h_date: formattedDate,
+                  h_resource_id: powner.reg_id,
+                  h_resource: `${powner.first_name} ${powner.last_name}`,
+                  h_description: `${powner.first_name} ${powner.last_name} Added ${new_mem.first_name} ${new_mem.last_name} as a team member`,
+                };
+
+                const paramNamesString1 = Object.keys(hdata).join(", ");
+                const paramValuesString1 = Object.values(hdata)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+                await pool.execute(callProcedureSQL1, [
+                  paramNamesString1,
+                  paramValuesString1,
+                ]);
+              }
+              const del2 = `gmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
+              await pool.execute("CALL DeleteGoalsMembers(?)", [del2]);
+            }
+          }
+        }
+
+        const [getStrategiesRes] = await pool.execute(
+          "CALL TMOpenStrategies(?,?)",
+          [old_reg_id, portfolio_id]
+        );
+
+        const getStrategies = getStrategiesRes[0];
+        if (getStrategies) {
+          for (const ggs of getStrategies) {
+            const updateFieldsValues = `screated_by = '${new_reg_id}'`;
+            const upid = `sid  = '${ggs.sid}'`;
+            await pool.execute("CALL UpdateStrategies(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
+            const hdata = {
+              gid: ggs.gid,
+              sid: ggs.sid,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${powner.first_name} ${powner.last_name} Transfer KPI ${ggs.sname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
+            };
+
+            const paramNamesString1 = Object.keys(hdata).join(", ");
+            const paramValuesString1 = Object.values(hdata)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
+          }
+        }
+
+        const [getProjectsRes] = await pool.execute(
+          "CALL TMOpenProjects(?,?)",
+          [old_reg_id, portfolio_id]
+        );
+        const getProjects = getProjectsRes[0];
+        if (getProjects) {
+          for (const gp of getProjects) {
+            if (gp.pcreated_by == old_reg_id) {
+              const [check_if_tm] = await pool.execute(
+                "CALL TMOpenGoals(?,?)",
+                [new_reg_id, gp.pid]
+              );
+              if (check_if_tm[0]) {
+                const del1 = `pmember = '${new_reg_id}' AND pid = '${gp.pid}'`;
+                await pool.execute("CALL DeleteProjectMembers(?)", [del1]);
+              }
+
+              const updateFieldsValues = `pcreated_by = '${new_reg_id}'`;
+              const upid = `pid  = '${gp.pid}'`;
+              await pool.execute("CALL UpdateProject(?, ?)", [
+                updateFieldsValues,
+                upid,
+              ]);
+
+              const hdata = {
+                gid: gp.gid,
+                sid: gp.sid,
+                pid: gp.pid,
+                h_date: formattedDate,
+                h_resource_id: powner.reg_id,
+                h_resource: `${powner.first_name} ${powner.last_name}`,
+                h_description: `${powner.first_name} ${powner.last_name} Transfer Project ${gp.gname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
+              };
+
+              const paramNamesString1 = Object.keys(hdata).join(", ");
+              const paramValuesString1 = Object.values(hdata)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+              await pool.execute(callProcedureSQL1, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
+            }
+            if (gp.pmanager == old_reg_id) {
+              const updateFieldsValues = `pmanager = '${new_reg_id}'`;
+              const upid = `pid  = '${gp.pid}'`;
+              await pool.execute("CALL UpdateProject(?, ?)", [
+                updateFieldsValues,
+                upid,
+              ]);
+              const hdata = {
+                gid: gp.gid,
+                sid: gp.sid,
+                pid: gp.pid,
+                h_date: formattedDate,
+                h_resource_id: powner.reg_id,
+                h_resource: `${powner.first_name} ${powner.last_name}`,
+                h_description: `${powner.first_name} ${powner.last_name} Transfer Project ${gp.gname} Manager to ${new_mem.first_name} ${new_mem.last_name}`,
+              };
+
+              const paramNamesString1 = Object.keys(hdata).join(", ");
+              const paramValuesString1 = Object.values(hdata)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+              await pool.execute(callProcedureSQL1, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
+            }
+
+            // Check if team member in any project
+            const [checkTM] = await pool.execute("CALL CheckOpenTM(?,?)", [
+              old_reg_id,
+              gp.pid,
+            ]);
+
+            if (checkTM[0][0]) {
+              const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
+              await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
+            }
+          }
+        }
+
+        const [getProjectTMRes] = await pool.execute(
+          "CALL getProjectOpenTM(?,?)",
+          [old_reg_id, portfolio_id]
+        );
+        const getProjectTM = getProjectTMRes[0];
+        if (getProjectTM) {
+          for (const gtm of getProjectTM) {
+            const [check_if_already_tmRes] = await pool.execute(
+              "CALL check_if_already_tm(?,?,?)",
+              [new_reg_id, gtm.pid, portfolio_id]
+            );
+
+            const check_if_already_tm = check_if_already_tmRes[0];
+            if (check_if_already_tm.length == 0) {
+              const [check_if_pownerRes] = await pool.execute(
+                "CALL check_if_powner(?,?)",
+                [new_reg_id, gtm.pid]
+              );
+
+              const check_if_powner = check_if_pownerRes[0];
+              if (check_if_powner.length == 0) {
+                const data2 = {
+                  pid: gtm.pid,
+                  portfolio_id: portfolio_id,
+                  pmember: new_reg_id,
+                  status: gtm.status,
+                  pcreated_by: reg_id,
+                  sent_date: formattedDate,
+                  sent_notify_clear: gtm.sent_notify_clear,
+                };
+
+                const paramNamesString2 = Object.keys(data2).join(", ");
+                const paramValuesString2 = Object.values(data2)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL2 = `CALL InsertProjectMembers(?, ?)`;
+                await pool.execute(callProcedureSQL2, [
+                  paramNamesString2,
+                  paramValuesString2,
+                ]);
+
+                const hdata = {
+                  gid: gtm.pid,
+                  sid: gtm.sid,
+                  pid: gtm.pid,
+                  h_date: formattedDate,
+                  h_resource_id: powner.reg_id,
+                  h_resource: `${powner.first_name} ${powner.last_name}`,
+                  h_description: `${powner.first_name} ${powner.last_name} Added ${new_mem.first_name} ${new_mem.last_name} as a team member`,
+                };
+
+                const paramNamesString1 = Object.keys(hdata).join(", ");
+                const paramValuesString1 = Object.values(hdata)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+                await pool.execute(callProcedureSQL1, [
+                  paramNamesString1,
+                  paramValuesString1,
+                ]);
+              }
+              const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
+              await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
+            }
+          }
+        }
+
+        const [getTasksRes] = await pool.execute("CALL TMOpenTasks(?,?)", [
+          old_reg_id,
+          portfolio_id,
+        ]);
+
+        const getTasks = getTasksRes[0];
+        if (getTasks) {
+          for (const gt of getTasks) {
+            const updateFieldsValues = `tassignee = '${new_reg_id}'`;
+            const upid = `tid  = '${gt.tid}' AND tassignee  = '${old_reg_id}'`;
+            await pool.execute("CALL UpdateTask(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
+
+            const updateFieldsValues2 = `tcreated_by = '${reg_id}'`;
+            const upid2 = `tid  = '${gt.tid}'`;
+            await pool.execute("CALL UpdateTask(?, ?)", [
+              updateFieldsValues2,
+              upid2,
+            ]);
+
+            const hdata = {
+              gid: gt.gid,
+              sid: gt.sid,
+              pid: gt.tproject_assign,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${powner.first_name} ${powner.last_name} Transfer Task to ${new_mem.first_name} ${new_mem.last_name}`,
+            };
+
+            const paramNamesString1 = Object.keys(hdata).join(", ");
+            const paramValuesString1 = Object.values(hdata)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
+          }
+        }
+
+        const [getSubtasksRes] = await pool.execute(
+          "CALL TMOpenSubtasks(?,?)",
+          [old_reg_id, portfolio_id]
+        );
+
+        const getSubtasks = getSubtasksRes[0];
+        if (getSubtasks) {
+          for (const gs of getSubtasks) {
+            const updateFieldsValues = `stassignee = '${new_reg_id}'`;
+            const upid = `stid  = '${gs.stid}' AND stassignee  = '${old_reg_id}'`;
+            await pool.execute("CALL UpdateSubtask(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
+
+            const updateFieldsValues2 = `stcreated_by = '${reg_id}'`;
+            const upid2 = `stid  = '${gs.stid}'`;
+            await pool.execute("CALL UpdateSubtask(?, ?)", [
+              updateFieldsValues2,
+              upid2,
+            ]);
+
+            const hdata = {
+              gid: gs.gid,
+              sid: gs.sid,
+              pid: gs.stproject_assign,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${powner.first_name} ${powner.last_name} Transfer Subtask to ${new_mem.first_name} ${new_mem.last_name}`,
+            };
+
+            const paramNamesString1 = Object.keys(hdata).join(", ");
+            const paramValuesString1 = Object.values(hdata)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
+          }
+        }
+
+        const updateFieldsValues1 = `working_status = 'inactive'`;
+        const upid = `pim_id  = '${pim_id}'`;
+        await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+          updateFieldsValues1,
+          upid,
+        ]);
+
+        res.status(200).json({ message: "status changed successfully" });
+      } else {
+        res.status(200).json({ message: "member not found" });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+//get_SideBar_ALLPortfolio;
+router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
+  const { email_address } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL get_SideBar_ALLPortfolio(?)", [
+      email_address,
+    ]);
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getPortfolioCount
+router.get("/user/get-portfolio-count/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [id]);
+    res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//count_portfolio_project
+router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL count_portfolio_project(?)", [portfolio_id]);
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//count_Portfolio_task
+router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [portfolio_id]);
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
