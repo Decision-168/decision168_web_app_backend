@@ -1231,4 +1231,16 @@ router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
   }
 });
 
+//getPortfolio2
+router.get("/user/get-portfolio/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
