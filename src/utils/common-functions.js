@@ -64,6 +64,7 @@ function convertObjectToProcedureParams(data) {
   return formattedParams;
 }
 
+
 module.exports = {
   transporter,
   generateVerificationToken,
