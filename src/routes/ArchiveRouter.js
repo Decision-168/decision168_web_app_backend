@@ -812,7 +812,7 @@ router.patch(
         );
 
         if (portfolio_row[0][0]) {
-          const portfolioFieldsValues = `portfolio_archive = '', portfolio_archive_date = '', portfolio_file_it = ${file_it}, portfolio_file_it_date = ${file_it_date}`;
+          const portfolioFieldsValues = `portfolio_archive = '', portfolio_archive_date = '', portfolio_file_it = '', portfolio_file_it_date = ''`;
           const portfolio_id = `portfolio_id = '${portfolio_id}'`;
           await pool.execute("CALL UpdatePortfolio(?, ?)", [
             portfolioFieldsValues,
@@ -824,7 +824,7 @@ router.patch(
           ]);
 
           if (goal_row[0]) {
-            const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = ${file_it}, g_file_it_date = ${file_it_date}`;
+            const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = '', g_file_it_date = ''`;
             await pool.execute("CALL UpdateGoals(?, ?)", [
               goalFieldsValues,
               portfolio_id,
@@ -850,7 +850,7 @@ router.patch(
           }
 
           if (kpi_row[0]) {
-            const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = ${file_it}, s_file_it_date = ${file_it_date}`;
+            const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '', s_file_it_date = ''`;
             await pool.execute("CALL UpdateStrategies(?, ?)", [
               kpiFieldsValues,
               portfolio_id,
@@ -858,7 +858,7 @@ router.patch(
           }
 
           if (project_row[0]) {
-            const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = ${file_it}, project_file_it_date = ${file_it_date}`;
+            const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '', project_file_it_date = ''`;
             await pool.execute("CALL UpdateProject(?, ?)", [
               projectFieldsValues,
               portfolio_id,
@@ -895,13 +895,13 @@ router.patch(
             }
           }
 
-          const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = ${file_it}, task_file_it_date = ${file_it_date}`;
+          const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '', task_file_it_date = ''`;
           await pool.execute("CALL UpdateTask(?, ?)", [
             taskFieldsValues,
             portfolio_id,
           ]);
 
-          const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = ${file_it}, subtask_file_it_date = ${file_it_date}`;
+          const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '', subtask_file_it_date = ''`;
           await pool.execute("CALL UpdateSubtask(?, ?)", [
             subtaskFieldsValues,
             portfolio_id,
@@ -1020,8 +1020,8 @@ router.patch(
               "CALL getPortfolioById(?)",
               [goal_row[0][0].portfolio_id]
             );
-            let file_it = "";
-            let file_it_date = "";
+            let file_it = '';
+            let file_it_date = '';
 
             if (portfolio_del[0][0]) {
               if (portfolio_del[0][0].portfolio_file_it == "yes") {
@@ -1029,7 +1029,7 @@ router.patch(
                 file_it_date = portfolio_del[0][0].portfolio_file_it_date;
               }
             }
-            const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = ${file_it}, g_file_it_date = ${file_it_date}`;
+            const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = '${file_it}', g_file_it_date = '${file_it_date}'`;
             const gid = `gid = '${goal_id}'`;
             await pool.execute("CALL UpdateGoals(?, ?)", [
               goalFieldsValues,
@@ -1055,7 +1055,7 @@ router.patch(
             if (goal_wise_kpis[0]) {
               const kpi_array = goal_wise_kpis[0];
               kpi_array.forEach(async (row) => {
-                const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = ${file_it}, s_file_it_date = ${file_it_date}`;
+                const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '${file_it}', s_file_it_date = '${file_it_date}'`;
                 const sid = `sid = '${row.sid}'`;
                 await pool.execute("CALL UpdateStrategies(?, ?)", [
                   kpiFieldsValues,
@@ -1069,7 +1069,7 @@ router.patch(
                 if (kpi_wise_projects[0]) {
                   const project_array = kpi_wise_projects[0];
                   project_array.forEach(async (row) => {
-                    const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = ${file_it}, project_file_it_date = ${file_it_date}`;
+                    const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
                     const pid = `pid = '${row.pid}'`;
                     await pool.execute("CALL UpdateProject(?, ?)", [
                       projectFieldsValues,
@@ -1100,14 +1100,14 @@ router.patch(
                       [projectFieldsValues, pid]
                     );
 
-                    const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = ${file_it}, task_file_it_date = ${file_it_date}`;
+                    const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
                     const tproject_assign = `tproject_assign = '${row.pid}'`;
                     await pool.execute("CALL UpdateTask(?, ?)", [
                       taskFieldsValues,
                       tproject_assign,
                     ]);
 
-                    const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = ${file_it}, subtask_file_it_date = ${file_it_date}`;
+                    const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
                     const stproject_assign = `stproject_assign = '${row.pid}'`;
                     await pool.execute("CALL UpdateSubtask(?, ?)", [
                       subtaskFieldsValues,
@@ -1249,7 +1249,7 @@ router.patch(
                 file_it_date = goal_del[0][0].g_file_it_date;
               }
             }
-            const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = ${file_it}, s_file_it_date = ${file_it_date}`;
+            const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '${file_it}', s_file_it_date = '${file_it_date}'`;
             const sid = `sid = '${strategy_id}'`;
             await pool.execute("CALL UpdateStrategies(?, ?)", [
               kpiFieldsValues,
@@ -1263,7 +1263,7 @@ router.patch(
             if (kpi_wise_projects[0]) {
               const project_array = kpi_wise_projects[0];
               project_array.forEach(async (row) => {
-                const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = ${file_it}, project_file_it_date = ${file_it_date}`;
+                const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
                 const pid = `pid = '${row.pid}'`;
                 await pool.execute("CALL UpdateProject(?, ?)", [
                   projectFieldsValues,
@@ -1294,7 +1294,7 @@ router.patch(
                   pid,
                 ]);
 
-                const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = ${file_it}, task_file_it_date = ${file_it_date}`;
+                const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
                 const tproject_assign = `tproject_assign = '${row.pid}'`;
                 await pool.execute("CALL UpdateTask(?, ?)", [
                   taskFieldsValues,
@@ -1456,7 +1456,7 @@ router.patch(
                   file_it_date = kpi_del[0][0].s_file_it_date;
                 }
               }
-              const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = ${file_it}, project_file_it_date = ${file_it_date}`;
+              const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
               const pid = `pid = '${project_id}'`;
               await pool.execute("CALL UpdateProject(?, ?)", [
                 projectFieldsValues,
@@ -1487,14 +1487,14 @@ router.patch(
                 pid,
               ]);
 
-              const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = ${file_it}, task_file_it_date = ${file_it_date}`;
+              const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
               const tproject_assign = `tproject_assign = '${project_id}'`;
               await pool.execute("CALL UpdateTask(?, ?)", [
                 taskFieldsValues,
                 tproject_assign,
               ]);
 
-              const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = ${file_it}, subtask_file_it_date = ${file_it_date}`;
+              const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
               const stproject_assign = `stproject_assign = '${project_id}'`;
               await pool.execute("CALL UpdateSubtask(?, ?)", [
                 subtaskFieldsValues,
@@ -1638,14 +1638,14 @@ router.patch(
                 file_it_date = project_del[0][0].project_file_it_date;
               }
             }
-            const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = ${file_it}, task_file_it_date = ${file_it_date}`;
+            const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
             const tid = `tid = '${task_id}'`;
             await pool.execute("CALL UpdateTask(?, ?)", [
               taskFieldsValues,
               tid,
             ]);
 
-            const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = ${file_it}, subtask_file_it_date = '`;
+            const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '`;
             await pool.execute("CALL UpdateSubtask(?, ?)", [
               subtaskFieldsValues,
               tid,
@@ -1713,7 +1713,7 @@ router.patch(
               file_it_date = task_del[0][0].task_file_it_date;
             }
           }
-          const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = ${file_it}, subtask_file_it_date = ${file_it_date}`;
+          const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
           const stid = `stid = '${subtask_id}'`;
           await pool.execute("CALL UpdateSubtask(?, ?)", [
             subtaskFieldsValues,
