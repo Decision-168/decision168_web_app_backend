@@ -50,23 +50,23 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
       portf_id,
       user_id,
     ]);
-    const [goal_row] = await pool.execute("CALL portfolio_goalsTrash(?,?)", [
+    const [goal_row] = await pool.execute("CALL portfolio_goalsTrash(?)", [
       portf_id,
     ]);
     const [kpi_row] = await pool.execute(
-      "CALL portfolio_strategiesTrash(?,?)",
+      "CALL portfolio_strategiesTrash(?)",
       [portf_id]
     );
     const [project_row] = await pool.execute(
-      "CALL portfolio_projectsNotArc(?,?)",
+      "CALL portfolio_projectsNotArc(?)",
       [portf_id]
     );
     const [task_row] = await pool.execute(
-      "CALL getPortfolioAllTaskNotArc(?,?)",
+      "CALL getPortfolioAllTaskNotArc(?)",
       [portf_id]
     );
     const [subtask_row] = await pool.execute(
-      "CALL getPortfolioAllSubtaskNotArc(?,?)",
+      "CALL getPortfolioAllSubtaskNotArc(?)",
       [portf_id]
     );
 
@@ -101,18 +101,18 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
       const total_all = all_task + all_subtask;
       const total_done = done_task + done_subtask;
       if (total_all == total_done) {
-        await pool.execute("CALL UpdatePortfolio(?, ?)", [
+        await pool.execute("CALL UpdatePortfolio(?,?)", [
           portfolioFieldsValues,
           portfolio_id,
         ]);
-        await pool.execute("CALL UpdatePortfolioMember(?, ?)", [
+        await pool.execute("CALL UpdatePortfolioMember(?,?)", [
           portfolioFieldsValues,
           portfolio_id,
         ]);
 
         if (goal_row[0]) {
           const goalFieldsValues = `g_archive = 'yes', g_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateGoals(?, ?)", [
+          await pool.execute("CALL UpdateGoals(?,?)", [
             goalFieldsValues,
             portfolio_id,
           ]);
@@ -120,15 +120,15 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
             const goal_array = goal_row[0];
             goal_array.forEach(async (row) => {
               const gid = `gid = '${row.gid}'`;
-              await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
+              await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
                 goalFieldsValues,
                 gid,
               ]);
-              await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
+              await pool.execute("CALL UpdateGoalsMembers(?,?)", [
                 goalFieldsValues,
                 gid,
               ]);
-              await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+              await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
                 goalFieldsValues,
                 gid,
               ]);
@@ -138,7 +138,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
 
         if (kpi_row[0]) {
           const kpiFieldsValues = `s_archive = 'yes', s_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateStrategies(?, ?)", [
+          await pool.execute("CALL UpdateStrategies(?,?)", [
             kpiFieldsValues,
             portfolio_id,
           ]);
@@ -146,7 +146,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
 
         if (project_row[0]) {
           const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateProject(?, ?)", [
+          await pool.execute("CALL UpdateProject(?,?)", [
             projectFieldsValues,
             portfolio_id,
           ]);
@@ -154,27 +154,27 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
             const project_array = project_row[0];
             project_array.forEach(async (row) => {
               const pid = `pid = '${row.pid}'`;
-              await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+              await pool.execute("CALL UpdateProjectFiles(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+              await pool.execute("CALL UpdateProjectManagement(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+              await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
@@ -184,7 +184,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
 
         if (task_row[0]) {
           const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateTask(?, ?)", [
+          await pool.execute("CALL UpdateTask(?,?)", [
             taskFieldsValues,
             portfolio_id,
           ]);
@@ -192,7 +192,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
 
         if (subtask_row[0]) {
           const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [
+          await pool.execute("CALL UpdateSubtask(?,?)", [
             subtaskFieldsValues,
             portfolio_id,
           ]);
@@ -254,16 +254,16 @@ router.patch("/archive/goal/:goal_id/:user_id", async (req, res) => {
       const total_all = all_task + all_subtask;
       const total_done = done_task + done_subtask;
       if (total_all == total_done) {
-        await pool.execute("CALL UpdateGoals(?, ?)", [goalFieldsValues, gid]);
-        await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
+        await pool.execute("CALL UpdateGoals(?,?)", [goalFieldsValues, gid]);
+        await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
           goalFieldsValues,
           gid,
         ]);
-        await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
+        await pool.execute("CALL UpdateGoalsMembers(?,?)", [
           goalFieldsValues,
           gid,
         ]);
-        await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+        await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
           goalFieldsValues,
           gid,
         ]);
@@ -277,7 +277,7 @@ router.patch("/archive/goal/:goal_id/:user_id", async (req, res) => {
           kpi_array.forEach(async (row) => {
             const kpiFieldsValues = `s_archive = 'yes', s_archive_date = '${formattedDate}'`;
             const sid = `sid = '${row.sid}'`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
+            await pool.execute("CALL UpdateStrategies(?,?)", [
               kpiFieldsValues,
               sid,
             ]);
@@ -290,45 +290,45 @@ router.patch("/archive/goal/:goal_id/:user_id", async (req, res) => {
               project_array.forEach(async (row) => {
                 const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
                 const pid = `pid = '${row.pid}'`;
-                await pool.execute("CALL UpdateProject(?, ?)", [
+                await pool.execute("CALL UpdateProject(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                await pool.execute("CALL UpdateProjectFiles(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagement(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
 
                 const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
                 const tproject_assign = `tproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateTask(?, ?)", [
+                await pool.execute("CALL UpdateTask(?,?)", [
                   taskFieldsValues,
                   tproject_assign,
                 ]);
 
                 const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
                 const stproject_assign = `stproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateSubtask(?, ?)", [
+                await pool.execute("CALL UpdateSubtask(?,?)", [
                   subtaskFieldsValues,
                   stproject_assign,
                 ]);
@@ -345,7 +345,7 @@ router.patch("/archive/goal/:goal_id/:user_id", async (req, res) => {
           "gid, h_date, h_resource_id, h_resource, h_description";
         const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Archived By Goal Owner ${student.first_name} ${student.last_name}"`;
 
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
           historyFieldsNames,
           historyFieldsValues,
         ]);
@@ -401,7 +401,7 @@ router.patch("/archive/kpi/:strategy_id/:user_id", async (req, res) => {
       if (total_all == total_done) {
         const kpiFieldsValues = `s_archive = 'yes', s_archive_date = '${formattedDate}'`;
         const sid = `sid = '${strategy_id}'`;
-        await pool.execute("CALL UpdateStrategies(?, ?)", [
+        await pool.execute("CALL UpdateStrategies(?,?)", [
           kpiFieldsValues,
           sid,
         ]);
@@ -414,45 +414,45 @@ router.patch("/archive/kpi/:strategy_id/:user_id", async (req, res) => {
           project_array.forEach(async (row) => {
             const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
             const pid = `pid = '${row.pid}'`;
-            await pool.execute("CALL UpdateProject(?, ?)", [
+            await pool.execute("CALL UpdateProject(?,?)", [
               projectFieldsValues,
               pid,
             ]);
-            await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+            await pool.execute("CALL UpdateProjectFiles(?,?)", [
               projectFieldsValues,
               pid,
             ]);
-            await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+            await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
               projectFieldsValues,
               pid,
             ]);
-            await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+            await pool.execute("CALL UpdateProjectManagement(?,?)", [
               projectFieldsValues,
               pid,
             ]);
-            await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+            await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
               projectFieldsValues,
               pid,
             ]);
-            await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+            await pool.execute("CALL UpdateProjectMembers(?,?)", [
               projectFieldsValues,
               pid,
             ]);
-            await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+            await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
               projectFieldsValues,
               pid,
             ]);
 
             const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
             const tproject_assign = `tproject_assign = '${row.pid}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [
+            await pool.execute("CALL UpdateTask(?,?)", [
               taskFieldsValues,
               tproject_assign,
             ]);
 
             const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
             const stproject_assign = `stproject_assign = '${row.pid}'`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [
+            await pool.execute("CALL UpdateSubtask(?,?)", [
               subtaskFieldsValues,
               stproject_assign,
             ]);
@@ -467,7 +467,7 @@ router.patch("/archive/kpi/:strategy_id/:user_id", async (req, res) => {
           "sid, gid, h_date, h_resource_id, h_resource, h_description";
         const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Archived By KPI Owner ${student.first_name} ${student.last_name}"`;
 
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
           historyFieldsNames,
           historyFieldsValues,
         ]);
@@ -524,45 +524,45 @@ router.patch("/archive/project/:project_id/:user_id", async (req, res) => {
       if (total_all == total_done) {
         const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
         const pid = `pid = '${project_id}'`;
-        await pool.execute("CALL UpdateProject(?, ?)", [
+        await pool.execute("CALL UpdateProject(?,?)", [
           projectFieldsValues,
           pid,
         ]);
-        await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+        await pool.execute("CALL UpdateProjectFiles(?,?)", [
           projectFieldsValues,
           pid,
         ]);
-        await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+        await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
           projectFieldsValues,
           pid,
         ]);
-        await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+        await pool.execute("CALL UpdateProjectManagement(?,?)", [
           projectFieldsValues,
           pid,
         ]);
-        await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+        await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
           projectFieldsValues,
           pid,
         ]);
-        await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+        await pool.execute("CALL UpdateProjectMembers(?,?)", [
           projectFieldsValues,
           pid,
         ]);
-        await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+        await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
           projectFieldsValues,
           pid,
         ]);
 
         const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
         const tproject_assign = `tproject_assign = '${project_id}'`;
-        await pool.execute("CALL UpdateTask(?, ?)", [
+        await pool.execute("CALL UpdateTask(?,?)", [
           taskFieldsValues,
           tproject_assign,
         ]);
 
         const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
         const stproject_assign = `stproject_assign = '${project_id}'`;
-        await pool.execute("CALL UpdateSubtask(?, ?)", [
+        await pool.execute("CALL UpdateSubtask(?,?)", [
           subtaskFieldsValues,
           stproject_assign,
         ]);
@@ -575,7 +575,7 @@ router.patch("/archive/project/:project_id/:user_id", async (req, res) => {
           "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
         const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Archived By Project Owner ${student.first_name} ${student.last_name}"`;
 
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
           historyFieldsNames,
           historyFieldsValues,
         ]);
@@ -620,10 +620,10 @@ router.patch("/archive/task/:task_id/:user_id", async (req, res) => {
       if (all_subtask == done_subtask) {
         const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
         const tid = `tid = '${task_id}'`;
-        await pool.execute("CALL UpdateTask(?, ?)", [taskFieldsValues, tid]);
+        await pool.execute("CALL UpdateTask(?,?)", [taskFieldsValues, tid]);
 
         const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-        await pool.execute("CALL UpdateSubtask(?, ?)", [
+        await pool.execute("CALL UpdateSubtask(?,?)", [
           subtaskFieldsValues,
           tid,
         ]);
@@ -636,7 +636,7 @@ router.patch("/archive/task/:task_id/:user_id", async (req, res) => {
           "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
         const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Archived By ${student.first_name} ${student.last_name}"`;
 
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
           historyFieldsNames,
           historyFieldsValues,
         ]);
@@ -667,7 +667,7 @@ router.patch("/archive/subtask/:subtask_id/:user_id", async (req, res) => {
     if (subtask_row[0][0]) {
       const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
       const stid = `stid = '${subtask_id}'`;
-      await pool.execute("CALL UpdateSubtask(?, ?)", [
+      await pool.execute("CALL UpdateSubtask(?,?)", [
         subtaskFieldsValues,
         stid,
       ]);
@@ -680,7 +680,7 @@ router.patch("/archive/subtask/:subtask_id/:user_id", async (req, res) => {
         "subtask_id, task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
       const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Archived By ${student.first_name} ${student.last_name}"`;
 
-      await pool.execute("CALL InsertProjectHistory(?, ?)", [
+      await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
         historyFieldsValues,
       ]);
@@ -778,33 +778,33 @@ router.patch(
           [portfolio_id, user_id]
         );
         const [goal_row] = await pool.execute(
-          "CALL portfolio_goalsTrash(?,?)",
+          "CALL portfolio_goalsTrash(?)",
           [portfolio_id]
         );
         const [kpi_row] = await pool.execute(
-          "CALL portfolio_strategiesTrash(?,?)",
+          "CALL portfolio_strategiesTrash(?)",
           [portfolio_id]
         );
         const [project_row] = await pool.execute(
-          "CALL portfolio_projectsNotArc(?,?)",
+          "CALL portfolio_projectsNotArc(?)",
           [portfolio_id]
         );
 
         if (portfolio_row[0][0]) {
           const portfolioFieldsValues = `portfolio_archive = '', portfolio_archive_date = '', portfolio_file_it = '', portfolio_file_it_date = ''`;
           const portfolio_id = `portfolio_id = '${portfolio_id}'`;
-          await pool.execute("CALL UpdatePortfolio(?, ?)", [
+          await pool.execute("CALL UpdatePortfolio(?,?)", [
             portfolioFieldsValues,
             portfolio_id,
           ]);
-          await pool.execute("CALL UpdatePortfolioMember(?, ?)", [
+          await pool.execute("CALL UpdatePortfolioMember(?,?)", [
             portfolioFieldsValues,
             portfolio_id,
           ]);
 
           if (goal_row[0]) {
             const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = '', g_file_it_date = ''`;
-            await pool.execute("CALL UpdateGoals(?, ?)", [
+            await pool.execute("CALL UpdateGoals(?,?)", [
               goalFieldsValues,
               portfolio_id,
             ]);
@@ -812,15 +812,15 @@ router.patch(
               const goal_array = goal_row[0];
               goal_array.forEach(async (row) => {
                 const gid = `gid = '${row.gid}'`;
-                await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
+                await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
                   goalFieldsValues,
                   gid,
                 ]);
-                await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
+                await pool.execute("CALL UpdateGoalsMembers(?,?)", [
                   goalFieldsValues,
                   gid,
                 ]);
-                await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+                await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
                   goalFieldsValues,
                   gid,
                 ]);
@@ -830,7 +830,7 @@ router.patch(
 
           if (kpi_row[0]) {
             const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '', s_file_it_date = ''`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
+            await pool.execute("CALL UpdateStrategies(?,?)", [
               kpiFieldsValues,
               portfolio_id,
             ]);
@@ -838,7 +838,7 @@ router.patch(
 
           if (project_row[0]) {
             const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '', project_file_it_date = ''`;
-            await pool.execute("CALL UpdateProject(?, ?)", [
+            await pool.execute("CALL UpdateProject(?,?)", [
               projectFieldsValues,
               portfolio_id,
             ]);
@@ -846,27 +846,27 @@ router.patch(
               const project_array = project_row[0];
               project_array.forEach(async (row) => {
                 const pid = `pid = '${row.pid}'`;
-                await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                await pool.execute("CALL UpdateProjectFiles(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagement(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
@@ -875,13 +875,13 @@ router.patch(
           }
 
           const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '', task_file_it_date = ''`;
-          await pool.execute("CALL UpdateTask(?, ?)", [
+          await pool.execute("CALL UpdateTask(?,?)", [
             taskFieldsValues,
             portfolio_id,
           ]);
 
           const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '', subtask_file_it_date = ''`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [
+          await pool.execute("CALL UpdateSubtask(?,?)", [
             subtaskFieldsValues,
             portfolio_id,
           ]);
@@ -924,7 +924,7 @@ router.patch(
           const [package] = await pool.execute("CALL getPackDetail(?)", [
             student.package_id,
           ]);
-          const [goal_count] = await pool.execute("CALL getGoalCount(?, ?)", [
+          const [goal_count] = await pool.execute("CALL getGoalCount(?,?)", [
             user_id,
             portfolio_id,
           ]);
@@ -953,7 +953,7 @@ router.patch(
         const [package] = await pool.execute("CALL getPackDetail(?)", [
           student.package_id,
         ]);
-        const [goal_count] = await pool.execute("CALL getGoalCount(?, ?)", [
+        const [goal_count] = await pool.execute("CALL getGoalCount(?,?)", [
           user_id,
           portfolio_id,
         ]);
@@ -1010,19 +1010,19 @@ router.patch(
             }
             const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = '${file_it}', g_file_it_date = '${file_it_date}'`;
             const gid = `gid = '${goal_id}'`;
-            await pool.execute("CALL UpdateGoals(?, ?)", [
+            await pool.execute("CALL UpdateGoals(?,?)", [
               goalFieldsValues,
               gid,
             ]);
-            await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
+            await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
               goalFieldsValues,
               gid,
             ]);
-            await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
+            await pool.execute("CALL UpdateGoalsMembers(?,?)", [
               goalFieldsValues,
               gid,
             ]);
-            await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+            await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
               goalFieldsValues,
               gid,
             ]);
@@ -1036,7 +1036,7 @@ router.patch(
               kpi_array.forEach(async (row) => {
                 const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '${file_it}', s_file_it_date = '${file_it_date}'`;
                 const sid = `sid = '${row.sid}'`;
-                await pool.execute("CALL UpdateStrategies(?, ?)", [
+                await pool.execute("CALL UpdateStrategies(?,?)", [
                   kpiFieldsValues,
                   sid,
                 ]);
@@ -1050,45 +1050,45 @@ router.patch(
                   project_array.forEach(async (row) => {
                     const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
                     const pid = `pid = '${row.pid}'`;
-                    await pool.execute("CALL UpdateProject(?, ?)", [
+                    await pool.execute("CALL UpdateProject(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
-                    await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                    await pool.execute("CALL UpdateProjectFiles(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
                     await pool.execute(
-                      "CALL UpdateProjectInvitedMembers(?, ?)",
+                      "CALL UpdateProjectInvitedMembers(?,?)",
                       [projectFieldsValues, pid]
                     );
-                    await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                    await pool.execute("CALL UpdateProjectManagement(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
                     await pool.execute(
-                      "CALL UpdateProjectManagementFields(?, ?)",
+                      "CALL UpdateProjectManagementFields(?,?)",
                       [projectFieldsValues, pid]
                     );
-                    await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+                    await pool.execute("CALL UpdateProjectMembers(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
                     await pool.execute(
-                      "CALL UpdateProjectSuggestedMembers(?, ?)",
+                      "CALL UpdateProjectSuggestedMembers(?,?)",
                       [projectFieldsValues, pid]
                     );
 
                     const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
                     const tproject_assign = `tproject_assign = '${row.pid}'`;
-                    await pool.execute("CALL UpdateTask(?, ?)", [
+                    await pool.execute("CALL UpdateTask(?,?)", [
                       taskFieldsValues,
                       tproject_assign,
                     ]);
 
                     const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
                     const stproject_assign = `stproject_assign = '${row.pid}'`;
-                    await pool.execute("CALL UpdateSubtask(?, ?)", [
+                    await pool.execute("CALL UpdateSubtask(?,?)", [
                       subtaskFieldsValues,
                       stproject_assign,
                     ]);
@@ -1101,7 +1101,7 @@ router.patch(
               "gid, h_date, h_resource_id, h_resource, h_description";
             const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Reopened By ${student.first_name} ${student.last_name}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?, ?)", [
+            await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
               historyFieldsValues,
             ]);
@@ -1230,7 +1230,7 @@ router.patch(
             }
             const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '${file_it}', s_file_it_date = '${file_it_date}'`;
             const sid = `sid = '${strategy_id}'`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
+            await pool.execute("CALL UpdateStrategies(?,?)", [
               kpiFieldsValues,
               sid,
             ]);
@@ -1244,45 +1244,45 @@ router.patch(
               project_array.forEach(async (row) => {
                 const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
                 const pid = `pid = '${row.pid}'`;
-                await pool.execute("CALL UpdateProject(?, ?)", [
+                await pool.execute("CALL UpdateProject(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                await pool.execute("CALL UpdateProjectFiles(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagement(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
 
                 const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
                 const tproject_assign = `tproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateTask(?, ?)", [
+                await pool.execute("CALL UpdateTask(?,?)", [
                   taskFieldsValues,
                   tproject_assign,
                 ]);
 
                 const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = ''`;
                 const stproject_assign = `stproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateSubtask(?, ?)", [
+                await pool.execute("CALL UpdateSubtask(?,?)", [
                   subtaskFieldsValues,
                   stproject_assign,
                 ]);
@@ -1293,7 +1293,7 @@ router.patch(
               "sid, gid, h_date, h_resource_id, h_resource, h_description";
             const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Reopned By ${student.first_name} ${student.last_name}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?, ?)", [
+            await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
               historyFieldsValues,
             ]);
@@ -1437,45 +1437,45 @@ router.patch(
               }
               const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
               const pid = `pid = '${project_id}'`;
-              await pool.execute("CALL UpdateProject(?, ?)", [
+              await pool.execute("CALL UpdateProject(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+              await pool.execute("CALL UpdateProjectFiles(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+              await pool.execute("CALL UpdateProjectManagement(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+              await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
 
               const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
               const tproject_assign = `tproject_assign = '${project_id}'`;
-              await pool.execute("CALL UpdateTask(?, ?)", [
+              await pool.execute("CALL UpdateTask(?,?)", [
                 taskFieldsValues,
                 tproject_assign,
               ]);
 
               const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
               const stproject_assign = `stproject_assign = '${project_id}'`;
-              await pool.execute("CALL UpdateSubtask(?, ?)", [
+              await pool.execute("CALL UpdateSubtask(?,?)", [
                 subtaskFieldsValues,
                 stproject_assign,
               ]);
@@ -1484,7 +1484,7 @@ router.patch(
                 "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
               const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Reopened By ${student.first_name} ${student.last_name}"`;
 
-              await pool.execute("CALL InsertProjectHistory(?, ?)", [
+              await pool.execute("CALL InsertProjectHistory(?,?)", [
                 historyFieldsNames,
                 historyFieldsValues,
               ]);
@@ -1619,13 +1619,13 @@ router.patch(
             }
             const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
             const tid = `tid = '${task_id}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [
+            await pool.execute("CALL UpdateTask(?,?)", [
               taskFieldsValues,
               tid,
             ]);
 
-            const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [
+            const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
+            await pool.execute("CALL UpdateSubtask(?,?)", [
               subtaskFieldsValues,
               tid,
             ]);
@@ -1634,7 +1634,7 @@ router.patch(
               "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
             const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Reopened By ${student.first_name} ${student.last_name}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?, ?)", [
+            await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
               historyFieldsValues,
             ]);
@@ -1694,7 +1694,7 @@ router.patch(
           }
           const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
           const stid = `stid = '${subtask_id}'`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [
+          await pool.execute("CALL UpdateSubtask(?,?)", [
             subtaskFieldsValues,
             stid,
           ]);
@@ -1703,7 +1703,7 @@ router.patch(
             "subtask_id, task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
           const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Reopened By ${student.first_name} ${student.last_name}"`;
 
-          await pool.execute("CALL InsertProjectHistory(?, ?)", [
+          await pool.execute("CALL InsertProjectHistory(?,?)", [
             historyFieldsNames,
             historyFieldsValues,
           ]);
