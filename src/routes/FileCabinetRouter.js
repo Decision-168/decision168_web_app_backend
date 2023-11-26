@@ -5,7 +5,7 @@ const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
 // Get All portfolio departments
-router.get("/file-cabinet/:portfolio_id/:user_id", async (req, res) => {
+router.get("/file-cabinet/data/:portfolio_id/:user_id", async (req, res) => {
   const { portfolio_id, user_id } = req.params;
   try {
     const [departments] = await pool.execute(
