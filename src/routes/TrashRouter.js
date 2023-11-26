@@ -325,7 +325,13 @@ router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
 
       const historyFieldsNames =
         "gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Moved To Trash By Goal Owner ${student.first_name} ${student.last_name}"`;
+      const historyFieldsValues = `"${goal_id}", "${dateConversion()}", "${
+        student.reg_id
+      }", "${student.first_name} ${
+        student.last_name
+      }", "Goal Moved To Trash By Goal Owner ${student.first_name} ${
+        student.last_name
+      }"`;
 
       await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
@@ -418,7 +424,13 @@ router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
 
       const historyFieldsNames =
         "sid, gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Moved to Trash By KPI Owner ${student.first_name} ${student.last_name}"`;
+      const historyFieldsValues = `"${strategy_id}", "${
+        kpi_row[0][0].gid
+      }", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${
+        student.last_name
+      }", "KPI Moved to Trash By KPI Owner ${student.first_name} ${
+        student.last_name
+      }"`;
 
       await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
@@ -502,7 +514,15 @@ router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
 
       const historyFieldsNames =
         "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Moved to Trash By Project Owner ${student.first_name} ${student.last_name}"`;
+      const historyFieldsValues = `"${project_id}", "${
+        project_row[0][0].sid
+      }", "${project_row[0][0].gid}", "${dateConversion()}", "${
+        student.reg_id
+      }", "${student.first_name} ${
+        student.last_name
+      }", "Project Moved to Trash By Project Owner ${student.first_name} ${
+        student.last_name
+      }"`;
 
       await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
@@ -538,10 +558,7 @@ router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
       await pool.execute("CALL UpdateTask(?,?)", [taskFieldsValues, tid]);
 
       const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}', stsingle_trash = 't_yes'`;
-      await pool.execute("CALL UpdateSubtask(?,?)", [
-        subtaskFieldsValues,
-        tid,
-      ]);
+      await pool.execute("CALL UpdateSubtask(?,?)", [subtaskFieldsValues, tid]);
       const [owner_row] = await pool.execute("CALL getStudentById(?)", [
         user_id,
       ]);
@@ -549,7 +566,15 @@ router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
 
       const historyFieldsNames =
         "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Moved to Trash By ${student.first_name} ${student.last_name}"`;
+      const historyFieldsValues = `"${task_id}", "${
+        task_row[0][0].tproject_assign
+      }", "${task_row[0][0].sid}", "${
+        task_row[0][0].gid
+      }", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${
+        student.last_name
+      }", "${task_row[0][0].tcode} Task Moved to Trash By ${
+        student.first_name
+      } ${student.last_name}"`;
 
       await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
@@ -593,7 +618,15 @@ router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
 
       const historyFieldsNames =
         "subtask_id, task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Moved to Trash By ${student.first_name} ${student.last_name}"`;
+      const historyFieldsValues = `"${subtask_id}", "${
+        subtask_row[0][0].tid
+      }", "${subtask_row[0][0].stproject_assign}", "${
+        subtask_row[0][0].sid
+      }", "${subtask_row[0][0].gid}", "${dateConversion()}", "${
+        student.reg_id
+      }", "${student.first_name} ${student.last_name}", "${
+        subtask_row[0][0].stcode
+      } Subtask Moved to Trash By ${student.first_name} ${student.last_name}"`;
 
       await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
@@ -683,7 +716,7 @@ router.patch(
   async (req, res) => {
     const { tfile_name, task_id, user_id } = req.params;
     try {
-      const [task_row] = await pool.execute("CALL file_itgetTaskById(?,?)", [
+      const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
         task_id,
       ]);
 
@@ -741,9 +774,9 @@ router.patch(
 
 // Reopen Portfolio
 router.patch(
-  "/trash/retrieve/portfolio/:portfolio_id/:user_id",
+  "/trash/retrieve/portfolio/:portf_id/:user_id",
   async (req, res) => {
-    const { portfolio_id, user_id } = req.params;
+    const { portf_id, user_id } = req.params;
     try {
       var limitation = "";
       const [owner_row] = await pool.execute("CALL getStudentById(?)", [
@@ -771,14 +804,14 @@ router.patch(
             const check_type = !isNaN(total_portfolios);
             if (check_type) {
               if (used_portfolios < total_portfolios) {
-                if (portfolio_id) {
+                if (portf_id) {
                   var limitation = "in_limit";
                 }
               } else {
                 res.status(400).json({ error: "Limit Exceeds." });
               }
             } else {
-              if (portfolio_id) {
+              if (portf_id) {
                 var limitation = "in_limit";
               }
             }
@@ -800,14 +833,14 @@ router.patch(
           const check_type = !isNaN(total_portfolios);
           if (check_type) {
             if (used_portfolios < total_portfolios) {
-              if (portfolio_id) {
+              if (portf_id) {
                 var limitation = "in_limit";
               }
             } else {
               res.status(400).json({ error: "Limit Exceeds." });
             }
           } else {
-            if (portfolio_id) {
+            if (portf_id) {
               var limitation = "in_limit";
             }
           }
@@ -817,18 +850,18 @@ router.patch(
       }
       if (limitation == "in_limit") {
         const [portfolio_row] = await pool.execute("CALL getPortfolio(?,?)", [
-          portfolio_id,
+          portf_id,
           user_id,
         ]);
 
         const [project_row] = await pool.execute(
           "CALL portfolio_projectsRetriveTrash(?)",
-          [portfolio_id]
+          [portf_id]
         );
 
         if (portfolio_row[0][0]) {
           const portfolioFieldsValues = `portfolio_trash = '', portfolio_trash_date = '', delete_agree = ''`;
-          const portfolio_id = `portfolio_id = '${portfolio_id}'`;
+          const portfolio_id = `portfolio_id = '${portf_id}'`;
           await pool.execute("CALL UpdatePortfolio(?,?)", [
             portfolioFieldsValues,
             portfolio_id,
@@ -1098,7 +1131,11 @@ router.patch(
 
             const historyFieldsNames =
               "gid, h_date, h_resource_id, h_resource, h_description";
-            const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Restored By ${student.first_name} ${student.last_name}"`;
+            const historyFieldsValues = `"${goal_id}", "${dateConversion()}", "${
+              student.reg_id
+            }", "${student.first_name} ${
+              student.last_name
+            }", "Goal Restored By ${student.first_name} ${student.last_name}"`;
 
             await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
@@ -1279,7 +1316,13 @@ router.patch(
 
             const historyFieldsNames =
               "sid, gid, h_date, h_resource_id, h_resource, h_description";
-            const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Restored By ${student.first_name} ${student.last_name}"`;
+            const historyFieldsValues = `"${strategy_id}", "${
+              kpi_row[0][0].gid
+            }", "${dateConversion()}", "${student.reg_id}", "${
+              student.first_name
+            } ${student.last_name}", "KPI Restored By ${student.first_name} ${
+              student.last_name
+            }"`;
 
             await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
@@ -1460,7 +1503,15 @@ router.patch(
 
               const historyFieldsNames =
                 "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-              const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Restored By ${student.first_name} ${student.last_name}"`;
+              const historyFieldsValues = `"${project_id}", "${
+                project_row[0][0].sid
+              }", "${project_row[0][0].gid}", "${dateConversion()}", "${
+                student.reg_id
+              }", "${student.first_name} ${
+                student.last_name
+              }", "Project Restored By ${student.first_name} ${
+                student.last_name
+              }"`;
 
               await pool.execute("CALL InsertProjectHistory(?,?)", [
                 historyFieldsNames,
@@ -1582,10 +1633,7 @@ router.patch(
           } else {
             const taskFieldsValues = `trash = '', trash_date = '', tstatus_date = '${formattedDate}', tsingle_trash = ''`;
             const tid = `tid = '${task_id}'`;
-            await pool.execute("CALL UpdateTask(?,?)", [
-              taskFieldsValues,
-              tid,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [taskFieldsValues, tid]);
 
             const subtaskFieldsValues = `strash = '', strash_date = '', ststatus_date = '${formattedDate}', stsingle_trash = ''`;
             await pool.execute("CALL UpdateSubtask(?,?)", [
@@ -1595,7 +1643,15 @@ router.patch(
 
             const historyFieldsNames =
               "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-            const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Restored By ${student.first_name} ${student.last_name}"`;
+            const historyFieldsValues = `"${task_id}", "${
+              task_row[0][0].tproject_assign
+            }", "${task_row[0][0].sid}", "${
+              task_row[0][0].gid
+            }", "${dateConversion()}", "${student.reg_id}", "${
+              student.first_name
+            } ${student.last_name}", "${
+              task_row[0][0].tcode
+            } Task Restored By ${student.first_name} ${student.last_name}"`;
 
             await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
@@ -1619,7 +1675,8 @@ router.patch(
 );
 
 // Reopen Subtask
-router.patch( "/trash/retrieve/subtask/:subtask_id/:user_id",
+router.patch(
+  "/trash/retrieve/subtask/:subtask_id/:user_id",
   async (req, res) => {
     const { subtask_id, user_id } = req.params;
     try {
@@ -1649,7 +1706,15 @@ router.patch( "/trash/retrieve/subtask/:subtask_id/:user_id",
 
           const historyFieldsNames =
             "subtask_id, task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-          const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Restored By ${student.first_name} ${student.last_name}"`;
+          const historyFieldsValues = `"${subtask_id}", "${
+            subtask_row[0][0].tid
+          }", "${subtask_row[0][0].stproject_assign}", "${
+            subtask_row[0][0].sid
+          }", "${subtask_row[0][0].gid}", "${dateConversion()}", "${
+            student.reg_id
+          }", "${student.first_name} ${student.last_name}", "${
+            subtask_row[0][0].stcode
+          } Subtask Restored By ${student.first_name} ${student.last_name}"`;
 
           await pool.execute("CALL InsertProjectHistory(?,?)", [
             historyFieldsNames,
@@ -1683,11 +1748,11 @@ router.patch(
         "CALL checkFileProjectTrash(?)",
         [project_id]
       );
-      if(project_trash[0][0]){
+      if (project_trash[0][0]) {
         res.status(400).json({
           error: "Project is in Trash! To Restore File please Restore Project.",
         });
-      }else{
+      } else {
         const projectFieldsValues = `ptrash = '', ptrash_date = ''`;
         const file_id = `pfile_id = '${pfile_id}'`;
         await pool.execute("CALL UpdateProjectFiles(?,?)", [
@@ -1696,7 +1761,7 @@ router.patch(
         ]);
 
         const [project_row] = await pool.execute(
-          "CALL file_itgetProjectById(?,?)",
+          "CALL file_itgetProjectById(?)",
           [project_id]
         );
 
@@ -1704,13 +1769,13 @@ router.patch(
           const pfile = project_file_row[0][0].pfile;
           const trimmedPfile = pfile.trim();
           const indexOfUnderscore = trimmedPfile.indexOf("_");
-          const project_file = trimmedPfile.substr(indexOfUnderscore + 1);         
-  
+          const project_file = trimmedPfile.substr(indexOfUnderscore + 1);
+
           const [owner_row] = await pool.execute("CALL getStudentById(?)", [
             user_id,
           ]);
           const student = owner_row[0][0];
-  
+
           const historyFieldsNames =
             "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
           const historyFieldsValues = `"${pfile_id}", "${project_id}", "${
@@ -1719,10 +1784,10 @@ router.patch(
             student.reg_id
           }", "${student.first_name} ${
             student.last_name
-          }", "${project_file} Restored By ${
-            student.first_name
-          } ${student.last_name}"`;
-  
+          }", "${project_file} Restored By ${student.first_name} ${
+            student.last_name
+          }"`;
+
           await pool.execute("CALL InsertProjectHistory(?,?)", [
             historyFieldsNames,
             historyFieldsValues,
@@ -1733,7 +1798,285 @@ router.patch(
         } else {
           res.status(400).json({ error: "Failed to get Project details." });
         }
-      } 
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Forever Goal
+router.patch(
+  "/trash/delete-forever/goal/:goal_id/:user_id",
+  async (req, res) => {
+    const { goal_id, user_id } = req.params;
+    try {
+      const [goal_row] = await pool.execute("CALL check_goal_trash(?,?)", [
+        user_id,
+        goal_id,
+      ]);
+
+      if (goal_row[0][0]) {
+        const [goal_wise_kpis] = await pool.execute(
+          "CALL GoalsAllStrategiesList_to_delete(?)",
+          [goal_id]
+        );
+        if (goal_wise_kpis[0]) {
+          const kpi_array = goal_wise_kpis[0];
+          kpi_array.forEach(async (row) => {
+            const sid = row.sid;
+            const [kpi_wise_projects] = await pool.execute(
+              "CALL StrategyAllProjectsList_to_delete(?)",
+              [sid]
+            );
+            if (kpi_wise_projects[0]) {
+              const project_array = kpi_wise_projects[0];
+              project_array.forEach(async (row) => {
+                const pid = row.pid;
+                const [tasks] = await pool.execute(
+                  "CALL getProjectAllTaskTrash(?)",
+                  [pid]
+                );
+                if (tasks[0]) {
+                  const task_array = tasks[0];
+                  task_array.forEach(async (row) => {
+                    const tid = row.tid;
+                    await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+                  });
+                  await pool.execute("CALL DeleteTask(?)", [pid]);
+                }
+                const [subtasks] = await pool.execute(
+                  "CALL getProjectAllSubtaskTrash(?)",
+                  [pid]
+                );
+                if (subtasks[0]) {
+                  const subtask_array = subtasks[0];
+                  subtask_array.forEach(async (row) => {
+                    const stid = row.stid;
+                    await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+                  });
+                  await pool.execute("CALL DeleteSubtask(?)", [pid]);
+                }
+
+                await pool.execute("CALL DeleteProjectFiles(?)", [pid]);
+                await pool.execute("CALL DeleteProjectInvitedMembers(?)", [
+                  pid,
+                ]);
+                await pool.execute("CALL DeleteProjectManagement(?)", [pid]);
+                await pool.execute("CALL DeleteProjectManagementFields(?)", [
+                  pid,
+                ]);
+                await pool.execute("CALL DeleteProjectMembers(?)", [pid]);
+                await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [
+                  pid,
+                ]);
+                await pool.execute("CALL DeleteProjectHistory(?)", [pid]);
+                await pool.execute("CALL DeleteProjectRequestMember(?)", [pid]);
+                await pool.execute("CALL DeleteProject(?)", [pid]);
+              });
+            }
+            await pool.execute("CALL DeleteStrategies(?)", [sid]);
+          });
+        }
+        await pool.execute("CALL DeleteGoals(?)", [gid]);
+        return res.status(200).json({ message: "Goal deleted permanently" });
+      } else {
+        res.status(400).json({ error: "Failed to get Goal details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Forever KPI
+router.patch("/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
+  const { sid, user_id } = req.params;
+  try {
+    const [kpi_row] = await pool.execute("CALL check_strategy_trash(?,?)", [
+      user_id,
+      sid,
+    ]);
+
+    if (kpi_row[0][0]) {
+      const [kpi_wise_projects] = await pool.execute(
+        "CALL StrategyAllProjectsList_to_delete(?)",
+        [sid]
+      );
+      if (kpi_wise_projects[0]) {
+        const project_array = kpi_wise_projects[0];
+        project_array.forEach(async (row) => {
+          const pid = row.pid;
+          const [tasks] = await pool.execute("CALL getProjectAllTaskTrash(?)", [
+            pid,
+          ]);
+          if (tasks[0]) {
+            const task_array = tasks[0];
+            task_array.forEach(async (row) => {
+              const tid = row.tid;
+              await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+            });
+            await pool.execute("CALL DeleteTask(?)", [pid]);
+          }
+          const [subtasks] = await pool.execute(
+            "CALL getProjectAllSubtaskTrash(?)",
+            [pid]
+          );
+          if (subtasks[0]) {
+            const subtask_array = subtasks[0];
+            subtask_array.forEach(async (row) => {
+              const stid = row.stid;
+              await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+            });
+            await pool.execute("CALL DeleteSubtask(?)", [pid]);
+          }
+
+          await pool.execute("CALL DeleteProjectFiles(?)", [pid]);
+          await pool.execute("CALL DeleteProjectInvitedMembers(?)", [pid]);
+          await pool.execute("CALL DeleteProjectManagement(?)", [pid]);
+          await pool.execute("CALL DeleteProjectManagementFields(?)", [pid]);
+          await pool.execute("CALL DeleteProjectMembers(?)", [pid]);
+          await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [pid]);
+          await pool.execute("CALL DeleteProjectHistory(?)", [pid]);
+          await pool.execute("CALL DeleteProjectRequestMember(?)", [pid]);
+          await pool.execute("CALL DeleteProject(?)", [pid]);
+        });
+      }
+      await pool.execute("CALL DeleteStrategies(?)", [sid]);
+      return res.status(200).json({ message: "KPI deleted permanently" });
+    } else {
+      res.status(400).json({ error: "Failed to get KPI details." });
+    }
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Delete Forever Project
+router.patch(
+  "/trash/delete-forever/project/:pid/:user_id",
+  async (req, res) => {
+    const { pid, user_id } = req.params;
+    try {
+      const [project_row] = await pool.execute(
+        "CALL check_project_trash(?,?)",
+        [pid, user_id]
+      );
+
+      if (project_row[0][0]) {
+        const [tasks] = await pool.execute("CALL getProjectAllTaskTrash(?)", [
+          pid,
+        ]);
+        if (tasks[0]) {
+          const task_array = tasks[0];
+          task_array.forEach(async (row) => {
+            const tid = row.tid;
+            await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+          });
+          await pool.execute("CALL DeleteTask(?)", [pid]);
+        }
+        const [subtasks] = await pool.execute(
+          "CALL getProjectAllSubtaskTrash(?)",
+          [pid]
+        );
+        if (subtasks[0]) {
+          const subtask_array = subtasks[0];
+          subtask_array.forEach(async (row) => {
+            const stid = row.stid;
+            await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+          });
+          await pool.execute("CALL DeleteSubtask(?)", [pid]);
+        }
+
+        await pool.execute("CALL DeleteProjectFiles(?)", [pid]);
+        await pool.execute("CALL DeleteProjectInvitedMembers(?)", [pid]);
+        await pool.execute("CALL DeleteProjectManagement(?)", [pid]);
+        await pool.execute("CALL DeleteProjectManagementFields(?)", [pid]);
+        await pool.execute("CALL DeleteProjectMembers(?)", [pid]);
+        await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [pid]);
+        await pool.execute("CALL DeleteProjectHistory(?)", [pid]);
+        await pool.execute("CALL DeleteProjectRequestMember(?)", [pid]);
+        await pool.execute("CALL DeleteProject(?)", [pid]);
+        return res.status(200).json({ message: "Project deleted permanently" });
+      } else {
+        res.status(400).json({ error: "Failed to get Project details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Forever Task
+router.patch("/trash/delete-forever/task/:tid", async (req, res) => {
+  const { tid } = req.params;
+  try {
+    const [task_row] = await pool.execute("CALL check_task2_new(?)", [tid]);
+
+    if (task_row[0][0]) {
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [tid]);
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [tid]);
+      await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+      await pool.execute("CALL DeleteTask(?)", [tid]);
+      return res.status(200).json({ message: "Task deleted permanently" });
+    } else {
+      res.status(400).json({ error: "Failed to get Task details." });
+    }
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Delete Forever Subtask
+router.patch("/trash/delete-forever/subtask/:stid", async (req, res) => {
+  const { stid } = req.params;
+  try {
+    const [task_row] = await pool.execute("CALL check_subtask2(?)", [stid]);
+
+    if (task_row[0][0]) {
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+      await pool.execute("CALL DeleteSubtask(?)", [stid]);
+      return res.status(200).json({ message: "Subtask deleted permanently" });
+    } else {
+      res.status(400).json({ error: "Failed to get Subtask details." });
+    }
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Delete Forever Project File
+router.patch(
+  "/trash/delete-forever/project-file/:pfile_id",
+  async (req, res) => {
+    const { pfile_id } = req.params;
+    try {
+      const [file_row] = await pool.execute("CALL check_pfile_trash(?)", [
+        pfile_id,
+      ]);
+
+      if (file_row[0][0]) {
+        await pool.execute("CALL DeleteProjectFiles(?)", [pfile_id]);
+        const fs = require("fs");
+        fs.unlink(`./assets/project_files/${file_row[0][0].pfile}`, (err) => {
+          if (err) {
+            return res
+              .status(400)
+              .json({ message: "Project File not Deleted" });
+          }
+          return res
+            .status(200)
+            .json({ message: "Project File deleted permanently" });
+        });
+      } else {
+        res.status(400).json({ error: "Failed to get Project File details." });
+      }
     } catch (error) {
       console.error("Error executing stored procedure:", error);
       res.status(500).json({ error: "Internal Server Error" });
