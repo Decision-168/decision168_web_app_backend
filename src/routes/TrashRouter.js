@@ -8,27 +8,56 @@ const moment = require("moment");
 router.get("/trash/data/:portfolio_id/:user_id", async (req, res) => {
   const { portfolio_id, user_id } = req.params;
   try {
-    const [TrashProjectFiles] = await pool.execute("CALL TrashProjectFiles(?)", [portfolio_id]);
-    const [TrashTaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [portfolio_id]);
-    const [TrashProjects] = await pool.execute("CALL TrashProjects(?,?)", [portfolio_id, user_id]);
-    const [TrashTasks] = await pool.execute("CALL TrashTasks(?,?)", [user_id, portfolio_id]);
-    const [TrashSingleTasks] = await pool.execute("CALL TrashSingleTasks(?,?)", [user_id, portfolio_id]);
-    const [TrashSubtasks] = await pool.execute("CALL TrashSubtasks(?,?)", [portfolio_id, user_id]);
-    const [TrashSingleSubtasks] = await pool.execute("CALL TrashSingleSubtasks(?,?)", [portfolio_id, user_id]);
-    const [TrashSubtaskFiles] = await pool.execute("CALL TrashSubtaskFiles(?)", [portfolio_id]);
-    const [TrashGoals] = await pool.execute("CALL TrashGoals(?,?)", [user_id, portfolio_id]);
-    const [TrashStrategies] = await pool.execute("CALL TrashStrategies(?,?)", [user_id, portfolio_id]);
+    const [TrashProjectFiles] = await pool.execute(
+      "CALL TrashProjectFiles(?)",
+      [portfolio_id]
+    );
+    const [TrashTaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [
+      portfolio_id,
+    ]);
+    const [TrashProjects] = await pool.execute("CALL TrashProjects(?,?)", [
+      portfolio_id,
+      user_id,
+    ]);
+    const [TrashTasks] = await pool.execute("CALL TrashTasks(?,?)", [
+      user_id,
+      portfolio_id,
+    ]);
+    const [TrashSingleTasks] = await pool.execute(
+      "CALL TrashSingleTasks(?,?)",
+      [user_id, portfolio_id]
+    );
+    const [TrashSubtasks] = await pool.execute("CALL TrashSubtasks(?,?)", [
+      portfolio_id,
+      user_id,
+    ]);
+    const [TrashSingleSubtasks] = await pool.execute(
+      "CALL TrashSingleSubtasks(?,?)",
+      [portfolio_id, user_id]
+    );
+    const [TrashSubtaskFiles] = await pool.execute(
+      "CALL TrashSubtaskFiles(?)",
+      [portfolio_id]
+    );
+    const [TrashGoals] = await pool.execute("CALL TrashGoals(?,?)", [
+      user_id,
+      portfolio_id,
+    ]);
+    const [TrashStrategies] = await pool.execute("CALL TrashStrategies(?,?)", [
+      user_id,
+      portfolio_id,
+    ]);
     res.status(200).json({
-        trashProjectFiles: TrashProjectFiles[0],
-        trashTaskFiles: TrashTaskFiles[0],
-        trashProjects: TrashProjects[0],
-        trashTasks: TrashTasks[0],
-        trashSingleTasks: TrashSingleTasks[0],
-        trashSubtasks: TrashSubtasks[0],
-        trashSingleSubtasks: TrashSingleSubtasks[0],
-        trashSubtaskFiles: TrashSubtaskFiles[0],
-        trashGoals: TrashGoals[0],
-        trashStrategies: TrashStrategies[0],
+      trashProjectFiles: TrashProjectFiles[0],
+      trashTaskFiles: TrashTaskFiles[0],
+      trashProjects: TrashProjects[0],
+      trashTasks: TrashTasks[0],
+      trashSingleTasks: TrashSingleTasks[0],
+      trashSubtasks: TrashSubtasks[0],
+      trashSingleSubtasks: TrashSingleSubtasks[0],
+      trashSubtaskFiles: TrashSubtaskFiles[0],
+      trashGoals: TrashGoals[0],
+      trashStrategies: TrashStrategies[0],
     });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -52,166 +81,131 @@ router.get("/trash/user/:user_id", async (req, res) => {
 router.patch("/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
   const { portf_id, user_id } = req.params;
   try {
-    const [portfolio_row] = await pool.execute("CALL getPortfolioNotArc(?,?)", [
+    const [portfolio_row] = await pool.execute("CALL getPortfolio(?,?)", [
       portf_id,
       user_id,
     ]);
-    const [goal_row] = await pool.execute("CALL portfolio_goalsTrash(?,?)", [
+    const [goal_row] = await pool.execute("CALL portfolio_goalsTrash(?)", [
       portf_id,
     ]);
-    const [kpi_row] = await pool.execute(
-      "CALL portfolio_strategiesTrash(?,?)",
-      [portf_id]
-    );
+    const [kpi_row] = await pool.execute("CALL portfolio_strategiesTrash(?)", [
+      portf_id,
+    ]);
     const [project_row] = await pool.execute(
-      "CALL portfolio_projectsNotArc(?,?)",
+      "CALL portfolio_projectsTrash(?)",
       [portf_id]
     );
-    const [task_row] = await pool.execute(
-      "CALL getPortfolioAllTaskNotArc(?,?)",
-      [portf_id]
-    );
+    const [task_row] = await pool.execute("CALL getPortfolioAllTaskTrash(?)", [
+      portf_id,
+    ]);
     const [subtask_row] = await pool.execute(
-      "CALL getPortfolioAllSubtaskNotArc(?,?)",
+      "CALL getPortfolioAllSubtaskTrash(?)",
       [portf_id]
     );
 
-    const [portfolio_wise_tasks] = await pool.execute(
-      "CALL file_itPortfolioprogress_total(?)",
-      [portf_id]
-    );
-    const [portfolio_wise_done_tasks] = await pool.execute(
-      "CALL file_itPortfolioprogress_done(?)",
-      [portf_id]
-    );
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const formattedDate = currentDate.toISOString().split("T")[0];
 
-    const [portfolio_wise_subtasks] = await pool.execute(
-      "CALL file_itPortfoliosub_progress_total(?)",
-      [portf_id]
-    );
-    const [portfolio_wise_done_subtasks] = await pool.execute(
-      "CALL file_itPortfoliosub_progress_done(?)",
-      [portf_id]
-    );
-
-    const formattedDate = dateConversion();
-    const portfolioFieldsValues = `portfolio_archive = 'yes', portfolio_archive_date = '${formattedDate}'`;
+    const portfolioFieldsValues = `portfolio_trash = 'yes', portfolio_trash_date = '${formattedDate}', delete_agree = 'yes'`;
     const portfolio_id = `portfolio_id = '${portf_id}'`;
 
     if (portfolio_row[0][0]) {
-      const all_task = portfolio_wise_tasks[0][0].count_rows;
-      const done_task = portfolio_wise_done_tasks[0][0].count_rows;
-      const all_subtask = portfolio_wise_subtasks[0][0].count_rows;
-      const done_subtask = portfolio_wise_done_subtasks[0][0].count_rows;
+      await pool.execute("CALL UpdatePortfolio(?,?)", [
+        portfolioFieldsValues,
+        portfolio_id,
+      ]);
 
-      const total_all = all_task + all_subtask;
-      const total_done = done_task + done_subtask;
-      if (total_all == total_done) {
-        await pool.execute("CALL UpdatePortfolio(?, ?)", [
-          portfolioFieldsValues,
+      if (goal_row[0]) {
+        const goalFieldsValues = `g_trash = 'yes', g_trash_date = '${formattedDate}'`;
+        await pool.execute("CALL UpdateGoals(?,?)", [
+          goalFieldsValues,
           portfolio_id,
         ]);
-        await pool.execute("CALL UpdatePortfolioMember(?, ?)", [
-          portfolioFieldsValues,
-          portfolio_id,
-        ]);
-
         if (goal_row[0]) {
-          const goalFieldsValues = `g_archive = 'yes', g_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateGoals(?, ?)", [
-            goalFieldsValues,
-            portfolio_id,
-          ]);
-          if (goal_row[0]) {
-            const goal_array = goal_row[0];
-            goal_array.forEach(async (row) => {
-              const gid = `gid = '${row.gid}'`;
-              await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
-                goalFieldsValues,
-                gid,
-              ]);
-              await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
-                goalFieldsValues,
-                gid,
-              ]);
-              await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
-                goalFieldsValues,
-                gid,
-              ]);
-            });
-          }
+          const goal_array = goal_row[0];
+          goal_array.forEach(async (row) => {
+            const gid = `gid = '${row.gid}'`;
+            await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
+              goalFieldsValues,
+              gid,
+            ]);
+            await pool.execute("CALL UpdateGoalsMembers(?,?)", [
+              goalFieldsValues,
+              gid,
+            ]);
+            await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
+              goalFieldsValues,
+              gid,
+            ]);
+          });
         }
-
-        if (kpi_row[0]) {
-          const kpiFieldsValues = `s_archive = 'yes', s_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateStrategies(?, ?)", [
-            kpiFieldsValues,
-            portfolio_id,
-          ]);
-        }
-
-        if (project_row[0]) {
-          const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateProject(?, ?)", [
-            projectFieldsValues,
-            portfolio_id,
-          ]);
-          if (project_row[0]) {
-            const project_array = project_row[0];
-            project_array.forEach(async (row) => {
-              const pid = `pid = '${row.pid}'`;
-              await pool.execute("CALL UpdateProjectFiles(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-              await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-              await pool.execute("CALL UpdateProjectManagement(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-              await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-              await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-            });
-          }
-        }
-
-        if (task_row[0]) {
-          const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateTask(?, ?)", [
-            taskFieldsValues,
-            portfolio_id,
-          ]);
-        }
-
-        if (subtask_row[0]) {
-          const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [
-            subtaskFieldsValues,
-            portfolio_id,
-          ]);
-        }
-        return res
-          .status(200)
-          .json({ message: "Portfolio Archived Successfully." });
-      } else {
-        return res.status(400).json({
-          error:
-            "Please Complete All Tasks and Subtasks to Delete the Portfolio!",
-        });
       }
+
+      if (kpi_row[0]) {
+        const kpiFieldsValues = `s_trash = 'yes', s_trash_date = '${formattedDate}'`;
+        await pool.execute("CALL UpdateStrategies(?,?)", [
+          kpiFieldsValues,
+          portfolio_id,
+        ]);
+      }
+
+      if (project_row[0]) {
+        const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+        await pool.execute("CALL UpdateProject(?,?)", [
+          projectFieldsValues,
+          portfolio_id,
+        ]);
+        if (project_row[0]) {
+          const project_array = project_row[0];
+          project_array.forEach(async (row) => {
+            const pid = `pid = '${row.pid}'`;
+            await pool.execute("CALL UpdateProjectFiles(?,?)", [
+              projectFieldsValues,
+              pid,
+            ]);
+            await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
+              projectFieldsValues,
+              pid,
+            ]);
+            await pool.execute("CALL UpdateProjectManagement(?,?)", [
+              projectFieldsValues,
+              pid,
+            ]);
+            await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
+              projectFieldsValues,
+              pid,
+            ]);
+            await pool.execute("CALL UpdateProjectMembers(?,?)", [
+              projectFieldsValues,
+              pid,
+            ]);
+            await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
+              projectFieldsValues,
+              pid,
+            ]);
+          });
+        }
+      }
+
+      if (task_row[0]) {
+        const taskFieldsValues = `trash = 'yes', trash_date = '${formattedDate}', tstatus_date = '${dateConversion()}'`;
+        await pool.execute("CALL UpdateTask(?,?)", [
+          taskFieldsValues,
+          portfolio_id,
+        ]);
+      }
+
+      if (subtask_row[0]) {
+        const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}'`;
+        await pool.execute("CALL UpdateSubtask(?,?)", [
+          subtaskFieldsValues,
+          portfolio_id,
+        ]);
+      }
+      return res
+        .status(200)
+        .json({ message: "Portfolio Moved to Trash Successfully." });
     } else {
       res.status(400).json({ error: "Failed to get Portfolio details." });
     }
@@ -225,142 +219,121 @@ router.patch("/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
 router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
   const { goal_id, user_id } = req.params;
   try {
-    const [goal_row] = await pool.execute("CALL archiveGoalDetail(?)", [
+    const [goal_row] = await pool.execute("CALL file_itGoalDetail(?)", [
       goal_id,
     ]);
 
-    const [goal_wise_tasks] = await pool.execute(
-      "CALL file_itGoalprogress_total(?)",
-      [goal_id]
-    );
-    const [goal_wise_done_tasks] = await pool.execute(
-      "CALL file_itGoalprogress_done(?)",
-      [goal_id]
-    );
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const formattedDate = currentDate.toISOString().split("T")[0];
 
-    const [goal_wise_subtasks] = await pool.execute(
-      "CALL file_itGoalsub_progress_total(?)",
-      [goal_id]
-    );
-    const [goal_wise_done_subtasks] = await pool.execute(
-      "CALL file_itGoalsub_progress_done(?)",
-      [goal_id]
-    );
-
-    const formattedDate = dateConversion();
-    const goalFieldsValues = `g_archive = 'yes', g_archive_date = '${formattedDate}'`;
+    const goalParentFieldsValues = `g_trash = 'yes', g_trash_date = '${formattedDate}', gsingle_trash = 'yes'`;
+    const goalFieldsValues = `g_trash = 'yes', g_trash_date = '${formattedDate}'`;
     const gid = `gid = '${goal_id}'`;
 
     if (goal_row[0][0]) {
-      const all_task = goal_wise_tasks[0][0].count_rows;
-      const done_task = goal_wise_done_tasks[0][0].count_rows;
-      const all_subtask = goal_wise_subtasks[0][0].count_rows;
-      const done_subtask = goal_wise_done_subtasks[0][0].count_rows;
+      await pool.execute("CALL UpdateGoals(?,?)", [
+        goalParentFieldsValues,
+        gid,
+      ]);
+      await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
+        goalFieldsValues,
+        gid,
+      ]);
+      await pool.execute("CALL UpdateGoalsMembers(?,?)", [
+        goalFieldsValues,
+        gid,
+      ]);
+      await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
+        goalFieldsValues,
+        gid,
+      ]);
 
-      const total_all = all_task + all_subtask;
-      const total_done = done_task + done_subtask;
-      if (total_all == total_done) {
-        await pool.execute("CALL UpdateGoals(?, ?)", [goalFieldsValues, gid]);
-        await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
-          goalFieldsValues,
-          gid,
-        ]);
-        await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
-          goalFieldsValues,
-          gid,
-        ]);
-        await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
-          goalFieldsValues,
-          gid,
-        ]);
+      const [goal_wise_kpis] = await pool.execute(
+        "CALL GoalsAllStrategiesList_not_in_trash(?)",
+        [goal_id]
+      );
+      if (goal_wise_kpis[0]) {
+        const kpi_array = goal_wise_kpis[0];
+        kpi_array.forEach(async (row) => {
+          const kpiFieldsValues = `s_trash = 'yes', s_trash_date = '${formattedDate}', s_single_trash = 'g_yes'`;
+          const sid = `sid = '${row.sid}'`;
+          await pool.execute("CALL UpdateStrategies(?,?)", [
+            kpiFieldsValues,
+            sid,
+          ]);
+          const [kpi_wise_projects] = await pool.execute(
+            "CALL StrategyAllProjectsList_not_in_trash(?)",
+            [row.sid]
+          );
+          if (kpi_wise_projects[0]) {
+            const project_array = kpi_wise_projects[0];
+            project_array.forEach(async (row) => {
+              const projectParentFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}', psingle_trash = 'g_yes'`;
+              const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+              const pid = `pid = '${row.pid}'`;
+              await pool.execute("CALL UpdateProject(?,?)", [
+                projectParentFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectFiles(?,?)", [
+                projectFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
+                projectFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectManagement(?,?)", [
+                projectFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
+                projectFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectMembers(?,?)", [
+                projectFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
+                projectFieldsValues,
+                pid,
+              ]);
 
-        const [goal_wise_kpis] = await pool.execute(
-          "CALL GoalsAllStrategiesList_to_delete(?)",
-          [goal_id]
-        );
-        if (goal_wise_kpis[0]) {
-          const kpi_array = goal_wise_kpis[0];
-          kpi_array.forEach(async (row) => {
-            const kpiFieldsValues = `s_archive = 'yes', s_archive_date = '${formattedDate}'`;
-            const sid = `sid = '${row.sid}'`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
-              kpiFieldsValues,
-              sid,
-            ]);
-            const [kpi_wise_projects] = await pool.execute(
-              "CALL StrategyAllProjectsList_to_delete(?)",
-              [row.sid]
-            );
-            if (kpi_wise_projects[0]) {
-              const project_array = kpi_wise_projects[0];
-              project_array.forEach(async (row) => {
-                const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
-                const pid = `pid = '${row.pid}'`;
-                await pool.execute("CALL UpdateProject(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectFiles(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectManagement(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
+              const taskFieldsValues = `trash = 'yes', trash_date = '${formattedDate}', tstatus_date = '${dateConversion()}', tsingle_trash = 'g_yes'`;
+              const tproject_assign = `tproject_assign = '${row.pid}'`;
+              await pool.execute("CALL UpdateTask(?,?)", [
+                taskFieldsValues,
+                tproject_assign,
+              ]);
 
-                const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
-                const tproject_assign = `tproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateTask(?, ?)", [
-                  taskFieldsValues,
-                  tproject_assign,
-                ]);
-
-                const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-                const stproject_assign = `stproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateSubtask(?, ?)", [
-                  subtaskFieldsValues,
-                  stproject_assign,
-                ]);
-              });
-            }
-          });
-        }
-        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
-          user_id,
-        ]);
-        const student = owner_row[0][0];
-
-        const historyFieldsNames =
-          "gid, h_date, h_resource_id, h_resource, h_description";
-        const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Archived By Goal Owner ${student.first_name} ${student.last_name}"`;
-
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
-          historyFieldsNames,
-          historyFieldsValues,
-        ]);
-        return res.status(200).json({ message: "Goal Archived Successfully." });
-      } else {
-        return res.status(400).json({
-          error: "Please Complete All Tasks and Subtasks to Delete the Goal!",
+              const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}', stsingle_trash = 'g_yes'`;
+              const stproject_assign = `stproject_assign = '${row.pid}'`;
+              await pool.execute("CALL UpdateSubtask(?,?)", [
+                subtaskFieldsValues,
+                stproject_assign,
+              ]);
+            });
+          }
         });
       }
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
+
+      const historyFieldsNames =
+        "gid, h_date, h_resource_id, h_resource, h_description";
+      const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Moved To Trash By Goal Owner ${student.first_name} ${student.last_name}"`;
+
+      await pool.execute("CALL InsertProjectHistory(?,?)", [
+        historyFieldsNames,
+        historyFieldsValues,
+      ]);
+      return res
+        .status(200)
+        .json({ message: "Goal Moved To Trash Successfully." });
     } else {
       res.status(400).json({ error: "Failed to get Goal details." });
     }
@@ -374,115 +347,86 @@ router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
 router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
   const { strategy_id, user_id } = req.params;
   try {
-    const [kpi_row] = await pool.execute("CALL archiveStrategyDetail(?)", [
+    const [kpi_row] = await pool.execute("CALL file_itStrategyDetail(?)", [
       strategy_id,
     ]);
-
-    const [kpi_wise_tasks] = await pool.execute(
-      "CALL file_itStrategyprogress_total(?)",
-      [strategy_id]
-    );
-    const [kpi_wise_done_tasks] = await pool.execute(
-      "CALL file_itStrategyprogress_done(?)",
-      [strategy_id]
-    );
-
-    const [kpi_wise_subtasks] = await pool.execute(
-      "CALL file_itStrategysub_progress_total(?)",
-      [strategy_id]
-    );
-    const [kpi_wise_done_subtasks] = await pool.execute(
-      "CALL file_itStrategysub_progress_done(?)",
-      [strategy_id]
-    );
-    const formattedDate = dateConversion();
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const formattedDate = currentDate.toISOString().split("T")[0];
     if (kpi_row[0][0]) {
-      const all_task = kpi_wise_tasks[0][0].count_rows;
-      const done_task = kpi_wise_done_tasks[0][0].count_rows;
-      const all_subtask = kpi_wise_subtasks[0][0].count_rows;
-      const done_subtask = kpi_wise_done_subtasks[0][0].count_rows;
+      const kpiFieldsValues = `s_trash = 'yes', s_trash_date = '${formattedDate}', s_single_trash = 'yes'`;
+      const sid = `sid = '${strategy_id}'`;
+      await pool.execute("CALL UpdateStrategies(?,?)", [kpiFieldsValues, sid]);
+      const [kpi_wise_projects] = await pool.execute(
+        "CALL StrategyAllProjectsList_not_in_trash(?)",
+        [strategy_id]
+      );
+      if (kpi_wise_projects[0]) {
+        const project_array = kpi_wise_projects[0];
+        project_array.forEach(async (row) => {
+          const projectParentFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}', psingle_trash = 's_yes'`;
+          const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+          const pid = `pid = '${row.pid}'`;
+          await pool.execute("CALL UpdateProject(?,?)", [
+            projectParentFieldsValues,
+            pid,
+          ]);
+          await pool.execute("CALL UpdateProjectFiles(?,?)", [
+            projectFieldsValues,
+            pid,
+          ]);
+          await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
+            projectFieldsValues,
+            pid,
+          ]);
+          await pool.execute("CALL UpdateProjectManagement(?,?)", [
+            projectFieldsValues,
+            pid,
+          ]);
+          await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
+            projectFieldsValues,
+            pid,
+          ]);
+          await pool.execute("CALL UpdateProjectMembers(?,?)", [
+            projectFieldsValues,
+            pid,
+          ]);
+          await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
+            projectFieldsValues,
+            pid,
+          ]);
 
-      const total_all = all_task + all_subtask;
-      const total_done = done_task + done_subtask;
-      if (total_all == total_done) {
-        const kpiFieldsValues = `s_archive = 'yes', s_archive_date = '${formattedDate}'`;
-        const sid = `sid = '${strategy_id}'`;
-        await pool.execute("CALL UpdateStrategies(?, ?)", [
-          kpiFieldsValues,
-          sid,
-        ]);
-        const [kpi_wise_projects] = await pool.execute(
-          "CALL StrategyAllProjectsList_to_delete(?)",
-          [strategy_id]
-        );
-        if (kpi_wise_projects[0]) {
-          const project_array = kpi_wise_projects[0];
-          project_array.forEach(async (row) => {
-            const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
-            const pid = `pid = '${row.pid}'`;
-            await pool.execute("CALL UpdateProject(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
-            await pool.execute("CALL UpdateProjectFiles(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
-            await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
-            await pool.execute("CALL UpdateProjectManagement(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
-            await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
-            await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
-            await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
-              projectFieldsValues,
-              pid,
-            ]);
+          const taskFieldsValues = `trash = 'yes', trash_date = '${formattedDate}', tstatus_date = '${dateConversion()}', tsingle_trash = 's_yes'`;
+          const tproject_assign = `tproject_assign = '${row.pid}'`;
+          await pool.execute("CALL UpdateTask(?,?)", [
+            taskFieldsValues,
+            tproject_assign,
+          ]);
 
-            const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
-            const tproject_assign = `tproject_assign = '${row.pid}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [
-              taskFieldsValues,
-              tproject_assign,
-            ]);
-
-            const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-            const stproject_assign = `stproject_assign = '${row.pid}'`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [
-              subtaskFieldsValues,
-              stproject_assign,
-            ]);
-          });
-        }
-        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
-          user_id,
-        ]);
-        const student = owner_row[0][0];
-
-        const historyFieldsNames =
-          "sid, gid, h_date, h_resource_id, h_resource, h_description";
-        const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Archived By KPI Owner ${student.first_name} ${student.last_name}"`;
-
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
-          historyFieldsNames,
-          historyFieldsValues,
-        ]);
-        return res.status(200).json({ message: "KPI Archived Successfully." });
-      } else {
-        return res.status(400).json({
-          error: "Please Complete All Tasks and Subtasks to Delete the KPI!",
+          const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}', stsingle_trash = 's_yes'`;
+          const stproject_assign = `stproject_assign = '${row.pid}'`;
+          await pool.execute("CALL UpdateSubtask(?,?)", [
+            subtaskFieldsValues,
+            stproject_assign,
+          ]);
         });
       }
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
+
+      const historyFieldsNames =
+        "sid, gid, h_date, h_resource_id, h_resource, h_description";
+      const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Moved to Trash By KPI Owner ${student.first_name} ${student.last_name}"`;
+
+      await pool.execute("CALL InsertProjectHistory(?,?)", [
+        historyFieldsNames,
+        historyFieldsValues,
+      ]);
+      return res
+        .status(200)
+        .json({ message: "KPI Moved to Trash Successfully." });
     } else {
       res.status(400).json({ error: "Failed to get KPI details." });
     }
@@ -496,104 +440,77 @@ router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
 router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
   const { project_id, user_id } = req.params;
   try {
-    const [project_row] = await pool.execute("CALL archiveProjectDetail(?,?)", [
-      user_id,
+    const [project_row] = await pool.execute("CALL file_itProjectDetail(?,?)", [
       project_id,
+      user_id,
     ]);
 
-    const [project_wise_tasks] = await pool.execute(
-      "CALL file_itprogress_total(?)",
-      [project_id]
-    );
-    const [project_wise_done_tasks] = await pool.execute(
-      "CALL file_itprogress_done(?)",
-      [project_id]
-    );
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const formattedDate = currentDate.toISOString().split("T")[0];
 
-    const [project_wise_subtasks] = await pool.execute(
-      "CALL file_itsub_progress_total(?)",
-      [project_id]
-    );
-    const [project_wise_done_subtasks] = await pool.execute(
-      "CALL file_itsub_progress_done(?)",
-      [project_id]
-    );
-    const formattedDate = dateConversion();
     if (project_row[0][0]) {
-      const all_task = project_wise_tasks[0][0].count_rows;
-      const done_task = project_wise_done_tasks[0][0].count_rows;
-      const all_subtask = project_wise_subtasks[0][0].count_rows;
-      const done_subtask = project_wise_done_subtasks[0][0].count_rows;
+      const projectParentFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}', psingle_trash = 'yes'`;
+      const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+      const pid = `pid = '${project_id}'`;
+      await pool.execute("CALL UpdateProject(?,?)", [
+        projectParentFieldsValues,
+        pid,
+      ]);
+      await pool.execute("CALL UpdateProjectFiles(?,?)", [
+        projectFieldsValues,
+        pid,
+      ]);
+      await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
+        projectFieldsValues,
+        pid,
+      ]);
+      await pool.execute("CALL UpdateProjectManagement(?,?)", [
+        projectFieldsValues,
+        pid,
+      ]);
+      await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
+        projectFieldsValues,
+        pid,
+      ]);
+      await pool.execute("CALL UpdateProjectMembers(?,?)", [
+        projectFieldsValues,
+        pid,
+      ]);
+      await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
+        projectFieldsValues,
+        pid,
+      ]);
 
-      const total_all = all_task + all_subtask;
-      const total_done = done_task + done_subtask;
-      if (total_all == total_done) {
-        const projectFieldsValues = `project_archive = 'yes', project_archive_date = '${formattedDate}'`;
-        const pid = `pid = '${project_id}'`;
-        await pool.execute("CALL UpdateProject(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
-        await pool.execute("CALL UpdateProjectFiles(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
-        await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
-        await pool.execute("CALL UpdateProjectManagement(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
-        await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
-        await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
-        await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
-          projectFieldsValues,
-          pid,
-        ]);
+      const taskFieldsValues = `trash = 'yes', trash_date = '${formattedDate}', tstatus_date = '${dateConversion()}', tsingle_trash = 'p_yes'`;
+      const tproject_assign = `tproject_assign = '${project_id}'`;
+      await pool.execute("CALL UpdateTask(?,?)", [
+        taskFieldsValues,
+        tproject_assign,
+      ]);
 
-        const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
-        const tproject_assign = `tproject_assign = '${project_id}'`;
-        await pool.execute("CALL UpdateTask(?, ?)", [
-          taskFieldsValues,
-          tproject_assign,
-        ]);
+      const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}', stsingle_trash = 'p_yes'`;
+      const stproject_assign = `stproject_assign = '${project_id}'`;
+      await pool.execute("CALL UpdateSubtask(?,?)", [
+        subtaskFieldsValues,
+        stproject_assign,
+      ]);
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
 
-        const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-        const stproject_assign = `stproject_assign = '${project_id}'`;
-        await pool.execute("CALL UpdateSubtask(?, ?)", [
-          subtaskFieldsValues,
-          stproject_assign,
-        ]);
-        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
-          user_id,
-        ]);
-        const student = owner_row[0][0];
+      const historyFieldsNames =
+        "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+      const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Moved to Trash By Project Owner ${student.first_name} ${student.last_name}"`;
 
-        const historyFieldsNames =
-          "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-        const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Archived By Project Owner ${student.first_name} ${student.last_name}"`;
-
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
-          historyFieldsNames,
-          historyFieldsValues,
-        ]);
-        return res
-          .status(200)
-          .json({ message: "Project Archived Successfully." });
-      } else {
-        return res.status(400).json({
-          error:
-            "Please Complete All Tasks and Subtasks to Delete the Project!",
-        });
-      }
+      await pool.execute("CALL InsertProjectHistory(?,?)", [
+        historyFieldsNames,
+        historyFieldsValues,
+      ]);
+      return res
+        .status(200)
+        .json({ message: "Project Moved to Trash Successfully." });
     } else {
       res.status(400).json({ error: "Failed to get Project details." });
     }
@@ -607,53 +524,42 @@ router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
 router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
   const { task_id, user_id } = req.params;
   try {
-    const [task_row] = await pool.execute("CALL archivecheck_Donetask(?)", [
+    const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
       task_id,
     ]);
 
-    const [subtasks] = await pool.execute(
-      "CALL file_itTasksubtask_progress_total(?)",
-      [task_id]
-    );
-    const [done_subtasks] = await pool.execute(
-      "CALL file_itTasksubtask_progress_done(?)",
-      [task_id]
-    );
-    const formattedDate = dateConversion();
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const formattedDate = currentDate.toISOString().split("T")[0];
+
     if (task_row[0][0]) {
-      const all_subtask = subtasks[0][0].count_rows;
-      const done_subtask = done_subtasks[0][0].count_rows;
-      if (all_subtask == done_subtask) {
-        const taskFieldsValues = `task_archive = 'yes', task_archive_date = '${formattedDate}'`;
-        const tid = `tid = '${task_id}'`;
-        await pool.execute("CALL UpdateTask(?, ?)", [taskFieldsValues, tid]);
+      const taskFieldsValues = `trash = 'yes', trash_date = '${formattedDate}', tstatus_date = '${dateConversion()}', tsingle_trash = 't_yes'`;
+      const tid = `tid = '${task_id}'`;
+      await pool.execute("CALL UpdateTask(?,?)", [taskFieldsValues, tid]);
 
-        const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
-        await pool.execute("CALL UpdateSubtask(?, ?)", [
-          subtaskFieldsValues,
-          tid,
-        ]);
-        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
-          user_id,
-        ]);
-        const student = owner_row[0][0];
+      const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}', stsingle_trash = 't_yes'`;
+      await pool.execute("CALL UpdateSubtask(?,?)", [
+        subtaskFieldsValues,
+        tid,
+      ]);
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
 
-        const historyFieldsNames =
-          "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-        const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Archived By ${student.first_name} ${student.last_name}"`;
+      const historyFieldsNames =
+        "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+      const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Moved to Trash By ${student.first_name} ${student.last_name}"`;
 
-        await pool.execute("CALL InsertProjectHistory(?, ?)", [
-          historyFieldsNames,
-          historyFieldsValues,
-        ]);
-        return res.status(200).json({ message: "Task Archived Successfully." });
-      } else {
-        return res.status(400).json({
-          error: "Please Complete All Subtasks to Delete the Task.",
-        });
-      }
+      await pool.execute("CALL InsertProjectHistory(?,?)", [
+        historyFieldsNames,
+        historyFieldsValues,
+      ]);
+      return res
+        .status(200)
+        .json({ message: "Task Moved to Trash Successfully." });
     } else {
-      res.status(400).json({ error: "Please Complete Task to file it." });
+      res.status(400).json({ error: "Failed to get Task details." });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -665,15 +571,18 @@ router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
 router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
-    const [subtask_row] = await pool.execute(
-      "CALL archivecheck_Donesubtask(?)",
-      [subtask_id]
-    );
-    const formattedDate = dateConversion();
+    const [subtask_row] = await pool.execute("CALL file_itcheck_subtask(?)", [
+      subtask_id,
+    ]);
+
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const formattedDate = currentDate.toISOString().split("T")[0];
+
     if (subtask_row[0][0]) {
-      const subtaskFieldsValues = `subtask_archive = 'yes', subtask_archive_date = '${formattedDate}'`;
+      const subtaskFieldsValues = `strash = 'yes', strash_date = '${formattedDate}', ststatus_date = '${dateConversion()}', stsingle_trash = 'yes'`;
       const stid = `stid = '${subtask_id}'`;
-      await pool.execute("CALL UpdateSubtask(?, ?)", [
+      await pool.execute("CALL UpdateSubtask(?,?)", [
         subtaskFieldsValues,
         stid,
       ]);
@@ -684,17 +593,17 @@ router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
 
       const historyFieldsNames =
         "subtask_id, task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Archived By ${student.first_name} ${student.last_name}"`;
+      const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Moved to Trash By ${student.first_name} ${student.last_name}"`;
 
-      await pool.execute("CALL InsertProjectHistory(?, ?)", [
+      await pool.execute("CALL InsertProjectHistory(?,?)", [
         historyFieldsNames,
         historyFieldsValues,
       ]);
       return res
         .status(200)
-        .json({ message: "Subtask Archived Successfully." });
+        .json({ message: "Subtask Moved to Trash Successfully." });
     } else {
-      res.status(400).json({ error: "Please Complete Subtask to file it." });
+      res.status(400).json({ error: "Failed to get Task details." });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -702,8 +611,137 @@ router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
   }
 });
 
+// Delete Project File
+router.patch(
+  "/trash/delete/project-file/:project_id/:pfile_id/:user_id",
+  async (req, res) => {
+    const { project_id, pfile_id, user_id } = req.params;
+    try {
+      const [project_file_row] = await pool.execute(
+        "CALL pfile_detailfile_it(?)",
+        [pfile_id]
+      );
+      const [project_row] = await pool.execute(
+        "CALL file_itgetProjectById(?)",
+        [project_id]
+      );
+
+      const currentDate = new Date();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      const formattedDate = currentDate.toISOString().split("T")[0];
+
+      if (project_row[0][0]) {
+        const pfile = project_file_row[0][0].pfile;
+        const trimmedPfile = pfile.trim();
+        const indexOfUnderscore = trimmedPfile.indexOf("_");
+        const project_file = trimmedPfile.substr(indexOfUnderscore + 1);
+
+        const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+        const file_id = `pfile_id = '${pfile_id}'`;
+        await pool.execute("CALL UpdateProjectFiles(?,?)", [
+          projectFieldsValues,
+          file_id,
+        ]);
+
+        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+          user_id,
+        ]);
+        const student = owner_row[0][0];
+
+        const historyFieldsNames =
+          "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+        const historyFieldsValues = `"${pfile_id}", "${project_id}", "${
+          project_row[0][0].sid
+        }", "${project_row[0][0].gid}", "${dateConversion()}", "${
+          student.reg_id
+        }", "${student.first_name} ${
+          student.last_name
+        }", "${project_file} Moved to Trash By Project Owner ${
+          student.first_name
+        } ${student.last_name}"`;
+
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
+          historyFieldsNames,
+          historyFieldsValues,
+        ]);
+        return res
+          .status(200)
+          .json({ message: "Project File Moved to Trash Successfully." });
+      } else {
+        res.status(400).json({ error: "Failed to get Project details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Task File
+router.patch(
+  "/trash/delete/task-file/:task_id/:tfile_name/:user_id",
+  async (req, res) => {
+    const { tfile_name, task_id, user_id } = req.params;
+    try {
+      const [task_row] = await pool.execute("CALL file_itgetTaskById(?,?)", [
+        task_id,
+      ]);
+
+      const currentDate = new Date();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      const formattedDate = currentDate.toISOString().split("T")[0];
+
+      if (task_row[0][0]) {
+        const trimmedtfile_name = tfile_name.trim();
+        const indexOfUnderscore = trimmedtfile_name.indexOf("_");
+        const task_file = trimmedtfile_name.substr(indexOfUnderscore + 1);
+
+        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+          user_id,
+        ]);
+        const student = owner_row[0][0];
+
+        const historyFieldsNames =
+          "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+        const historyFieldsValues = `"${pfile_id}", "${
+          task_row[0][0].tproject_assign
+        }", "${task_row[0][0].sid}", "${
+          task_row[0][0].gid
+        }", "${dateConversion()}", "${student.reg_id}", "${
+          student.first_name
+        } ${student.last_name}", "${task_file} Moved to Trash By ${
+          student.first_name
+        } ${student.last_name}"`;
+
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
+          historyFieldsNames,
+          historyFieldsValues,
+        ]);
+
+        const taskFieldsNames = "pid, tid, tfile, task_trash, task_trash_date";
+        const taskFieldsValues = `"${task_row[0][0].tproject_assign}", "${task_row[0][0].tid}", "${task_file}", "yes", "${formattedDate}"`;
+
+        await pool.execute("CALL InsertTaskTrash(?,?)", [
+          taskFieldsNames,
+          taskFieldsValues,
+        ]);
+
+        return res
+          .status(200)
+          .json({ message: "Task File Moved to Trash Successfully." });
+      } else {
+        res.status(400).json({ error: "Failed to get Project details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
 // Reopen Portfolio
-router.patch("/trash/retrieve/portfolio/:portfolio_id/:user_id",
+router.patch(
+  "/trash/retrieve/portfolio/:portfolio_id/:user_id",
   async (req, res) => {
     const { portfolio_id, user_id } = req.params;
     try {
@@ -778,72 +816,39 @@ router.patch("/trash/retrieve/portfolio/:portfolio_id/:user_id",
         }
       }
       if (limitation == "in_limit") {
-        const [portfolio_row] = await pool.execute(
-          "CALL getPortfolioNotArc(?,?)",
-          [portfolio_id, user_id]
-        );
-        const [goal_row] = await pool.execute(
-          "CALL portfolio_goalsTrash(?,?)",
-          [portfolio_id]
-        );
-        const [kpi_row] = await pool.execute(
-          "CALL portfolio_strategiesTrash(?,?)",
-          [portfolio_id]
-        );
+        const [portfolio_row] = await pool.execute("CALL getPortfolio(?,?)", [
+          portfolio_id,
+          user_id,
+        ]);
+
         const [project_row] = await pool.execute(
-          "CALL portfolio_projectsNotArc(?,?)",
+          "CALL portfolio_projectsRetriveTrash(?)",
           [portfolio_id]
         );
 
         if (portfolio_row[0][0]) {
-          const portfolioFieldsValues = `portfolio_archive = '', portfolio_archive_date = '', portfolio_file_it = '', portfolio_file_it_date = ''`;
+          const portfolioFieldsValues = `portfolio_trash = '', portfolio_trash_date = '', delete_agree = ''`;
           const portfolio_id = `portfolio_id = '${portfolio_id}'`;
-          await pool.execute("CALL UpdatePortfolio(?, ?)", [
-            portfolioFieldsValues,
-            portfolio_id,
-          ]);
-          await pool.execute("CALL UpdatePortfolioMember(?, ?)", [
+          await pool.execute("CALL UpdatePortfolio(?,?)", [
             portfolioFieldsValues,
             portfolio_id,
           ]);
 
-          if (goal_row[0]) {
-            const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = '', g_file_it_date = ''`;
-            await pool.execute("CALL UpdateGoals(?, ?)", [
-              goalFieldsValues,
-              portfolio_id,
-            ]);
-            if (goal_row[0]) {
-              const goal_array = goal_row[0];
-              goal_array.forEach(async (row) => {
-                const gid = `gid = '${row.gid}'`;
-                await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
-                  goalFieldsValues,
-                  gid,
-                ]);
-                await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
-                  goalFieldsValues,
-                  gid,
-                ]);
-                await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
-                  goalFieldsValues,
-                  gid,
-                ]);
-              });
-            }
-          }
+          const goalFieldsValues = `g_trash = '', g_trash_date = ''`;
+          await pool.execute("CALL UpdateGoals(?,?)", [
+            goalFieldsValues,
+            portfolio_id,
+          ]);
 
-          if (kpi_row[0]) {
-            const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '', s_file_it_date = ''`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
-              kpiFieldsValues,
-              portfolio_id,
-            ]);
-          }
+          const kpiFieldsValues = `s_trash = '', s_trash_date = ''`;
+          await pool.execute("CALL UpdateStrategies(?,?)", [
+            kpiFieldsValues,
+            portfolio_id,
+          ]);
 
           if (project_row[0]) {
-            const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '', project_file_it_date = ''`;
-            await pool.execute("CALL UpdateProject(?, ?)", [
+            const projectFieldsValues = `ptrash = '', ptrash_date = ''`;
+            await pool.execute("CALL UpdateProject(?,?)", [
               projectFieldsValues,
               portfolio_id,
             ]);
@@ -851,27 +856,27 @@ router.patch("/trash/retrieve/portfolio/:portfolio_id/:user_id",
               const project_array = project_row[0];
               project_array.forEach(async (row) => {
                 const pid = `pid = '${row.pid}'`;
-                await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                await pool.execute("CALL UpdateProjectFiles(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagement(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
@@ -879,21 +884,21 @@ router.patch("/trash/retrieve/portfolio/:portfolio_id/:user_id",
             }
           }
 
-          const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '', task_file_it_date = ''`;
-          await pool.execute("CALL UpdateTask(?, ?)", [
+          const taskFieldsValues = `trash = '', trash_date = '', tstatus_date = '${dateConversion()}'`;
+          await pool.execute("CALL UpdateTask(?,?)", [
             taskFieldsValues,
             portfolio_id,
           ]);
 
-          const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '', subtask_file_it_date = ''`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [
+          const subtaskFieldsValues = `strash = '', strash_date = '', ststatus_date = '${dateConversion()}'`;
+          await pool.execute("CALL UpdateSubtask(?,?)", [
             subtaskFieldsValues,
             portfolio_id,
           ]);
 
           return res
             .status(200)
-            .json({ message: "Portfolio Reopened Successfully." });
+            .json({ message: "Portfolio Restored Successfully." });
         } else {
           res.status(400).json({ error: "Failed to get Portfolio details." });
         }
@@ -908,7 +913,8 @@ router.patch("/trash/retrieve/portfolio/:portfolio_id/:user_id",
 );
 
 // Reopen Goal
-router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
+router.patch(
+  "/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
   async (req, res) => {
     const { goal_id, portfolio_id, user_id } = req.params;
     try {
@@ -928,7 +934,7 @@ router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
           const [package] = await pool.execute("CALL getPackDetail(?)", [
             student.package_id,
           ]);
-          const [goal_count] = await pool.execute("CALL getGoalCount(?, ?)", [
+          const [goal_count] = await pool.execute("CALL getGoalCount(?,?)", [
             user_id,
             portfolio_id,
           ]);
@@ -957,7 +963,7 @@ router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
         const [package] = await pool.execute("CALL getPackDetail(?)", [
           student.package_id,
         ]);
-        const [goal_count] = await pool.execute("CALL getGoalCount(?, ?)", [
+        const [goal_count] = await pool.execute("CALL getGoalCount(?,?)", [
           user_id,
           portfolio_id,
         ]);
@@ -983,116 +989,105 @@ router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
         }
       }
       if (limitation == "in_limit") {
-        const [goal_row] = await pool.execute("CALL check_goal_archive(?,?)", [
+        const [goal_row] = await pool.execute("CALL check_goal_trash(?,?)", [
           user_id,
           goal_id,
         ]);
 
         if (goal_row[0][0]) {
           const [portfolio_row] = await pool.execute(
-            "CALL checkProjectPorfolioArchive(?)",
+            "CALL checkProjectPorfolioTrash(?)",
             [goal_row[0][0].portfolio_id]
           );
           if (portfolio_row[0][0]) {
             res.status(400).json({
               error:
-                "Portfolio is Archived! To Reopen Goal please Reopen Portfolio.",
+                "Portfolio is in Trash! To Restore Goal please Restore Portfolio.",
             });
           } else {
-            const [portfolio_del] = await pool.execute(
-              "CALL getPortfolioById(?)",
-              [goal_row[0][0].portfolio_id]
-            );
-            let file_it = '';
-            let file_it_date = '';
-
-            if (portfolio_del[0][0]) {
-              if (portfolio_del[0][0].portfolio_file_it == "yes") {
-                file_it = "yes";
-                file_it_date = portfolio_del[0][0].portfolio_file_it_date;
-              }
-            }
-            const goalFieldsValues = `g_archive = '', g_archive_date = '', g_file_it = '${file_it}', g_file_it_date = '${file_it_date}'`;
+            const goalParentFieldsValues = `g_trash = '', g_trash_date = '', gsingle_trash = ''`;
+            const goalFieldsValues = `g_trash = '', g_trash_date = ''`;
             const gid = `gid = '${goal_id}'`;
-            await pool.execute("CALL UpdateGoals(?, ?)", [
+            await pool.execute("CALL UpdateGoals(?,?)", [
+              goalParentFieldsValues,
+              gid,
+            ]);
+            await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
               goalFieldsValues,
               gid,
             ]);
-            await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
+            await pool.execute("CALL UpdateGoalsMembers(?,?)", [
               goalFieldsValues,
               gid,
             ]);
-            await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
-              goalFieldsValues,
-              gid,
-            ]);
-            await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+            await pool.execute("CALL UpdateGoalsSuggestedMembers(?,?)", [
               goalFieldsValues,
               gid,
             ]);
 
             const [goal_wise_kpis] = await pool.execute(
-              "CALL GoalsAllStrategiesList_to_delete(?)",
+              "CALL GoalsAllStrategiesList_in_trash(?)",
               [goal_id]
             );
             if (goal_wise_kpis[0]) {
               const kpi_array = goal_wise_kpis[0];
               kpi_array.forEach(async (row) => {
-                const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '${file_it}', s_file_it_date = '${file_it_date}'`;
+                const kpiFieldsValues = `s_trash = '', s_trash_date = '', s_single_trash = ''`;
                 const sid = `sid = '${row.sid}'`;
-                await pool.execute("CALL UpdateStrategies(?, ?)", [
+                await pool.execute("CALL UpdateStrategies(?,?)", [
                   kpiFieldsValues,
                   sid,
                 ]);
 
                 const [kpi_wise_projects] = await pool.execute(
-                  "CALL StrategyAllProjectsList_to_delete(?)",
+                  "CALL StrategyAllProjectsList_in_trash(?)",
                   [row.sid]
                 );
                 if (kpi_wise_projects[0]) {
                   const project_array = kpi_wise_projects[0];
                   project_array.forEach(async (row) => {
-                    const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
+                    const projectParentFieldsValues = `ptrash = '', ptrash_date = '', psingle_trash = ''`;
+                    const projectFieldsValues = `ptrash = '', ptrash_date = ''`;
                     const pid = `pid = '${row.pid}'`;
-                    await pool.execute("CALL UpdateProject(?, ?)", [
-                      projectFieldsValues,
+                    await pool.execute("CALL UpdateProject(?,?)", [
+                      projectParentFieldsValues,
                       pid,
                     ]);
-                    await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                    await pool.execute("CALL UpdateProjectFiles(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
                     await pool.execute(
-                      "CALL UpdateProjectInvitedMembers(?, ?)",
+                      "CALL UpdateProjectInvitedMembers(?,?)",
                       [projectFieldsValues, pid]
                     );
-                    await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                    await pool.execute("CALL UpdateProjectManagement(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
                     await pool.execute(
-                      "CALL UpdateProjectManagementFields(?, ?)",
+                      "CALL UpdateProjectManagementFields(?,?)",
                       [projectFieldsValues, pid]
                     );
-                    await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+                    await pool.execute("CALL UpdateProjectMembers(?,?)", [
                       projectFieldsValues,
                       pid,
                     ]);
                     await pool.execute(
-                      "CALL UpdateProjectSuggestedMembers(?, ?)",
+                      "CALL UpdateProjectSuggestedMembers(?,?)",
                       [projectFieldsValues, pid]
                     );
 
-                    const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
+                    const taskFieldsValues = `trash = '', trash_date = '', tsingle_trash = ''`;
                     const tproject_assign = `tproject_assign = '${row.pid}'`;
-                    await pool.execute("CALL UpdateTask(?, ?)", [
+                    await pool.execute("CALL UpdateTask(?,?)", [
                       taskFieldsValues,
                       tproject_assign,
                     ]);
 
-                    const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
+                    const subtaskFieldsValues = `strash = '', strash_date = '', stsingle_trash = ''`;
                     const stproject_assign = `stproject_assign = '${row.pid}'`;
-                    await pool.execute("CALL UpdateSubtask(?, ?)", [
+                    await pool.execute("CALL UpdateSubtask(?,?)", [
                       subtaskFieldsValues,
                       stproject_assign,
                     ]);
@@ -1103,15 +1098,15 @@ router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
 
             const historyFieldsNames =
               "gid, h_date, h_resource_id, h_resource, h_description";
-            const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Reopened By ${student.first_name} ${student.last_name}"`;
+            const historyFieldsValues = `"${goal_id}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Goal Restored By ${student.first_name} ${student.last_name}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?, ?)", [
+            await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
               historyFieldsValues,
             ]);
             return res
               .status(200)
-              .json({ message: "Goal Reopened Successfully." });
+              .json({ message: "Goal Restored Successfully." });
           }
         } else {
           res.status(400).json({ error: "Failed to get Goal details." });
@@ -1127,7 +1122,8 @@ router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id",
 );
 
 // Reopen KPI
-router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id",
+router.patch(
+  "/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id",
   async (req, res) => {
     const { strategy_id, portfolio_id, user_id } = req.params;
     try {
@@ -1205,87 +1201,76 @@ router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id",
         }
       }
       if (limitation == "in_limit") {
-        const [kpi_row] = await pool.execute(
-          "CALL check_strategy_archive(?,?)",
-          [user_id, strategy_id]
-        );
+        const [kpi_row] = await pool.execute("CALL check_strategy_trash(?,?)", [
+          user_id,
+          strategy_id,
+        ]);
         if (kpi_row[0][0]) {
           const [goal_row] = await pool.execute(
-            "CALL checkStrategyGoalArchive(?)",
+            "CALL checkStrategyGoalTrash(?)",
             [kpi_row[0][0].gid]
           );
           if (goal_row[0][0]) {
             res.status(400).json({
-              error: "Goal is Archived! To Reopen KPI please Reopen Goal.",
+              error: "Goal is in Trash! To Restore KPI please Restore Goal.",
             });
           } else {
-            const [goal_del] = await pool.execute("CALL getGoalById(?)", [
-              kpi_row[0][0].gid,
-            ]);
-            let file_it = "";
-            let file_it_date = "";
-
-            if (goal_del[0][0]) {
-              if (goal_del[0][0].g_file_it == "yes") {
-                file_it = "yes";
-                file_it_date = goal_del[0][0].g_file_it_date;
-              }
-            }
-            const kpiFieldsValues = `s_archive = '', s_archive_date = '', s_file_it = '${file_it}', s_file_it_date = '${file_it_date}'`;
+            const kpiFieldsValues = `s_trash = '', s_trash_date = '', s_single_trash = ''`;
             const sid = `sid = '${strategy_id}'`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
+            await pool.execute("CALL UpdateStrategies(?,?)", [
               kpiFieldsValues,
               sid,
             ]);
 
             const [kpi_wise_projects] = await pool.execute(
-              "CALL StrategyAllProjectsList_to_delete(?)",
+              "CALL StrategyAllProjectsList_in_trash_strategybulk(?)",
               [strategy_id]
             );
             if (kpi_wise_projects[0]) {
               const project_array = kpi_wise_projects[0];
               project_array.forEach(async (row) => {
-                const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
+                const projectParentFieldsValues = `ptrash = '', ptrash_date = '', psingle_trash = ''`;
+                const projectFieldsValues = `ptrash = '', ptrash_date = ''`;
                 const pid = `pid = '${row.pid}'`;
-                await pool.execute("CALL UpdateProject(?, ?)", [
+                await pool.execute("CALL UpdateProject(?,?)", [
+                  projectParentFieldsValues,
+                  pid,
+                ]);
+                await pool.execute("CALL UpdateProjectFiles(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+                await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagement(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+                await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+                await pool.execute("CALL UpdateProjectMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
-                await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-                  projectFieldsValues,
-                  pid,
-                ]);
-                await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+                await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                   projectFieldsValues,
                   pid,
                 ]);
 
-                const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
+                const taskFieldsValues = `trash = '', trash_date = '', tsingle_trash = ''`;
                 const tproject_assign = `tproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateTask(?, ?)", [
+                await pool.execute("CALL UpdateTask(?,?)", [
                   taskFieldsValues,
                   tproject_assign,
                 ]);
 
-                const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = ''`;
+                const subtaskFieldsValues = `strash = '', strash_date = '', stsingle_trash = ''`;
                 const stproject_assign = `stproject_assign = '${row.pid}'`;
-                await pool.execute("CALL UpdateSubtask(?, ?)", [
+                await pool.execute("CALL UpdateSubtask(?,?)", [
                   subtaskFieldsValues,
                   stproject_assign,
                 ]);
@@ -1294,15 +1279,15 @@ router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id",
 
             const historyFieldsNames =
               "sid, gid, h_date, h_resource_id, h_resource, h_description";
-            const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Reopned By ${student.first_name} ${student.last_name}"`;
+            const historyFieldsValues = `"${strategy_id}", "${kpi_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "KPI Restored By ${student.first_name} ${student.last_name}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?, ?)", [
+            await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
               historyFieldsValues,
             ]);
             return res
               .status(200)
-              .json({ message: "KPI Reopened Successfully." });
+              .json({ message: "KPI Restored Successfully." });
           }
         } else {
           res.status(400).json({ error: "Failed to get KPI details." });
@@ -1318,7 +1303,8 @@ router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id",
 );
 
 // Reopen Project
-router.patch("/trash/retrieve/project/:project_id/:portfolio_id/:user_id",
+router.patch(
+  "/trash/retrieve/project/:project_id/:portfolio_id/:user_id",
   async (req, res) => {
     const { project_id, portfolio_id, user_id } = req.params;
     try {
@@ -1401,98 +1387,88 @@ router.patch("/trash/retrieve/project/:project_id/:portfolio_id/:user_id",
       }
 
       if (limitation == "in_limit") {
-        const [project_row] = await pool.execute(
-          "CALL check_project_archive(?)",
-          [project_id]
-        );
+        const [project_row] = await pool.execute("CALL check_ptrash(?,?)", [
+          project_id,
+          user_id,
+        ]);
         if (project_row[0][0]) {
           const [portfolio_row] = await pool.execute(
-            "CALL checkProjectPorfolioArchive(?)",
+            "CALL checkProjectPorfolioTrash(?)",
             [project_row[0][0].portfolio_id]
           );
           if (portfolio_row[0][0]) {
             res.status(400).json({
               error:
-                "Portfolio is Archived! To Reopen Project please Reopen Portfolio.",
+                "Portfolio is in Trash! To Restore Project please Restore Portfolio.",
             });
           } else {
             const [kpi_row] = await pool.execute(
-              "CALL checkProjectStrategyArchive(?)",
+              "CALL checkProjectStrategyTrash(?)",
               [project_row[0][0].sid]
             );
             if (kpi_row[0][0]) {
               res.status(400).json({
-                error: "KPI is Archived! To Reopen Project please Reopen KPI.",
+                error:
+                  "KPI is in Trash! To Restore Project please Restore KPI.",
               });
             } else {
-              const [kpi_del] = await pool.execute("CALL getStrategyById(?)", [
-                project_row[0][0].sid,
-              ]);
-              let file_it = "";
-              let file_it_date = "";
-
-              if (kpi_del[0][0]) {
-                if (kpi_del[0][0].s_file_it == "yes") {
-                  file_it = "yes";
-                  file_it_date = kpi_del[0][0].s_file_it_date;
-                }
-              }
-              const projectFieldsValues = `project_archive = '', project_archive_date = '', project_file_it = '${file_it}', project_file_it_date = '${file_it_date}'`;
+              const projectParentFieldsValues = `ptrash = '', ptrash_date = '', psingle_trash = ''`;
+              const projectFieldsValues = `ptrash = '', ptrash_date = ''`;
               const pid = `pid = '${project_id}'`;
-              await pool.execute("CALL UpdateProject(?, ?)", [
+              await pool.execute("CALL UpdateProject(?,?)", [
+                projectParentFieldsValues,
+                pid,
+              ]);
+              await pool.execute("CALL UpdateProjectFiles(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectFiles(?, ?)", [
+              await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectManagement(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectManagement(?, ?)", [
+              await pool.execute("CALL UpdateProjectManagementFields(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectManagementFields(?, ?)", [
+              await pool.execute("CALL UpdateProjectMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
-              await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-                projectFieldsValues,
-                pid,
-              ]);
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?, ?)", [
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?)", [
                 projectFieldsValues,
                 pid,
               ]);
 
-              const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
+              const taskFieldsValues = `trash = '', trash_date = '', tsingle_trash = ''`;
               const tproject_assign = `tproject_assign = '${project_id}'`;
-              await pool.execute("CALL UpdateTask(?, ?)", [
+              await pool.execute("CALL UpdateTask(?,?)", [
                 taskFieldsValues,
                 tproject_assign,
               ]);
 
-              const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
+              const subtaskFieldsValues = `strash = '', strash_date = '', , stsingle_trash = ''`;
               const stproject_assign = `stproject_assign = '${project_id}'`;
-              await pool.execute("CALL UpdateSubtask(?, ?)", [
+              await pool.execute("CALL UpdateSubtask(?,?)", [
                 subtaskFieldsValues,
                 stproject_assign,
               ]);
 
               const historyFieldsNames =
                 "pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-              const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Reopened By ${student.first_name} ${student.last_name}"`;
+              const historyFieldsValues = `"${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Project Restored By ${student.first_name} ${student.last_name}"`;
 
-              await pool.execute("CALL InsertProjectHistory(?, ?)", [
+              await pool.execute("CALL InsertProjectHistory(?,?)", [
                 historyFieldsNames,
                 historyFieldsValues,
               ]);
               return res
                 .status(200)
-                .json({ message: "Project Reopened Successfully." });
+                .json({ message: "Project Restored Successfully." });
             }
           }
         } else {
@@ -1509,7 +1485,8 @@ router.patch("/trash/retrieve/project/:project_id/:portfolio_id/:user_id",
 );
 
 // Reopen Task
-router.patch("/trash/retrieve/task/:task_id/:portfolio_id/:user_id",
+router.patch(
+  "/trash/retrieve/task/:task_id/:portfolio_id/:user_id",
   async (req, res) => {
     const { task_id, portfolio_id, user_id } = req.params;
     try {
@@ -1591,57 +1568,42 @@ router.patch("/trash/retrieve/task/:task_id/:portfolio_id/:user_id",
       }
 
       if (limitation == "in_limit") {
-        const [task_row] = await pool.execute("CALL check_task_archive(?)", [
-          task_id,
-        ]);
+        const [task_row] = await pool.execute("CALL check_task2(?)", [task_id]);
         if (task_row[0][0]) {
           const [project_row] = await pool.execute(
-            "CALL checkTaskProjectArchive(?)",
+            "CALL checkTaskProjectTrash(?)",
             [task_row[0][0].tproject_assign]
           );
           if (project_row[0][0]) {
             res.status(400).json({
               error:
-                "Project is Archived! To Reopen Task please Reopen Project.",
+                "Project is in Trash! To Restore Task please Restore Project.",
             });
           } else {
-            const [project_del] = await pool.execute(
-              "CALL getPortProjectById(?)",
-              [task_row[0][0].tproject_assign]
-            );
-            let file_it = "";
-            let file_it_date = "";
-
-            if (project_del[0][0]) {
-              if (project_del[0][0].project_file_it == "yes") {
-                file_it = "yes";
-                file_it_date = project_del[0][0].project_file_it_date;
-              }
-            }
-            const taskFieldsValues = `task_archive = '', task_archive_date = '', task_file_it = '${file_it}', task_file_it_date = '${file_it_date}'`;
+            const taskFieldsValues = `trash = '', trash_date = '', tstatus_date = '${formattedDate}', tsingle_trash = ''`;
             const tid = `tid = '${task_id}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [
+            await pool.execute("CALL UpdateTask(?,?)", [
               taskFieldsValues,
               tid,
             ]);
 
-            const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [
+            const subtaskFieldsValues = `strash = '', strash_date = '', ststatus_date = '${formattedDate}', stsingle_trash = ''`;
+            await pool.execute("CALL UpdateSubtask(?,?)", [
               subtaskFieldsValues,
               tid,
             ]);
 
             const historyFieldsNames =
               "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-            const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Reopened By ${student.first_name} ${student.last_name}"`;
+            const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_row[0][0].tcode} Task Restored By ${student.first_name} ${student.last_name}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?, ?)", [
+            await pool.execute("CALL InsertProjectHistory(?,?)", [
               historyFieldsNames,
               historyFieldsValues,
             ]);
             return res
               .status(200)
-              .json({ message: "Task Reopened Successfully." });
+              .json({ message: "Task Restored Successfully." });
           }
         } else {
           res.status(400).json({ error: "Failed to get Task details." });
@@ -1657,7 +1619,7 @@ router.patch("/trash/retrieve/task/:task_id/:portfolio_id/:user_id",
 );
 
 // Reopen Subtask
-router.patch("/trash/retrieve/subtask/:subtask_id/:user_id",
+router.patch( "/trash/retrieve/subtask/:subtask_id/:user_id",
   async (req, res) => {
     const { subtask_id, user_id } = req.params;
     try {
@@ -1666,50 +1628,36 @@ router.patch("/trash/retrieve/subtask/:subtask_id/:user_id",
       ]);
       const student = owner_row[0][0];
       const formattedDate = dateConversion();
-      const [subtask_row] = await pool.execute(
-        "CALL check_subtask_archive(?)",
-        [subtask_id]
-      );
+      const [subtask_row] = await pool.execute("CALL check_subtask2(?)", [
+        subtask_id,
+      ]);
       if (subtask_row[0][0]) {
-        const [task_row] = await pool.execute(
-          "CALL checkSubtaskTaskArchive(?)",
-          [subtask_row[0][0].tid]
-        );
+        const [task_row] = await pool.execute("CALL checkFileTaskTrash(?)", [
+          subtask_row[0][0].tid,
+        ]);
         if (task_row[0][0]) {
           res.status(400).json({
-            error: "Task is Archived! To Reopen Subtask please Reopen Task.",
+            error: "Task is in Trash! To Restore Subtask please Restore Task.",
           });
         } else {
-          const [task_del] = await pool.execute("CALL getProjTaskById(?)", [
-            subtask_row[0][0].tid,
-          ]);
-          let file_it = "";
-          let file_it_date = "";
-
-          if (task_del[0][0]) {
-            if (task_del[0][0].task_file_it == "yes") {
-              file_it = "yes";
-              file_it_date = task_del[0][0].task_file_it_date;
-            }
-          }
-          const subtaskFieldsValues = `subtask_archive = '', subtask_archive_date = '', subtask_file_it = '${file_it}', subtask_file_it_date = '${file_it_date}'`;
+          const subtaskFieldsValues = `strash = '', strash_date = '', ststatus_date = '${formattedDate}', stsingle_trash = ''`;
           const stid = `stid = '${subtask_id}'`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [
+          await pool.execute("CALL UpdateSubtask(?,?)", [
             subtaskFieldsValues,
             stid,
           ]);
 
           const historyFieldsNames =
             "subtask_id, task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-          const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Reopened By ${student.first_name} ${student.last_name}"`;
+          const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].tid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_row[0][0].stcode} Subtask Restored By ${student.first_name} ${student.last_name}"`;
 
-          await pool.execute("CALL InsertProjectHistory(?, ?)", [
+          await pool.execute("CALL InsertProjectHistory(?,?)", [
             historyFieldsNames,
             historyFieldsValues,
           ]);
           return res
             .status(200)
-            .json({ message: "Subtask Reopened Successfully." });
+            .json({ message: "Subtask Restored Successfully." });
         }
       } else {
         res.status(400).json({ error: "Failed to get Subtask details." });
@@ -1721,91 +1669,76 @@ router.patch("/trash/retrieve/subtask/:subtask_id/:user_id",
   }
 );
 
-// Goal Details
-router.get("/trash/goal-detail/:gid", async (req, res) => {
-  const { gid } = req.params;
-  try {
-    const [goal_detail] = await pool.execute("CALL file_itGoalDetail(?)", [
-      gid,
-    ]);
-    res.status(200).json(goal_detail[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// Reopen Project File
+router.patch(
+  "/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
+  async (req, res) => {
+    const { project_id, pfile_id, user_id } = req.params;
+    try {
+      const [project_file_row] = await pool.execute(
+        "CALL check_pfile_trash(?)",
+        [pfile_id]
+      );
+      const [project_trash] = await pool.execute(
+        "CALL checkFileProjectTrash(?)",
+        [project_id]
+      );
+      if(project_trash[0][0]){
+        res.status(400).json({
+          error: "Project is in Trash! To Restore File please Restore Project.",
+        });
+      }else{
+        const projectFieldsValues = `ptrash = '', ptrash_date = ''`;
+        const file_id = `pfile_id = '${pfile_id}'`;
+        await pool.execute("CALL UpdateProjectFiles(?,?)", [
+          projectFieldsValues,
+          file_id,
+        ]);
 
-// Kpi Details
-router.get("/trash/kpi-detail/:sid", async (req, res) => {
-  const { sid } = req.params;
-  try {
-    const [kpi_detail] = await pool.execute("CALL file_itStrategyDetail(?)", [
-      sid,
-    ]);
-    res.status(200).json(kpi_detail[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+        const [project_row] = await pool.execute(
+          "CALL file_itgetProjectById(?,?)",
+          [project_id]
+        );
 
-// Project Details
-router.get("/trash/project-detail/:pid", async (req, res) => {
-  const { pid } = req.params;
-  try {
-    const [project_detail] = await pool.execute(
-      "CALL file_itProjectDetailPortfolio(?)",
-      [pid]
-    );
-    res.status(200).json(project_detail[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+        if (project_row[0][0]) {
+          const pfile = project_file_row[0][0].pfile;
+          const trimmedPfile = pfile.trim();
+          const indexOfUnderscore = trimmedPfile.indexOf("_");
+          const project_file = trimmedPfile.substr(indexOfUnderscore + 1);         
+  
+          const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+            user_id,
+          ]);
+          const student = owner_row[0][0];
+  
+          const historyFieldsNames =
+            "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+          const historyFieldsValues = `"${pfile_id}", "${project_id}", "${
+            project_row[0][0].sid
+          }", "${project_row[0][0].gid}", "${dateConversion()}", "${
+            student.reg_id
+          }", "${student.first_name} ${
+            student.last_name
+          }", "${project_file} Restored By ${
+            student.first_name
+          } ${student.last_name}"`;
+  
+          await pool.execute("CALL InsertProjectHistory(?,?)", [
+            historyFieldsNames,
+            historyFieldsValues,
+          ]);
+          return res
+            .status(200)
+            .json({ message: "Project File Restored Successfully." });
+        } else {
+          res.status(400).json({ error: "Failed to get Project details." });
+        }
+      } 
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
-
-// Project files Details
-router.get("/trash/project-files-detail/:pfile_id", async (req, res) => {
-  const { pfile_id } = req.params;
-  try {
-    const [project_files_detail] = await pool.execute(
-      "CALL pfile_detailfile_it(?)",
-      [pfile_id]
-    );
-    res.status(200).json(project_files_detail[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// Task Details
-router.get("/trash/task-detail/:tid", async (req, res) => {
-  const { tid } = req.params;
-  try {
-    const [task_detail] = await pool.execute("CALL file_itgetTaskById(?)", [
-      tid,
-    ]);
-    res.status(200).json(task_detail[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// Subtask Details
-router.get("/trash/subtask-detail/:stid", async (req, res) => {
-  const { stid } = req.params;
-  try {
-    const [subtask_detail] = await pool.execute(
-      "CALL file_itcheck_subtask(?)",
-      [stid]
-    );
-    res.status(200).json(subtask_detail[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+);
 
 module.exports = router;
