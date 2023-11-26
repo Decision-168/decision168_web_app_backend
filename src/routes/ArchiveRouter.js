@@ -5,7 +5,7 @@ const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
 // Get All Archive Modules
-router.get("/archive/:portfolio_id/:user_id", async (req, res) => {
+router.get("/archive/data/:portfolio_id/:user_id", async (req, res) => {
   const { portfolio_id, user_id } = req.params;
   try {
     const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
@@ -31,7 +31,7 @@ router.get("/archive/:portfolio_id/:user_id", async (req, res) => {
 });
 
 //  Get User Detail by ID
-router.get("/archive/get-student-detail/:user_id", async (req, res) => {
+router.get("/archive/user/:user_id", async (req, res) => {
   const { user_id } = req.params;
   try {
     const [user_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
