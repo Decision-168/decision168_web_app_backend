@@ -8,34 +8,13 @@ const moment = require("moment");
 router.get("/archive/:portfolio_id/:user_id", async (req, res) => {
   const { portfolio_id, user_id } = req.params;
   try {
-    const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [archive_kpis] = await pool.execute("CALL ArchiveStrategies(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [archive_projects] = await pool.execute("CALL ArchiveProjects(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [archive_tasks] = await pool.execute("CALL ArchiveTasks(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [archive_single_tasks] = await pool.execute(
-      "CALL ArchiveSingleTasks(?,?)",
-      [user_id, portfolio_id]
-    );
-    const [archive_subtasks] = await pool.execute("CALL ArchiveSubtasks(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [archive_single_subtasks] = await pool.execute(
-      "CALL ArchiveSingleSubtasks(?,?)",
-      [user_id, portfolio_id]
-    );
+    const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
+    const [archive_kpis] = await pool.execute("CALL ArchiveStrategies(?,?)", [user_id, portfolio_id]);
+    const [archive_projects] = await pool.execute("CALL ArchiveProjects(?,?)", [portfolio_id, user_id]);
+    const [archive_tasks] = await pool.execute("CALL ArchiveTasks(?,?)", [user_id, portfolio_id]);
+    const [archive_single_tasks] = await pool.execute("CALL ArchiveSingleTasks(?,?)", [user_id, portfolio_id]);
+    const [archive_subtasks] = await pool.execute("CALL ArchiveSubtasks(?,?)", [portfolio_id, user_id]);
+    const [archive_single_subtasks] = await pool.execute("CALL ArchiveSingleSubtasks(?,?)", [portfolio_id, user_id]);
     res.status(200).json({
       archiveGoals: archive_goals[0],
       archiveKpis: archive_kpis[0],
@@ -64,54 +43,54 @@ router.get("/archive/get-student-detail/:user_id", async (req, res) => {
 });
 
 // Archive Portfolio
-router.patch("/archive/portfolio/:portfolio_id/:user_id", async (req, res) => {
-  const { portfolio_id, user_id } = req.params;
+router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
+  const { portf_id, user_id } = req.params;
   try {
     const [portfolio_row] = await pool.execute("CALL getPortfolioNotArc(?,?)", [
-      portfolio_id,
+      portf_id,
       user_id,
     ]);
     const [goal_row] = await pool.execute("CALL portfolio_goalsTrash(?,?)", [
-      portfolio_id,
+      portf_id,
     ]);
     const [kpi_row] = await pool.execute(
       "CALL portfolio_strategiesTrash(?,?)",
-      [portfolio_id]
+      [portf_id]
     );
     const [project_row] = await pool.execute(
       "CALL portfolio_projectsNotArc(?,?)",
-      [portfolio_id]
+      [portf_id]
     );
     const [task_row] = await pool.execute(
       "CALL getPortfolioAllTaskNotArc(?,?)",
-      [portfolio_id]
+      [portf_id]
     );
     const [subtask_row] = await pool.execute(
       "CALL getPortfolioAllSubtaskNotArc(?,?)",
-      [portfolio_id]
+      [portf_id]
     );
 
     const [portfolio_wise_tasks] = await pool.execute(
       "CALL file_itPortfolioprogress_total(?)",
-      [portfolio_id]
+      [portf_id]
     );
     const [portfolio_wise_done_tasks] = await pool.execute(
       "CALL file_itPortfolioprogress_done(?)",
-      [portfolio_id]
+      [portf_id]
     );
 
     const [portfolio_wise_subtasks] = await pool.execute(
       "CALL file_itPortfoliosub_progress_total(?)",
-      [portfolio_id]
+      [portf_id]
     );
     const [portfolio_wise_done_subtasks] = await pool.execute(
       "CALL file_itPortfoliosub_progress_done(?)",
-      [portfolio_id]
+      [portf_id]
     );
 
     const formattedDate = dateConversion();
     const portfolioFieldsValues = `portfolio_archive = 'yes', portfolio_archive_date = '${formattedDate}'`;
-    const portfolio_id = `portfolio_id = '${portfolio_id}'`;
+    const portfolio_id = `portfolio_id = '${portf_id}'`;
 
     if (portfolio_row[0][0]) {
       const all_task = portfolio_wise_tasks[0][0].count_rows;
