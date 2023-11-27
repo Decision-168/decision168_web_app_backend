@@ -712,58 +712,120 @@ router.patch(
 
 // Delete Task File
 router.patch(
-  "/trash/delete/task-file/:task_id/:tfile_name/:user_id",
+  "/trash/delete/task-file/:task_id/:task_file_name/:user_id",
   async (req, res) => {
-    const { tfile_name, task_id, user_id } = req.params;
+    const { task_id, task_file_name, user_id } = req.params;
     try {
       const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
         task_id,
       ]);
 
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
       const currentDate = new Date();
       currentDate.setMonth(currentDate.getMonth() + 1);
       const formattedDate = currentDate.toISOString().split("T")[0];
 
       if (task_row[0][0]) {
-        const trimmedtfile_name = tfile_name.trim();
-        const indexOfUnderscore = trimmedtfile_name.indexOf("_");
-        const task_file = trimmedtfile_name.substr(indexOfUnderscore + 1);
+        const trimmedTfile = task_file_name.trim();
+        const indexOfUnderscore = trimmedTfile.indexOf("_");
+        const task_file = trimmedTfile.substr(indexOfUnderscore + 1);
 
-        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
-          user_id,
-        ]);
-        const student = owner_row[0][0];
-
-        const historyFieldsNames =
-          "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-        const historyFieldsValues = `"${pfile_id}", "${
-          task_row[0][0].tproject_assign
-        }", "${task_row[0][0].sid}", "${
-          task_row[0][0].gid
-        }", "${dateConversion()}", "${student.reg_id}", "${
-          student.first_name
-        } ${student.last_name}", "${task_file} Moved to Trash By ${
-          student.first_name
-        } ${student.last_name}"`;
+        const historyFieldsNames = "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+        const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_file} Moved to Trash By ${student.first_name} ${student.last_name}"`;
 
         await pool.execute("CALL InsertProjectHistory(?,?)", [
           historyFieldsNames,
           historyFieldsValues,
         ]);
 
-        const taskFieldsNames = "pid, tid, tfile, task_trash, task_trash_date";
-        const taskFieldsValues = `"${task_row[0][0].tproject_assign}", "${task_row[0][0].tid}", "${task_file}", "yes", "${formattedDate}"`;
+        const taskTrashFieldsNames = "pid, tid, tfile, task_trash, task_trash_date";
+        const taskTrashFieldsValues = `"${task_row[0][0].tproject_assign}", "${task_row[0][0].tid}", "${task_file_name}", "yes", "${formattedDate}"`;
 
         await pool.execute("CALL InsertTaskTrash(?,?)", [
-          taskFieldsNames,
-          taskFieldsValues,
+          taskTrashFieldsNames,
+          taskTrashFieldsValues,
         ]);
 
-        return res
-          .status(200)
-          .json({ message: "Task File Moved to Trash Successfully." });
+        const tfile_string = task_row[0][0].tfile;
+        const tfile_array = tfile_string.split(',');
+        const new_tfile_array = tfile_array.filter(obj => obj !== task_file_name);
+        const new_tfile_string = new_tfile_array.join(',');
+
+        const taskFieldsValues = `tfile = '${new_tfile_string}'`;
+        const tid = `tid = '${task_id}'`;
+        await pool.execute("CALL UpdateTask(?,?)", [
+          taskFieldsValues,
+          tid,
+        ]);
+
+        return res.status(200).json({ message: "Task File Moved to Trash Successfully." });
       } else {
-        res.status(400).json({ error: "Failed to get Project details." });
+        res.status(400).json({ error: "Failed to get Task File details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Subtask File
+router.patch(
+  "/trash/delete/subtask-file/:subtask_id/:subtask_file_name/:user_id",
+  async (req, res) => {
+    const { subtask_id, subtask_file_name, user_id } = req.params;
+    try {
+      const [subtask_row] = await pool.execute("CALL getSubtaskById(?)", [
+        subtask_id,
+      ]);
+
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
+      const currentDate = new Date();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      const formattedDate = currentDate.toISOString().split("T")[0];
+
+      if (subtask_row[0][0]) {
+        const trimmedTfile = subtask_file_name.trim();
+        const indexOfUnderscore = trimmedTfile.indexOf("_");
+        const subtask_file = trimmedTfile.substr(indexOfUnderscore + 1);
+
+        const historyFieldsNames = "subtask_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+        const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_file} Moved to Trash By ${student.first_name} ${student.last_name}"`;
+
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
+          historyFieldsNames,
+          historyFieldsValues,
+        ]);
+
+        const subtaskTrashFieldsNames = "pid, stid, tid, stfile, stask_trash, stask_trash_date";
+        const subtaskTrashFieldsValues = `"${subtask_row[0][0].tproject_assign}", "${subtask_row[0][0].stid}", "${subtask_row[0][0].tid}", "${subtask_file_name}", "yes", "${formattedDate}"`;
+
+        await pool.execute("CALL InsertSubtaskTrash(?,?)", [
+          subtaskTrashFieldsNames,
+          subtaskTrashFieldsValues,
+        ]);
+
+        const stfile_string = subtask_row[0][0].stfile;
+        const stfile_array = stfile_string.split(',');
+        const new_stfile_array = stfile_array.filter(obj => obj !== subtask_file_name);
+        const new_stfile_string = new_stfile_array.join(',');
+
+        const subtaskFieldsValues = `stfile = '${new_stfile_string}'`;
+        const stid = `stid = '${subtask_id}'`;
+        await pool.execute("CALL UpdateSubtask(?,?)", [
+          subtaskFieldsValues,
+          stid,
+        ]);
+
+        return res.status(200).json({ message: "Subtask File Moved to Trash Successfully." });
+      } else {
+        res.status(400).json({ error: "Failed to get Subtask File details." });
       }
     } catch (error) {
       console.error("Error executing stored procedure:", error);
@@ -1735,8 +1797,7 @@ router.patch(
 );
 
 // Reopen Project File
-router.patch(
-  "/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
+router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
   async (req, res) => {
     const { project_id, pfile_id, user_id } = req.params;
     try {
@@ -1799,6 +1860,161 @@ router.patch(
           res.status(400).json({ error: "Failed to get Project details." });
         }
       }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Reopen Task File
+router.patch(
+  "/trash/retrieve/task-file/:tid/:tfile/:trash_id/:user_id",
+  async (req, res) => {
+    const { tid, tfile, trash_id, user_id } = req.params;
+    try {
+      const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
+        tid,
+      ]);
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
+      const [trash_row] = await pool.execute("CALL checkFileTaskTrash(?)", [
+        trash_id,
+      ]);
+      if(trash_row[0][0]){
+        res.status(400).json({
+          error: "Task is in Trash! To Restore File please Restore Task.",
+        });
+      }else{
+        if (task_row[0][0]) {
+          const currentDate = new Date();
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          const formattedDate = currentDate.toISOString().split("T")[0];
+
+          const trimmedTfile = tfile.trim();
+          const indexOfUnderscore = trimmedTfile.indexOf("_");
+          const task_file = trimmedTfile.substr(indexOfUnderscore + 1);
+  
+          const historyFieldsNames = "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+          const historyFieldsValues = `"${tid}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_file} Restored By ${student.first_name} ${student.last_name}"`;
+  
+          await pool.execute("CALL InsertProjectHistory(?,?)", [
+            historyFieldsNames,
+            historyFieldsValues,
+          ]);
+  
+          let tfile_restore = "";
+
+if (task_row[0][0].tfile && task_row[0][0].tfile.trim() !== "") {
+  const exist_tfile = task_row[0][0].tfile;
+
+  // Split existing tfile and new tfile into arrays
+  const exist_tfile_array = exist_tfile.split(', ');
+  const tfile_new_array = tfile.split(', ');
+
+  // Merge arrays
+  const merge_tfile = [...exist_tfile_array, ...tfile_new_array];
+
+  // Join the merged array into a string
+  tfile_restore = merge_tfile.join(',');
+} else {
+  tfile_restore = tfile; // Replace with the new tfile string
+}
+  
+          const taskFieldsValues = `tfile = '${tfile_restore}'`;
+          const tid = `tid = '${tid}'`;
+          await pool.execute("CALL UpdateTask(?,?)", [
+            taskFieldsValues,
+            tid,
+          ]);
+          await pool.execute("CALL DeleteTaskTrash(?)", [trash_id]);
+  
+          return res.status(200).json({ message: "Task Restored Successfully." });
+        } else {
+          res.status(400).json({ error: "Failed to get Task File details." });
+        }
+      }
+
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Reopen Subtask File
+router.patch(
+  "/trash/retrieve/subtask-file/:stid/:stfile/:trash_id/:user_id",
+  async (req, res) => {
+    const { stid, stfile, trash_id, user_id } = req.params;
+    try {
+      const [subtask_row] = await pool.execute("CALL getSubtaskById(?)", [
+        stid,
+      ]);
+      const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const student = owner_row[0][0];
+      const [trash_row] = await pool.execute("CALL checkFileSubtaskTrash(?)", [
+        trash_id,
+      ]);
+      if(trash_row[0][0]){
+        res.status(400).json({
+          error: "Subtask is in Trash! To Restore File please Restore Subtask.",
+        });
+      }else{
+        if (subtask_row[0][0]) {
+          const currentDate = new Date();
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          const formattedDate = currentDate.toISOString().split("T")[0];
+
+          const trimmedTfile = stfile.trim();
+          const indexOfUnderscore = trimmedTfile.indexOf("_");
+          const subtask_file = trimmedTfile.substr(indexOfUnderscore + 1);
+  
+          const historyFieldsNames = "subtask_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+          const historyFieldsValues = `"${stid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_file} Restored By ${student.first_name} ${student.last_name}"`;
+  
+          await pool.execute("CALL InsertProjectHistory(?,?)", [
+            historyFieldsNames,
+            historyFieldsValues,
+          ]);
+  
+          let stfile_restore = "";
+
+if (subtask_row[0][0].stfile && subtask_row[0][0].stfile.trim() !== "") {
+  const exist_stfile = subtask_row[0][0].stfile;
+
+  // Split existing tfile and new tfile into arrays
+  const exist_stfile_array = exist_stfile.split(', ');
+  const stfile_new_array = stfile.split(', ');
+
+  // Merge arrays
+  const merge_stfile = [...exist_stfile_array, ...stfile_new_array];
+
+  // Join the merged array into a string
+  stfile_restore = merge_stfile.join(',');
+} else {
+  stfile_restore = stfile; // Replace with the new tfile string
+}
+  
+          const subtaskFieldsValues = `stfile = '${stfile_restore}'`;
+          const stid = `stid = '${stid}'`;
+          await pool.execute("CALL UpdateSubtask(?,?)", [
+            subtaskFieldsValues,
+            stid,
+          ]);
+
+          await pool.execute("CALL DeleteSubtaskTrash(?)", [trash_id]);
+  
+          return res.status(200).json({ message: "Task Restored Successfully." });
+        } else {
+          res.status(400).json({ error: "Failed to get Task File details." });
+        }
+      }
+
     } catch (error) {
       console.error("Error executing stored procedure:", error);
       res.status(500).json({ error: "Internal Server Error" });
@@ -2052,8 +2268,7 @@ router.patch("/trash/delete-forever/subtask/:stid", async (req, res) => {
 });
 
 // Delete Forever Project File
-router.patch(
-  "/trash/delete-forever/project-file/:pfile_id",
+router.patch("/trash/delete-forever/project-file/:pfile_id",
   async (req, res) => {
     const { pfile_id } = req.params;
     try {
@@ -2076,6 +2291,72 @@ router.patch(
         });
       } else {
         res.status(400).json({ error: "Failed to get Project File details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Forever Task File
+router.patch(
+  "/trash/delete-forever/task-file/:task_id/:trash_id/:user_id",
+  async (req, res) => {
+    const { task_id, trash_id, user_id } = req.params;
+    try {
+      const [trash_row] = await pool.execute("CALL check_tfile_task_trash(?,?)", [
+        trash_id, task_id
+      ]);
+
+      if(trash_row[0][0]){
+        await pool.execute("CALL DeleteTaskTrash(?)", [trash_id]);
+        const fs = require("fs");
+        fs.unlink(`./assets/task_files/${trash_row[0][0].tfile}`, (err) => {
+          if (err) {
+            return res
+              .status(400)
+              .json({ message: "Task File not Deleted" });
+          }
+          return res
+            .status(200)
+            .json({ message: "Task File deleted permanently" });
+        });
+      } else {
+        res.status(400).json({ error: "Failed to get Task File details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Delete Forever Subtask File
+router.patch(
+  "/trash/delete-forever/subtask-file/:subtask_id/:trash_id/:user_id",
+  async (req, res) => {
+    const { subtask_id, trash_id, user_id } = req.params;
+    try {
+      const [trash_row] = await pool.execute("CALL check_stfile_subtask_trash(?,?)", [
+        trash_id, subtask_id
+      ]);
+
+      if(trash_row[0][0]){
+        await pool.execute("CALL DeleteSubtaskTrash(?)", [trash_id]);
+        const fs = require("fs");
+        fs.unlink(`./assets/task_files/${trash_row[0][0].stfile}`, (err) => {
+          if (err) {
+            return res
+              .status(400)
+              .json({ message: "Subtask File not Deleted" });
+          }
+          return res
+            .status(200)
+            .json({ message: "Subtask File deleted permanently" });
+        });
+      } else {
+        res.status(400).json({ error: "Failed to get Subtask File details." });
       }
     } catch (error) {
       console.error("Error executing stored procedure:", error);
