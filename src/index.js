@@ -7,6 +7,7 @@ const Dashboard = require("./routes/dashboardRouter");
 const Portfolio = require("./routes/PortfolioRouter");
 const FileCabinet = require("./routes/FileCabinetRouter");
 const Archive = require("./routes/ArchiveRouter");
+const Trash = require("./routes/TrashRouter");
 
 const PORT = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
@@ -22,4 +23,5 @@ app.use(Dashboard);
 app.use(Portfolio);
 app.use(FileCabinet);
 app.use(Archive);
+app.use(Trash);
 app.listen(PORT);
