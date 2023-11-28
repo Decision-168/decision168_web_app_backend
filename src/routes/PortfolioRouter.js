@@ -21,7 +21,7 @@ router.get("/portfolio/get-all-portfolio/:email_address", async (req, res) => {
 
 //getAll_Accepted_PortTM;
 router.get(
-  "/portfolio/get-all-accepted-portfolio/:portfolio_id",
+  "/portfolio/get-all-accepted-portfolio-team-member/:portfolio_id",
   async (req, res) => {
     const { portfolio_id } = req.params;
     try {
@@ -149,79 +149,7 @@ router.get("/portfolio/get-project-count", async (req, res) => {
   }
 });
 
-//getCompany
-router.get("/portfolio/get-company/:cc_corporate_id", async (req, res) => {
-  const { cc_corporate_id } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL getCompany(?)", [cc_corporate_id]);
-    return res.status(200).json({ rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
 
-//getCompanyRoles
-router.get("/portfolio/get-company-roles/:ccr_id", async (req, res) => {
-  const { ccr_id } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL getCompanyRoles(?)", [ccr_id]);
-    return res.status(200).json({ rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//getProjectCountCorp
-router.get(
-  "/portfolio/get-project-count-corporate/:portfolio_id",
-  async (req, res) => {
-    const { portfolio_id } = req.params;
-    try {
-      const [rows] = await pool.execute("CALL getProjectCountCorp(?)", [
-        portfolio_id,
-      ]);
-      return res.status(200).json({ rows });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error." });
-    }
-  }
-);
-
-//getPortfolioMemberCount
-router.get("/portfolio/get-portfolio-member-count", async (req, res) => {
-  const { reg_id, portfolio_id } = req.body;
-  try {
-    const [rows] = await pool.execute("CALL getPortfolioMemberCount(?,?)", [
-      reg_id,
-      portfolio_id,
-    ]);
-    const response = rows[0][0];
-    return res.status(200).json(response);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//getAccepted_PortTM
-router.get(
-  "/portfolio/get-accepted-team-member/:portfolio_id",
-  async (req, res) => {
-    const { portfolio_id } = req.params;
-    try {
-      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
-        portfolio_id,
-      ]);
-      return res.status(200).json(rows[0]);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error." });
-    }
-  }
-);
 
 //selectLogin
 router.get("/portfolio/select-login", async (req, res) => {
@@ -364,25 +292,6 @@ router.patch("/portfolio/update-project-department/:id", async (req, res) => {
       portfolio_dept_id,
     ]);
     res.status(201).json({ message: "Department updated successfully." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//UpdateProjectPortfolioMember
-router.patch("/portfolio/update-project-member/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const updateData = Object.entries(req.body)
-      .map(([key, value]) => `${key} = "${value}"`)
-      .join(", ");
-    const pim_id = `pim_id  = '${id}'`;
-    await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
-      updateData,
-      pim_id,
-    ]);
-    res.status(201).json({ message: "Project member updated successfully." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error." });
@@ -1199,7 +1108,9 @@ router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
 router.get("/user/get-portfolio-count/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [id]);
+    const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [
+      id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1211,7 +1122,10 @@ router.get("/user/get-portfolio-count/:id", async (req, res) => {
 router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL count_portfolio_project(?)", [portfolio_id]);
+    const [rows, fields] = await pool.execute(
+      "CALL count_portfolio_project(?)",
+      [portfolio_id]
+    );
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1223,7 +1137,9 @@ router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
 router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [portfolio_id]);
+    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [
+      portfolio_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1235,7 +1151,9 @@ router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
 router.get("/user/get-portfolio/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+    const [rows, fields] = await pool.execute("CALL getPortfolio2(?)", [
+      portfolio_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1243,4 +1161,95 @@ router.get("/user/get-portfolio/:portfolio_id", async (req, res) => {
   }
 });
 
+//getCompany
+router.get("/portfolio/get-company/:cc_corporate_id", async (req, res) => {
+  const { cc_corporate_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getCompany(?)", [cc_corporate_id]);
+    return res.status(200).json({ rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getCompanyRoles
+router.get("/portfolio/get-company-roles/:ccr_id", async (req, res) => {
+  const { ccr_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getCompanyRoles(?)", [ccr_id]);
+    return res.status(200).json({ rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getProjectCountCorp
+router.get(
+  "/portfolio/get-project-count-corporate/:portfolio_id",
+  async (req, res) => {
+    const { portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getProjectCountCorp(?)", [
+        portfolio_id,
+      ]);
+      return res.status(200).json({ rows });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+//getPortfolioMemberCount
+router.get("/portfolio/get-portfolio-member-count", async (req, res) => {
+  const { reg_id, portfolio_id } = req.body;
+  try {
+    const [rows] = await pool.execute("CALL getPortfolioMemberCount(?,?)", [
+      reg_id,
+      portfolio_id,
+    ]);
+    const response = rows[0][0];
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+//getAccepted_PortTM
+router.get(
+  "/portfolio/get-accepted-team-member/:portfolio_id",
+  async (req, res) => {
+    const { portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      return res.status(200).json(rows[0]);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+//UpdateProjectPortfolioMember
+router.patch("/portfolio/update-project-member/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updateData = Object.entries(req.body)
+      .map(([key, value]) => `${key} = "${value}"`)
+      .join(", ");
+    const pim_id = `pim_id  = '${id}'`;
+    await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+      updateData,
+      pim_id,
+    ]);
+    res.status(201).json({ message: "Project member updated successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
 module.exports = router;
