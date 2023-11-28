@@ -5,6 +5,7 @@ const cors = require("cors");
 const User = require("./routes/UserRouter");
 const Dashboard = require("./routes/dashboardRouter");
 const Portfolio = require("./routes/PortfolioRouter");
+const GoalKpi = require("./routes/goalkpiRouter");
 
 const PORT = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
@@ -18,4 +19,5 @@ app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(User);
 app.use(Dashboard);
 app.use(Portfolio);
+app.use(GoalKpi);
 app.listen(PORT);

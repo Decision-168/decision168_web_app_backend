@@ -319,27 +319,62 @@ router.patch("/portfolio/update-portfolio/:portfolio_id", async (req, res) => {
   }
 });
 
-//InsertProjectPortfolioDepartment;
+//InsertProjectPortfolioDepartment
 router.post("/portfolio/insert-project-department", async (req, res) => {
   try {
-    const formattedDate = dateConversion();
-    const additionalFields = {
-      createddate: formattedDate,
-    };
+    let { portfolio_id, departments, cus_departments, createdby } = req.body;
 
-    const requestBodyWithAdditionalFields = {
-      ...req.body,
-      ...additionalFields,
-    };
-    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(
-      ", "
-    );
-    const paramValuesString = Object.values(requestBodyWithAdditionalFields)
-      .map((value) => `'${value}'`)
-      .join(", ");
+    let all_dept = [];
 
-    const callProcedureSQL = `CALL InsertProjectPortfolioDepartment(?, ?)`;
-    await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+    if (
+      departments &&
+      departments.length > 0 &&
+      cus_departments &&
+      cus_departments.length == 0
+    ) {
+      all_dept.push(...departments);
+    } else if (
+      departments &&
+      departments.length == 0 &&
+      cus_departments &&
+      cus_departments.length > 0
+    ) {
+      all_dept.push(...cus_departments);
+    } else if (
+      departments &&
+      departments.length > 0 &&
+      cus_departments &&
+      cus_departments.length > 0
+    ) {
+      const merge_depts = [...departments, ...cus_departments];
+      all_dept.push(...merge_depts);
+    }
+
+    if (all_dept && all_dept.length > 0) {
+      await Promise.all(
+        all_dept.map(async (dept) => {
+          const formattedDate = dateConversion();
+          const dataPortDept = {
+            portfolio_id: portfolio_id,
+            department: dept,
+            createdby: createdby,
+            dstatus: `active`,
+            createddate: formattedDate,
+          };
+
+          const paramNamesStringPortDept = Object.keys(dataPortDept).join(", ");
+          const paramValuesStringPortDept = Object.values(dataPortDept)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQLPortDept = `CALL InsertProjectPortfolioDepartment(?, ?)`;
+          await pool.execute(callProcedureSQLPortDept, [
+            paramNamesStringPortDept,
+            paramValuesStringPortDept,
+          ]);
+        })
+      );
+    }
 
     res.status(201).json({
       message: "Department added successfully.",
@@ -392,63 +427,80 @@ router.patch("/portfolio/update-project-member/:id", async (req, res) => {
 //InsertProjectPortfolioMember;
 router.post("/portfolio/insert-project-member", async (req, res) => {
   try {
-    let { portfolio_id, sent_to, sent_from } = req.body;
+    let { portfolio_id, imemail, sent_from } = req.body;
 
-    if (!isEmail(sent_to)) {
-      return res.status(400).json({ error: "Invalid email address." });
-    }
+    if (imemail && imemail.length > 0) {
+      await Promise.all(
+        imemail.map(async (sent_to) => {
+          if (!isEmail(sent_to)) {
+            return res.status(400).json({ error: "Invalid email address." });
+          }
 
-    const [checkEmail] = await pool.execute(
-      "CALL checkPortfolioMemberEmail(?,?)",
-      [sent_to, portfolio_id]
-    );
-    if (checkEmail[0]?.length > 0) {
-      return res.status(400).json({ error: "Member Already Exist." });
-    } else {
-      const paramNamesString = Object.keys(req.body).join(", ");
-      const paramValuesString = Object.values(req.body)
-        .map((value) => `'${value}'`)
-        .join(", ");
-      const callProcedureSQL = `CALL InsertProjectPortfolioMember(?, ?)`;
-      await pool.execute(callProcedureSQL, [
-        paramNamesString,
-        paramValuesString,
-      ]);
-      const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
-        portfolio_id,
-      ]);
-      const PortfolioName = getPortfolio[0][0]?.portfolio_name;
-      const [getPID] = await pool.execute(
-        "CALL checkPortfolioMemberEmail(?,?)",
-        [sent_to, portfolio_id]
-      );
-      const PIM_id = getPID[0][0]?.pim_id;
+          const [checkEmail] = await pool.execute(
+            "CALL checkPortfolioMemberEmail(?,?)",
+            [sent_to, portfolio_id]
+          );
+          if (checkEmail[0]?.length > 0) {
+            return res.status(400).json({ error: "Member Already Exist." });
+          } else {
+            const formattedDate = dateConversion();
+            const dataPort = {
+              portfolio_id: portfolio_id,
+              sent_to: sent_to,
+              sent_from: sent_from,
+              status: `pending`,
+              working_status: `active`,
+              status_date: formattedDate,
+            };
 
-      const acceptRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/1`;
-      const rejectRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/2`;
+            const paramNamesStringPort = Object.keys(dataPort).join(", ");
+            const paramValuesStringPort = Object.values(dataPort)
+              .map((value) => `'${value}'`)
+              .join(", ");
 
-      const mailOptions = {
-        from: process.env.SMTP_USER,
-        to: sent_to,
-        subject: "Portfolio Team Member Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${PortfolioName} has invited you to join ${PortfolioName} portfolio as a team member.
+            const callProcedureSQLPort = `CALL InsertProjectPortfolioMember(?, ?)`;
+            await pool.execute(callProcedureSQLPort, [
+              paramNamesStringPort,
+              paramValuesStringPort,
+            ]);
+            const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+              portfolio_id,
+            ]);
+            const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+            const [getPID] = await pool.execute(
+              "CALL checkPortfolioMemberEmail(?,?)",
+              [sent_to, portfolio_id]
+            );
+            const PIM_id = getPID[0][0]?.pim_id;
+
+            const acceptRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/1`;
+            const rejectRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/2`;
+
+            const mailOptions = {
+              from: process.env.SMTP_USER,
+              to: sent_to,
+              subject: "Portfolio Team Member Request | Decision 168",
+              html: generateEmailTemplate(
+                `Hello ${PortfolioName} has invited you to join ${PortfolioName} portfolio as a team member.
             Just click the appropriate button below to join the portfolio or request more information.`,
-          `<a href="${acceptRequest}">JOIN THE TEAM</a> <a href="${rejectRequest}">DENY REQUEST</a>`
-        ),
-      };
+                `<a href="${acceptRequest}">JOIN THE TEAM</a> <a href="${rejectRequest}">DENY REQUEST</a>`
+              ),
+            };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          res
-            .status(500)
-            .json({ error: "Failed to send portfolio invitation email." });
-        } else {
-          res.status(201).json({
-            message: "Project invitation sent to your email.",
-          });
-        }
-      });
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                res.status(500).json({
+                  error: "Failed to send portfolio invitation email.",
+                });
+              } else {
+                res.status(201).json({
+                  message: "Project invitation sent to your email.",
+                });
+              }
+            });
+          }
+        })
+      );
     }
   } catch (error) {
     res
@@ -1199,7 +1251,9 @@ router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
 router.get("/user/get-portfolio-count/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [id]);
+    const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [
+      id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1211,7 +1265,10 @@ router.get("/user/get-portfolio-count/:id", async (req, res) => {
 router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL count_portfolio_project(?)", [portfolio_id]);
+    const [rows, fields] = await pool.execute(
+      "CALL count_portfolio_project(?)",
+      [portfolio_id]
+    );
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1223,7 +1280,9 @@ router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
 router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [portfolio_id]);
+    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [
+      portfolio_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1235,7 +1294,9 @@ router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
 router.get("/user/get-portfolio/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+    const [rows, fields] = await pool.execute("CALL getPortfolio2(?)", [
+      portfolio_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
