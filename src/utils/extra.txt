@@ -1,0 +1,183 @@
+require("dotenv").config();
+const express = require("express");
+const pool = require("../database/connection");
+const { dateConversion, transporter } = require("../utils/common-functions");
+const { isEmail } = require("validator");
+const generateEmailTemplate = require("../utils/emailTemplate");
+const router = express.Router();
+
+//get_portfolio_accepted_notification
+router.get(
+  "/portfolio/get-portfolio-accepted-notification/:pim_id/:reg_id",
+  async (req, res) => {
+    const { pim_id, reg_id } = req.params;
+    try {
+      const [rows] = await pool.execute(
+        "CALL get_portfolio_accepted_notification(?,?)",
+        [pim_id, reg_id]
+      );
+      return res.status(200).json(rows[0]);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+//getPackDetail
+router.get("/portfolio/get-pack-details/:package_id", async (req, res) => {
+  const { package_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getPackDetail(?)", [package_id]);
+    const response = rows[0][0];
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+
+selectLogin
+router.get("/portfolio/select-login", async (req, res) => {
+  const { email_address } = req.body;
+  try {
+    const [rows] = await pool.execute("CALL selectLogin(?)", [email_address]);
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getCountryByCode
+router.get("/portfolio/get-country-by-code/:country_code", async (req, res) => {
+  const { country_code } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getCountryByCode(?)", [
+      country_code,
+    ]);
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getCompany
+router.get("/portfolio/get-company/:cc_corporate_id", async (req, res) => {
+  const { cc_corporate_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getCompany(?)", [cc_corporate_id]);
+    return res.status(200).json({ rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getCompanyRoles
+router.get("/portfolio/get-company-roles/:ccr_id", async (req, res) => {
+  const { ccr_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getCompanyRoles(?)", [ccr_id]);
+    return res.status(200).json({ rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getProjectCountCorp
+router.get(
+  "/portfolio/get-project-count-corporate/:portfolio_id",
+  async (req, res) => {
+    const { portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getProjectCountCorp(?)", [
+        portfolio_id,
+      ]);
+      return res.status(200).json({ rows });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+
+//getPortfolioMemberCount
+router.get("/portfolio/get-portfolio-member-count", async (req, res) => {
+  const { reg_id, portfolio_id } = req.body;
+  try {
+    const [rows] = await pool.execute("CALL getPortfolioMemberCount(?,?)", [
+      reg_id,
+      portfolio_id,
+    ]);
+    const response = rows[0][0];
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//getAll_Accepted_PortTM;
+router.get(
+  "/portfolio/get-all-accepted-portfolio-team-member/:portfolio_id",
+  async (req, res) => {
+    const { portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getAll_Accepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      return res.status(200).json(rows[0]);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+//get_SideBar_ALLPortfolio;
+router.get("/portfolio/get-sidebar-all-portfolios/:email_address", async (req, res) => {
+  const { email_address } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL get_SideBar_ALLPortfolio(?)", [
+      email_address,
+    ]);
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+//count_portfolio_project
+router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute(
+      "CALL count_portfolio_project(?)",
+      [portfolio_id]
+    );
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//count_Portfolio_task
+router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [
+      portfolio_id,
+    ]);
+    res.status(200).json(rows[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});

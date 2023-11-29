@@ -19,7 +19,7 @@ router.get("/portfolio/get-all-portfolio/:email_address", async (req, res) => {
   }
 });
 
-//getAll_Accepted_PortTM;
+//getAccepted_PortTM
 router.get(
   "/portfolio/get-all-accepted-portfolio-team-member/:portfolio_id",
   async (req, res) => {
@@ -28,26 +28,20 @@ router.get(
       const [rows] = await pool.execute("CALL getAll_Accepted_PortTM(?)", [
         portfolio_id,
       ]);
-      return res.status(200).json(rows[0]);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error." });
-    }
-  }
-);
-
-//get_portfolio_accepted_notification
-router.get(
-  "/portfolio/get-portfolio-accepted-notification/:pim_id",
-  async (req, res) => {
-    const { pim_id } = req.params;
-    const { reg_id } = req.body;
-    try {
-      const [rows] = await pool.execute(
-        "CALL get_portfolio_accepted_notification(?,?)",
-        [pim_id, reg_id]
-      );
-      return res.status(200).json(rows[0]);
+      const promises = rows[0].map(async (item) => {
+        const { sent_to } = item;
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        const member_name =
+          getName[0][0].first_name + " " + getName[0][0].last_name;
+        const data = {
+          ...item,
+          member_name,
+        };
+        return data;
+      });
+      const results = await Promise.all(promises);
+      console.log(results);
+      return res.status(200).json(results);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Internal server error." });
@@ -78,20 +72,22 @@ router.patch("/portfolio/update-member/:pim_id", async (req, res) => {
 });
 
 //check_PortfolioMemberActive
-router.get("/portfolio/check-member-active/:port_id", async (req, res) => {
-  const { port_id } = req.params;
-  const { sent_to } = req.body;
-  try {
-    const [rows] = await pool.execute(
-      "CALL check_PortfolioMemberActive(?, ?)",
-      [sent_to, port_id]
-    );
-    return res.status(200).json(rows[0]);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Internal server error." });
+router.get(
+  "/portfolio/check-member-active/:port_id/:sent_to",
+  async (req, res) => {
+    const { port_id, sent_to } = req.params;
+    try {
+      const [rows] = await pool.execute(
+        "CALL check_PortfolioMemberActive(?, ?)",
+        [sent_to, port_id]
+      );
+      return res.status(200).json(rows[0]);
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
   }
-});
+);
 
 //count portfolio details
 router.get(
@@ -119,63 +115,6 @@ router.get(
     }
   }
 );
-
-//getPackDetail
-router.get("/portfolio/get-pack-details/:package_id", async (req, res) => {
-  const { package_id } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL getPackDetail(?)", [package_id]);
-    const response = rows[0][0];
-    return res.status(200).json(response);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//getProjectCount
-router.get("/portfolio/get-project-count", async (req, res) => {
-  const { reg_id, portfolio_id } = req.body;
-  try {
-    const [rows] = await pool.execute("CALL getProjectCount(?,?)", [
-      reg_id,
-      portfolio_id,
-    ]);
-    const response = rows[0][0];
-    return res.status(200).json(response);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-
-
-//selectLogin
-router.get("/portfolio/select-login", async (req, res) => {
-  const { email_address } = req.body;
-  try {
-    const [rows] = await pool.execute("CALL selectLogin(?)", [email_address]);
-    return res.status(200).json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//getCountryByCode
-router.get("/portfolio/get-country-by-code/:country_code", async (req, res) => {
-  const { country_code } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL getCountryByCode(?)", [
-      country_code,
-    ]);
-    return res.status(200).json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
 
 //get_PortfolioDepartment
 router.get(
@@ -247,27 +186,62 @@ router.patch("/portfolio/update-portfolio/:portfolio_id", async (req, res) => {
   }
 });
 
-//InsertProjectPortfolioDepartment;
+//InsertProjectPortfolioDepartment
 router.post("/portfolio/insert-project-department", async (req, res) => {
   try {
-    const formattedDate = dateConversion();
-    const additionalFields = {
-      createddate: formattedDate,
-    };
+    let { portfolio_id, departments, cus_departments, createdby } = req.body;
 
-    const requestBodyWithAdditionalFields = {
-      ...req.body,
-      ...additionalFields,
-    };
-    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(
-      ", "
-    );
-    const paramValuesString = Object.values(requestBodyWithAdditionalFields)
-      .map((value) => `'${value}'`)
-      .join(", ");
+    let all_dept = [];
 
-    const callProcedureSQL = `CALL InsertProjectPortfolioDepartment(?, ?)`;
-    await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+    if (
+      departments &&
+      departments.length > 0 &&
+      cus_departments &&
+      cus_departments.length == 0
+    ) {
+      all_dept.push(...departments);
+    } else if (
+      departments &&
+      departments.length == 0 &&
+      cus_departments &&
+      cus_departments.length > 0
+    ) {
+      all_dept.push(...cus_departments);
+    } else if (
+      departments &&
+      departments.length > 0 &&
+      cus_departments &&
+      cus_departments.length > 0
+    ) {
+      const merge_depts = [...departments, ...cus_departments];
+      all_dept.push(...merge_depts);
+    }
+
+    if (all_dept && all_dept.length > 0) {
+      await Promise.all(
+        all_dept.map(async (dept) => {
+          const formattedDate = dateConversion();
+          const dataPortDept = {
+            portfolio_id: portfolio_id,
+            department: dept,
+            createdby: createdby,
+            dstatus: `active`,
+            createddate: formattedDate,
+          };
+
+          const paramNamesStringPortDept = Object.keys(dataPortDept).join(", ");
+          const paramValuesStringPortDept = Object.values(dataPortDept)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQLPortDept = `CALL InsertProjectPortfolioDepartment(?, ?)`;
+          await pool.execute(callProcedureSQLPortDept, [
+            paramNamesStringPortDept,
+            paramValuesStringPortDept,
+          ]);
+        })
+      );
+    }
 
     res.status(201).json({
       message: "Department added successfully.",
@@ -301,68 +275,104 @@ router.patch("/portfolio/update-project-department/:id", async (req, res) => {
 //InsertProjectPortfolioMember;
 router.post("/portfolio/insert-project-member", async (req, res) => {
   try {
-    let { portfolio_id, sent_to, sent_from } = req.body;
+    let { portfolio_id, imemail, sent_from } = req.body;
 
-    if (!isEmail(sent_to)) {
-      return res.status(400).json({ error: "Invalid email address." });
-    }
+    if (imemail && imemail.length > 0) {
+      await Promise.all(
+        imemail.map(async (sent_to) => {
+          if (!isEmail(sent_to)) {
+            return res.status(400).json({ error: "Invalid email address." });
+          }
 
-    const [checkEmail] = await pool.execute(
-      "CALL checkPortfolioMemberEmail(?,?)",
-      [sent_to, portfolio_id]
-    );
-    if (checkEmail[0]?.length > 0) {
-      return res.status(400).json({ error: "Member Already Exist." });
-    } else {
-      const paramNamesString = Object.keys(req.body).join(", ");
-      const paramValuesString = Object.values(req.body)
-        .map((value) => `'${value}'`)
-        .join(", ");
-      const callProcedureSQL = `CALL InsertProjectPortfolioMember(?, ?)`;
-      await pool.execute(callProcedureSQL, [
-        paramNamesString,
-        paramValuesString,
-      ]);
-      const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
-        portfolio_id,
-      ]);
-      const PortfolioName = getPortfolio[0][0]?.portfolio_name;
-      const [getPID] = await pool.execute(
-        "CALL checkPortfolioMemberEmail(?,?)",
-        [sent_to, portfolio_id]
-      );
-      const PIM_id = getPID[0][0]?.pim_id;
+          const [checkEmail] = await pool.execute(
+            "CALL checkPortfolioMemberEmail(?,?)",
+            [sent_to, portfolio_id]
+          );
+          if (checkEmail[0]?.length > 0) {
+            return res.status(400).json({ error: "Member Already Exist." });
+          } else {
+            const formattedDate = dateConversion();
+            const dataPort = {
+              portfolio_id: portfolio_id,
+              sent_to: sent_to,
+              sent_from: sent_from,
+              status: `pending`,
+              working_status: `active`,
+              status_date: formattedDate,
+            };
 
-      const acceptRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/1`;
-      const rejectRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/2`;
+            const paramNamesStringPort = Object.keys(dataPort).join(", ");
+            const paramValuesStringPort = Object.values(dataPort)
+              .map((value) => `'${value}'`)
+              .join(", ");
 
-      const mailOptions = {
-        from: process.env.SMTP_USER,
-        to: sent_to,
-        subject: "Portfolio Team Member Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${PortfolioName} has invited you to join ${PortfolioName} portfolio as a team member.
+            const callProcedureSQLPort = `CALL InsertProjectPortfolioMember(?, ?)`;
+            await pool.execute(callProcedureSQLPort, [
+              paramNamesStringPort,
+              paramValuesStringPort,
+            ]);
+            const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+              portfolio_id,
+            ]);
+            const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+            const [getPID] = await pool.execute(
+              "CALL checkPortfolioMemberEmail(?,?)",
+              [sent_to, portfolio_id]
+            );
+            const PIM_id = getPID[0][0]?.pim_id;
+
+            const acceptRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/1`;
+            const rejectRequest = `http://localhost:3000/portfolio-invite-request/${portfolio_id}/${PIM_id}/2`;
+
+            const mailOptions = {
+              from: process.env.SMTP_USER,
+              to: sent_to,
+              subject: "Portfolio Team Member Request | Decision 168",
+              html: generateEmailTemplate(
+                `Hello ${PortfolioName} has invited you to join ${PortfolioName} portfolio as a team member.
             Just click the appropriate button below to join the portfolio or request more information.`,
-          `<a href="${acceptRequest}">JOIN THE TEAM</a> <a href="${rejectRequest}">DENY REQUEST</a>`
-        ),
-      };
+                `<a href="${acceptRequest}">JOIN THE TEAM</a> <a href="${rejectRequest}">DENY REQUEST</a>`
+              ),
+            };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          res
-            .status(500)
-            .json({ error: "Failed to send portfolio invitation email." });
-        } else {
-          res.status(201).json({
-            message: "Project invitation sent to your email.",
-          });
-        }
-      });
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                res.status(500).json({
+                  error: "Failed to send portfolio invitation email.",
+                });
+              } else {
+                res.status(201).json({
+                  message: "Project invitation sent to your email.",
+                });
+              }
+            });
+          }
+        })
+      );
     }
   } catch (error) {
     res
       .status(500)
       .json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
+//UpdateProjectPortfolioMember
+router.patch("/portfolio/update-project-member/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updateData = Object.entries(req.body)
+      .map(([key, value]) => `${key} = "${value}"`)
+      .join(", ");
+    const pim_id = `pim_id  = '${id}'`;
+    await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+      updateData,
+      pim_id,
+    ]);
+    res.status(201).json({ message: "Project member updated successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
   }
 });
 
@@ -590,17 +600,16 @@ router.patch(
 router.patch(
   "/user/open-work-new-assignee/:reg_id/:new_reg_id/:old_reg_id/:pim_id/:portfolio_id",
   async (req, res) => {
-    const reg_id = req.params.reg_id;
-    const new_reg_id = req.params.new_reg_id;
-    const old_reg_id = req.params.old_reg_id;
-    const pim_id = req.params.pim_id;
+    const reg_id = req.params.reg_id; //own id
+    const new_reg_id = req.params.new_reg_id; //assignee id
+    const old_reg_id = req.params.old_reg_id; //old assignee id
+    const pim_id = req.params.pim_id; //old assignee pmid
     const portfolio_id = req.params.portfolio_id;
     try {
       const [check_ppm] = await pool.execute("CALL check_PPMToClear(?)", [
         pim_id,
       ]);
       const check = check_ppm[0][0];
-
       const [check_powner] = await pool.execute("CALL getStudentById(?)", [
         reg_id,
       ]);
@@ -1089,20 +1098,24 @@ router.patch(
     }
   }
 );
-
-//get_SideBar_ALLPortfolio;
-router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
-  const { email_address } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL get_SideBar_ALLPortfolio(?)", [
-      email_address,
-    ]);
-    return res.status(200).json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
+//getProjectCount
+router.get(
+  "/portfolio/get-project-count/:reg_id/:portfolio_id",
+  async (req, res) => {
+    const { reg_id, portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getProjectCount(?,?)", [
+        reg_id,
+        portfolio_id,
+      ]);
+      const response = rows[0][0];
+      return res.status(200).json(response);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
   }
-});
+);
 
 //getPortfolioCount
 router.get("/user/get-portfolio-count/:id", async (req, res) => {
@@ -1110,35 +1123,6 @@ router.get("/user/get-portfolio-count/:id", async (req, res) => {
   try {
     const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [
       id,
-    ]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//count_portfolio_project
-router.get("/user/count-portfolio-project/:portfolio_id", async (req, res) => {
-  const { portfolio_id } = req.params;
-  try {
-    const [rows, fields] = await pool.execute(
-      "CALL count_portfolio_project(?)",
-      [portfolio_id]
-    );
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//count_Portfolio_task
-router.get("/user/count-portfolio-task/:portfolio_id", async (req, res) => {
-  const { portfolio_id } = req.params;
-  try {
-    const [rows, fields] = await pool.execute("CALL count_Portfolio_task(?)", [
-      portfolio_id,
     ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
@@ -1161,95 +1145,4 @@ router.get("/user/get-portfolio/:portfolio_id", async (req, res) => {
   }
 });
 
-//getCompany
-router.get("/portfolio/get-company/:cc_corporate_id", async (req, res) => {
-  const { cc_corporate_id } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL getCompany(?)", [cc_corporate_id]);
-    return res.status(200).json({ rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//getCompanyRoles
-router.get("/portfolio/get-company-roles/:ccr_id", async (req, res) => {
-  const { ccr_id } = req.params;
-  try {
-    const [rows] = await pool.execute("CALL getCompanyRoles(?)", [ccr_id]);
-    return res.status(200).json({ rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-
-//getProjectCountCorp
-router.get(
-  "/portfolio/get-project-count-corporate/:portfolio_id",
-  async (req, res) => {
-    const { portfolio_id } = req.params;
-    try {
-      const [rows] = await pool.execute("CALL getProjectCountCorp(?)", [
-        portfolio_id,
-      ]);
-      return res.status(200).json({ rows });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error." });
-    }
-  }
-);
-
-//getPortfolioMemberCount
-router.get("/portfolio/get-portfolio-member-count", async (req, res) => {
-  const { reg_id, portfolio_id } = req.body;
-  try {
-    const [rows] = await pool.execute("CALL getPortfolioMemberCount(?,?)", [
-      reg_id,
-      portfolio_id,
-    ]);
-    const response = rows[0][0];
-    return res.status(200).json(response);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
-//getAccepted_PortTM
-router.get(
-  "/portfolio/get-accepted-team-member/:portfolio_id",
-  async (req, res) => {
-    const { portfolio_id } = req.params;
-    try {
-      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
-        portfolio_id,
-      ]);
-      return res.status(200).json(rows[0]);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error." });
-    }
-  }
-);
-
-//UpdateProjectPortfolioMember
-router.patch("/portfolio/update-project-member/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const updateData = Object.entries(req.body)
-      .map(([key, value]) => `${key} = "${value}"`)
-      .join(", ");
-    const pim_id = `pim_id  = '${id}'`;
-    await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
-      updateData,
-      pim_id,
-    ]);
-    res.status(201).json({ message: "Project member updated successfully." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-});
 module.exports = router;
