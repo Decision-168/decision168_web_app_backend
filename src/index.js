@@ -3,12 +3,14 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const User = require("./routes/UserRouter");
-const Dashboard = require("./routes/dashboardRouter");
+const Dashboard = require("./routes/DashboardRouter");
 const Portfolio = require("./routes/PortfolioRouter");
 const FileCabinet = require("./routes/FileCabinetRouter");
 const Archive = require("./routes/ArchiveRouter");
 const Trash = require("./routes/TrashRouter");
-const GoalKpi = require("./routes/goalkpiRouter");
+const GoalKpi = require("./routes/GoalKPIRouter");
+const Tasks = require("./routes/TasksRouter");
+
 const PORT = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
 
@@ -25,4 +27,5 @@ app.use(FileCabinet);
 app.use(Archive);
 app.use(Trash);
 app.use(GoalKpi);
+app.use(Tasks);
 app.listen(PORT);

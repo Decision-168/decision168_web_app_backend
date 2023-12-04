@@ -5,8 +5,9 @@ const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
 // Get All portfolio departments
-router.get("/file-cabinet/data/:portfolio_id/:user_id", async (req, res) => {
-  const { portfolio_id, user_id } = req.params;
+router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  const { user_id } = req.body;
   try {
     const [departments] = await pool.execute(
       "CALL get_PortfolioDepartment(?)",
@@ -1960,11 +1961,11 @@ router.get(
       ]);
 
       // Set file_type property for each category
-      task_files[0].forEach((tf) => (tf.file_type = "task"));
-      singletask_files[0].forEach((stf) => (stf.file_type = "task"));
-      subtask_files[0].forEach((sbtf) => (sbtf.file_type = "subtask"));
-      singlesubtask_files[0].forEach((ssbtf) => (ssbtf.file_type = "subtask"));
-      project_files[0].forEach((pf) => (pf.file_type = "project"));
+      task_files[0].forEach(async (tf) => (tf.file_type = "task"));
+      singletask_files[0].forEach(async (stf) => (stf.file_type = "task"));
+      subtask_files[0].forEach(async (sbtf) => (sbtf.file_type = "subtask"));
+      singlesubtask_files[0].forEach(async (ssbtf) => (ssbtf.file_type = "subtask"));
+      project_files[0].forEach(async (pf) => (pf.file_type = "project"));
 
       const all_files_data = [
         ...task_files[0],
