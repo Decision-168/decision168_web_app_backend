@@ -539,13 +539,13 @@ router.post("/goal/insert-goal", async (req, res) => {
 
                 const [check_user] = await pool.execute(
                   "CALL getStudentById(?)",
-                  [check_if_registered]
+                  [rid]
                 );
                 const user = check_user[0][0];
 
                 const [getgmid] = await pool.execute(
                   "CALL check_GoalMToClear(?,?)",
-                  [gid, check_if_registered]
+                  [gid, rid]
                 );
                 const gmid = getgmid[0][0]?.gmid;
 
@@ -916,15 +916,15 @@ router.get(
 router.post("/goal/insert-strategies", async (req, res) => {
   try {
     const formattedDate = dateConversion();
-    const increaseCnt = req.body.increase_cnt;
     const screated_by = req.body.screated_by;
     const portfolio_id = req.body.portfolio_id;
     const gid = req.body.gid;
     const gdept_id = req.body.gdept_id;
+    const {kpiArray} = req.body;    
 
-    for (let i = 1; i <= increaseCnt; i++) {
-      const sname = req.body[`sname${i}`];
-      const sdes = req.body[`sdes${i}`];
+    for (const kpi of kpiArray) {
+      const sname = kpi.sname;
+      const sdes = kpi.sdes;
 
       const additionalFields = {
         screated_date: formattedDate,
@@ -1799,13 +1799,13 @@ router.patch("/goal/update-goal", async (req, res) => {
 
                 const [check_user] = await pool.execute(
                   "CALL getStudentById(?)",
-                  [check_if_registered]
+                  [rid]
                 );
                 const user = check_user[0][0];
 
                 const [getgmid] = await pool.execute(
                   "CALL check_GoalMToClear(?,?)",
-                  [gid, check_if_registered]
+                  [gid, rid]
                 );
                 const gmid = getgmid[0][0]?.gmid;
 
@@ -3511,7 +3511,7 @@ router.patch(
         h_date: formattedDate,
         h_resource_id: powner.gmember_id,
         h_resource: `${powner.first_name} ${powner.last_name}`,
-        h_description: `${powner.first_name} ${powner.last_name} Removed from goal`,
+        h_description: `${powner.first_name} ${powner.last_name} Removed as a Goal Manager`,
       };
 
       const paramNamesString1 = Object.keys(hdata).join(", ");
@@ -4070,7 +4070,7 @@ router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
       h_date: formattedDate,
       h_resource_id: powner.gmember_id,
       h_resource: `${powner.first_name} ${powner.last_name}`,
-      h_description: `${powner.first_name} ${powner.last_name} assigned as a goal`,
+      h_description: `${powner.first_name} ${powner.last_name} assigned as a goal manager`,
     };
 
     const paramNamesString1 = Object.keys(hdata).join(", ");
@@ -5464,6 +5464,240 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
       message: "KPI Copied successfully.",
     });
   } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
+//gdetail_SuggestTMember
+router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
+  try {
+    let { gid } = req.body;
+    let { user_id } = req.body;
+    const { team_member, imemail } = req.body;
+
+    const formattedDate = dateConversion();
+
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      user_id,
+    ]);
+    const powner = check_powner[0][0];
+
+    const [getGoalRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
+    const getGoal = getGoalRes[0][0];
+
+    //insert suggest team member
+    if (team_member && team_member.length > 0) {
+      // Use forEach with async/await
+      await Promise.all(
+        team_member.map(async (t) => {
+          const [checkgs_idRes] = await pool.execute(
+            "CALL check_g_suggested(?,?)",
+            [gid, t]
+          );
+          if (!checkgs_idRes[0] || checkgs_idRes[0].length === 0) {
+            const data6 = {
+              gid: gid,
+              suggest_id: t,
+              status: "suggested",
+              already_register: "yes",
+              suggested_by: user_id,
+              suggested_date: formattedDate,
+            };
+
+            const paramNamesString6 = Object.keys(data6).join(", ");
+            const paramValuesString6 = Object.values(data6)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL6 = `CALL InsertGoalsSuggestedMembers(?, ?)`;
+            await pool.execute(callProcedureSQL6, [
+              paramNamesString6,
+              paramValuesString6,
+            ]);
+
+            const [check_user] = await pool.execute("CALL getStudentById(?)", [
+              t,
+            ]);
+            const user = check_user[0][0];
+
+            const [getgs_id] = await pool.execute(
+              "CALL check_g_suggested(?,?)",
+              [gid, t]
+            );
+            const gs_id = getgs_id[0][0]?.gs_id;
+            //console.log(gs_id);
+
+            const hdata7 = {
+              gid: gid,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${user.first_name} ${user.last_name} is suggested by ${powner.first_name} ${powner.last_name}`,
+              gmsuggested_id: gs_id,
+            };
+
+            const paramNamesString7 = Object.keys(hdata7).join(", ");
+            const paramValuesString7 = Object.values(hdata7)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL7 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL7, [
+              paramNamesString7,
+              paramValuesString7,
+            ]);
+          }
+        })
+      );
+    }
+
+    //insert suggest invite email
+    if (imemail && imemail.length > 0) {
+      await Promise.all(
+        imemail.map(async (im) => {
+          if (!isEmail(im)) {
+            return res.status(400).json({ error: "Invalid email address." });
+          }
+
+          const [check_if_registered] = await pool.execute(
+            "CALL selectLogin(?)",
+            [im]
+          );
+          if (check_if_registered[0].length > 0) {
+            const t = check_if_registered[0][0]?.reg_id;
+            if (getGoal.pcreated_by != rid) {
+              const [checkgs_idRes] = await pool.execute(
+                "CALL check_g_suggested(?,?)",
+                [gid, t]
+              );
+
+              if (!checkgs_idRes[0] || checkgs_idRes[0].length === 0) {
+                const data6 = {
+                  gid: gid,
+                  suggest_id: t,
+                  status: "suggested",
+                  already_register: "yes",
+                  suggested_by: user_id,
+                  suggested_date: formattedDate,
+                };
+
+                const paramNamesString6 = Object.keys(data6).join(", ");
+                const paramValuesString6 = Object.values(data6)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL6 = `CALL InsertGoalsSuggestedMembers(?, ?)`;
+                await pool.execute(callProcedureSQL6, [
+                  paramNamesString6,
+                  paramValuesString6,
+                ]);
+
+                const [check_user] = await pool.execute(
+                  "CALL getStudentById(?)",
+                  [t]
+                );
+                const user = check_user[0][0];
+
+                const [getgs_id] = await pool.execute(
+                  "CALL check_g_suggested(?,?)",
+                  [gid, t]
+                );
+                const gs_id = getgs_id[0][0]?.gs_id;
+                //console.log(gs_id);
+
+                const hdata7 = {
+                  gid: gid,
+                  h_date: formattedDate,
+                  h_resource_id: powner.reg_id,
+                  h_resource: `${powner.first_name} ${powner.last_name}`,
+                  h_description: `${user.first_name} ${user.last_name} is suggested by ${powner.first_name} ${powner.last_name}`,
+                  gmsuggested_id: gs_id,
+                };
+
+                const paramNamesString7 = Object.keys(hdata7).join(", ");
+                const paramValuesString7 = Object.values(hdata7)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL7 = `CALL InsertProjectHistory(?, ?)`;
+                await pool.execute(callProcedureSQL7, [
+                  paramNamesString7,
+                  paramValuesString7,
+                ]);
+              }
+            }
+          } else {
+            const [check_email] = await pool.execute(
+              "CALL check_invited_suggestemail(?,?)",
+              [im, gid]
+            );
+            if (check_email[0].length == 0) {
+              const [checkgs_idRes] = await pool.execute(
+                "CALL check_g_suggested(?,?)",
+                [gid, im]
+              );
+
+              if (!checkgs_idRes[0] || checkgs_idRes[0].length === 0) {
+                const data10 = {
+                  gid: gid,
+                  suggest_id: im,
+                  status: "suggested",
+                  already_register: "no",
+                  suggested_by: user_id,
+                  suggested_date: formattedDate,
+                };
+
+                const paramNamesString10 = Object.keys(data10).join(", ");
+                const paramValuesString10 = Object.values(data10)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL10 = `CALL InsertGoalsSuggestedMembers(?, ?)`;
+                await pool.execute(callProcedureSQL10, [
+                  paramNamesString10,
+                  paramValuesString10,
+                ]);
+
+                const [getgs_id] = await pool.execute(
+                  "CALL check_g_suggested(?,?)",
+                  [gid, im]
+                );
+                const gs_id = getgs_id[0][0]?.gs_id;
+                //console.log(im_id);
+
+                const hdata11 = {
+                  gid: gid,
+                  h_date: formattedDate,
+                  h_resource_id: powner.reg_id,
+                  h_resource: `${powner.first_name} ${powner.last_name}`,
+                  h_description: `${im} is suggested by ${powner.first_name} ${powner.last_name}`,
+                  gmsuggested_id: gs_id,
+                };
+
+                const paramNamesString11 = Object.keys(hdata11).join(", ");
+                const paramValuesString11 = Object.values(hdata11)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
+                await pool.execute(callProcedureSQL11, [
+                  paramNamesString11,
+                  paramValuesString11,
+                ]);
+              }
+            }
+          }
+        })
+      );
+    }
+
+    res.status(201).json({
+      message: "Member suggested successfully.",
+    });
+  } catch (error) {
+    console.error("Error", error);
     res
       .status(500)
       .json({ error: "Internal Server Error", details: error.message });
