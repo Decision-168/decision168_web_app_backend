@@ -10,72 +10,109 @@ const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
 
-//GoalsList
-router.get("/goal/get-goals-list/:user_id/:portfolio_id", async (req, res) => {
-  const user_id = req.params.user_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows, fields] = await pool.execute("CALL GoalsList(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //GoalsList
+// router.get("/goal/get-goals-list/:user_id/:portfolio_id", async (req, res) => {
+//   const user_id = req.params.user_id;
+//   const portfolio_id = req.params.portfolio_id;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL GoalsList(?,?)", [
+//       user_id,
+//       portfolio_id,
+//     ]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//AcceptedGoalsAllList
+// //AcceptedGoalsAllList
+// router.get(
+//   "/goal/get-accepted-goals-list/:user_id/:portfolio_id",
+//   async (req, res) => {
+//     const user_id = req.params.user_id;
+//     const portfolio_id = req.params.portfolio_id;
+//     try {
+//       const [rows, fields] = await pool.execute(
+//         "CALL AcceptedGoalsAllList(?,?)",
+//         [user_id, portfolio_id]
+//       );
+//       res.status(200).json(rows[0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
+
+// //PendingGoalsAllList
+// router.get(
+//   "/goal/get-pending-goals-list/:user_id/:portfolio_id",
+//   async (req, res) => {
+//     const user_id = req.params.user_id;
+//     const portfolio_id = req.params.portfolio_id;
+//     try {
+//       const [rows, fields] = await pool.execute(
+//         "CALL PendingGoalsAllList(?,?)",
+//         [user_id, portfolio_id]
+//       );
+//       res.status(200).json(rows[0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
+
+// //ReadMoreGoalsAllList
+// router.get(
+//   "/goal/get-readmore-goals-list/:user_id/:portfolio_id",
+//   async (req, res) => {
+//     const user_id = req.params.user_id;
+//     const portfolio_id = req.params.portfolio_id;
+//     try {
+//       const [rows, fields] = await pool.execute(
+//         "CALL ReadMoreGoalsAllList(?,?)",
+//         [user_id, portfolio_id]
+//       );
+//       res.status(200).json(rows[0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
+
+//AllGoalList
 router.get(
-  "/goal/get-accepted-goals-list/:user_id/:portfolio_id",
+  "/goal/get-all-goals-list/:user_id/:portfolio_id",
   async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
-      const [rows, fields] = await pool.execute(
+      const [createrows] = await pool.execute("CALL GoalsList(?,?)", [
+        user_id,
+        portfolio_id,
+      ]);
+      const [acceptedrows] = await pool.execute(
         "CALL AcceptedGoalsAllList(?,?)",
         [user_id, portfolio_id]
       );
-      res.status(200).json(rows[0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
-
-//PendingGoalsAllList
-router.get(
-  "/goal/get-pending-goals-list/:user_id/:portfolio_id",
-  async (req, res) => {
-    const user_id = req.params.user_id;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [rows, fields] = await pool.execute(
+      const [pendingrows] = await pool.execute(
         "CALL PendingGoalsAllList(?,?)",
         [user_id, portfolio_id]
       );
-      res.status(200).json(rows[0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
-
-//ReadMoreGoalsAllList
-router.get(
-  "/goal/get-readmore-goals-list/:user_id/:portfolio_id",
-  async (req, res) => {
-    const user_id = req.params.user_id;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [rows, fields] = await pool.execute(
+      const [moreInforows] = await pool.execute(
         "CALL ReadMoreGoalsAllList(?,?)",
         [user_id, portfolio_id]
       );
-      res.status(200).json(rows[0]);
+
+      res.status(200).json({
+        createData: createrows[0],
+        acceptedData: acceptedrows[0],
+        pendingRequest: pendingrows[0],
+        moreInfoRequest: moreInforows[0],
+      });
     } catch (error) {
       console.error("Error executing stored procedure:", error);
       res.status(500).json({ error: "Internal Server Error" });
@@ -142,57 +179,101 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
   }
 });
 
-//Goalprogress_done
-router.get("/goal/get-goal-task-progress-done/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute("CALL Goalprogress_done(?)", [
-      gid,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //Goalprogress_done
+// router.get("/goal/get-goal-task-progress-done/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL Goalprogress_done(?)", [
+//       gid,
+//     ]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //Goalprogress_total
-router.get("/goal/get-goal-task-progress-total/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute("CALL Goalprogress_total(?)", [
-      gid,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// router.get("/goal/get-goal-task-progress-total/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL Goalprogress_total(?)", [
+//       gid,
+//     ]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //Goalsub_progress_done
-router.get("/goal/get-goal-subtask-progress-done/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute("CALL Goalsub_progress_done(?)", [
-      gid,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// router.get("/goal/get-goal-subtask-progress-done/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL Goalsub_progress_done(?)", [
+//       gid,
+//     ]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //Goalsub_progress_total
-router.get("/goal/get-goal-subtask-progress-total/:gid", async (req, res) => {
+// router.get("/goal/get-goal-subtask-progress-total/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute(
+//       "CALL Goalsub_progress_total(?)",
+//       [gid]
+//     );
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+//GoalProgress
+router.get("/goal/get-goal-progress/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute(
+    const [t_progress_done_rows] = await pool.execute(
+      "CALL Goalprogress_done(?)",
+      [gid]
+    );
+
+    const [t_progress_total_rows] = await pool.execute(
+      "CALL Goalprogress_total(?)",
+      [gid]
+    );
+
+    const [st_progress_done_rows] = await pool.execute(
+      "CALL Goalsub_progress_done(?)",
+      [gid]
+    );
+
+    const [st_progress_total_rows] = await pool.execute(
       "CALL Goalsub_progress_total(?)",
       [gid]
     );
-    res.status(200).json(rows[0]);
+
+    let progressRes = 0;
+    let progress_done = t_progress_done_rows[0][0]?.count_rows;
+    let progress_total = t_progress_total_rows[0][0]?.count_rows;
+    let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+    let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+    if (progress_total || sub_progress_total) {
+      let total_pro_progress_done = progress_done + sub_progress_done;
+      let total_pro_progress = progress_total + sub_progress_total;
+      const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+      progressRes = Math.round(progressCal);
+    }
+
+    res.status(200).json({ progress: progressRes });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -920,7 +1001,7 @@ router.post("/goal/insert-strategies", async (req, res) => {
     const portfolio_id = req.body.portfolio_id;
     const gid = req.body.gid;
     const gdept_id = req.body.gdept_id;
-    const {kpiArray} = req.body;    
+    const { kpiArray } = req.body;
 
     for (const kpi of kpiArray) {
       const sname = kpi.sname;
@@ -1126,24 +1207,24 @@ router.get("/goal/goal-detail-accepted/:user_id/:gid", async (req, res) => {
 });
 
 //getStrategiesCount
-router.get(
-  "/goal/get-strategies-count/:user_id/:gid/:portfolio_id",
-  async (req, res) => {
-    const user_id = req.params.user_id;
-    const gid = req.params.gid;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [rows, fields] = await pool.execute(
-        "CALL getStrategiesCount(?,?,?)",
-        [user_id, gid, portfolio_id]
-      );
-      res.status(200).json(rows[0][0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
+// router.get(
+//   "/goal/get-strategies-count/:user_id/:gid/:portfolio_id",
+//   async (req, res) => {
+//     const user_id = req.params.user_id;
+//     const gid = req.params.gid;
+//     const portfolio_id = req.params.portfolio_id;
+//     try {
+//       const [rows, fields] = await pool.execute(
+//         "CALL getStrategiesCount(?,?,?)",
+//         [user_id, gid, portfolio_id]
+//       );
+//       res.status(200).json(rows[0][0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
 
 //file_itStrategy_tasks
 router.get("/goal/file-it-strategy-tasks/:sid", async (req, res) => {
@@ -3693,362 +3774,360 @@ router.get("/goal/get-goal-team-member-accepted/:gid", async (req, res) => {
 });
 
 //goal_open_work_new_assignee
-router.patch(
-  "/goal/goal-open-work-new-assignee/:reg_id/:new_reg_id/:old_reg_id/:gmid_id/:portfolio_id",
-  async (req, res) => {
-    const reg_id = req.params.reg_id;
-    const new_reg_id = req.params.new_reg_id;
-    const old_reg_id = req.params.old_reg_id;
-    const gmid_id = req.params.gmid_id;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [check_gm] = await pool.execute("CALL check_GoalPMToClear(?)", [
-        gmid_id,
-      ]);
-      const check = check_gm[0][0];
+router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
+  const reg_id = req.body.reg_id;
+  const new_reg_id = req.body.new_reg_id;
+  const old_reg_id = req.body.old_reg_id;
+  const gmid_id = req.body.gmid_id;
+  const portfolio_id = req.body.portfolio_id;
+  try {
+    const [check_gm] = await pool.execute("CALL check_GoalPMToClear(?)", [
+      gmid_id,
+    ]);
+    const check = check_gm[0][0];
 
-      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
-        reg_id,
-      ]);
-      const powner = check_powner[0][0];
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      reg_id,
+    ]);
+    const powner = check_powner[0][0];
 
-      const [check_new_mem] = await pool.execute("CALL getStudentById(?)", [
-        new_reg_id,
-      ]);
-      const new_mem = check_new_mem[0][0];
+    const [check_new_mem] = await pool.execute("CALL getStudentById(?)", [
+      new_reg_id,
+    ]);
+    const new_mem = check_new_mem[0][0];
 
-      if (check) {
-        //console.log("check",check);
-        const formattedDate = dateConversion();
+    if (check) {
+      //console.log("check",check);
+      const formattedDate = dateConversion();
 
-        const gid = check.gid;
+      const gid = check.gid;
 
-        const [getStrategiesRes] = await pool.execute(
-          "CALL GoalTMOpenStrategies(?,?,?)",
-          [old_reg_id, gid, portfolio_id]
-        );
+      const [getStrategiesRes] = await pool.execute(
+        "CALL GoalTMOpenStrategies(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
 
-        const getStrategies = getStrategiesRes[0];
-        if (getStrategies) {
-          for (const ggs of getStrategies) {
-            const updateFieldsValues = `screated_by = '${new_reg_id}'`;
-            const upid = `sid  = '${ggs.sid}'`;
-            await pool.execute("CALL UpdateStrategies(?, ?)", [
-              updateFieldsValues,
-              upid,
-            ]);
-            const hdata = {
-              gid: ggs.gid,
-              sid: ggs.sid,
-              h_date: formattedDate,
-              h_resource_id: powner.reg_id,
-              h_resource: `${powner.first_name} ${powner.last_name}`,
-              h_description: `${powner.first_name} ${powner.last_name} Transfer KPI ${ggs.sname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
-            };
-
-            const paramNamesString1 = Object.keys(hdata).join(", ");
-            const paramValuesString1 = Object.values(hdata)
-              .map((value) => `'${value}'`)
-              .join(", ");
-
-            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
-          }
-        }
-
-        const [getProjectsRes] = await pool.execute(
-          "CALL GoalTMOpenProjects(?,?,?)",
-          [old_reg_id, gid, portfolio_id]
-        );
-        const getProjects = getProjectsRes[0];
-        if (getProjects) {
-          for (const gp of getProjects) {
-            if (gp.pcreated_by == old_reg_id) {
-              const [check_if_tm] = await pool.execute(
-                "CALL TMOpenGoals(?,?)",
-                [new_reg_id, gp.pid]
-              );
-              if (check_if_tm[0]) {
-                const del1 = `pmember = '${new_reg_id}' AND pid = '${gp.pid}'`;
-                await pool.execute("CALL DeleteProjectMembers(?)", [del1]);
-              }
-
-              const updateFieldsValues = `pcreated_by = '${new_reg_id}'`;
-              const upid = `pid  = '${gp.pid}'`;
-              await pool.execute("CALL UpdateProject(?, ?)", [
-                updateFieldsValues,
-                upid,
-              ]);
-
-              const hdata = {
-                gid: gp.gid,
-                sid: gp.sid,
-                pid: gp.pid,
-                h_date: formattedDate,
-                h_resource_id: powner.reg_id,
-                h_resource: `${powner.first_name} ${powner.last_name}`,
-                h_description: `${powner.first_name} ${powner.last_name} Transfer Project ${gp.gname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
-              };
-
-              const paramNamesString1 = Object.keys(hdata).join(", ");
-              const paramValuesString1 = Object.values(hdata)
-                .map((value) => `'${value}'`)
-                .join(", ");
-
-              const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
-            }
-            if (gp.pmanager == old_reg_id) {
-              const updateFieldsValues = `pmanager = '${new_reg_id}'`;
-              const upid = `pid  = '${gp.pid}'`;
-              await pool.execute("CALL UpdateProject(?, ?)", [
-                updateFieldsValues,
-                upid,
-              ]);
-              const hdata = {
-                gid: gp.gid,
-                sid: gp.sid,
-                pid: gp.pid,
-                h_date: formattedDate,
-                h_resource_id: powner.reg_id,
-                h_resource: `${powner.first_name} ${powner.last_name}`,
-                h_description: `${powner.first_name} ${powner.last_name} Transfer Project ${gp.gname} Manager to ${new_mem.first_name} ${new_mem.last_name}`,
-              };
-
-              const paramNamesString1 = Object.keys(hdata).join(", ");
-              const paramValuesString1 = Object.values(hdata)
-                .map((value) => `'${value}'`)
-                .join(", ");
-
-              const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
-            }
-
-            // Check if team member in any project
-            const [checkTM] = await pool.execute("CALL CheckOpenTM(?,?)", [
-              old_reg_id,
-              gp.pid,
-            ]);
-
-            if (checkTM[0][0]) {
-              const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
-              await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
-            }
-          }
-        }
-
-        const [getProjectTMRes] = await pool.execute(
-          "CALL GoalgetProjectOpenTM(?,?,?)",
-          [old_reg_id, gid, portfolio_id]
-        );
-        const getProjectTM = getProjectTMRes[0];
-        if (getProjectTM) {
-          for (const gtm of getProjectTM) {
-            const [check_if_already_tmRes] = await pool.execute(
-              "CALL check_if_already_tm(?,?,?)",
-              [new_reg_id, gtm.pid, portfolio_id]
-            );
-
-            const check_if_already_tm = check_if_already_tmRes[0];
-            if (check_if_already_tm.length == 0) {
-              const [check_if_pownerRes] = await pool.execute(
-                "CALL check_if_powner(?,?)",
-                [new_reg_id, gtm.pid]
-              );
-
-              const check_if_powner = check_if_pownerRes[0];
-              if (check_if_powner.length == 0) {
-                const data2 = {
-                  pid: gtm.pid,
-                  portfolio_id: portfolio_id,
-                  pmember: new_reg_id,
-                  status: gtm.status,
-                  pcreated_by: reg_id,
-                  sent_date: formattedDate,
-                  sent_notify_clear: gtm.sent_notify_clear,
-                };
-
-                const paramNamesString2 = Object.keys(data2).join(", ");
-                const paramValuesString2 = Object.values(data2)
-                  .map((value) => `'${value}'`)
-                  .join(", ");
-
-                const callProcedureSQL2 = `CALL InsertProjectMembers(?, ?)`;
-                await pool.execute(callProcedureSQL2, [
-                  paramNamesString2,
-                  paramValuesString2,
-                ]);
-
-                const hdata = {
-                  gid: gtm.pid,
-                  sid: gtm.sid,
-                  pid: gtm.pid,
-                  h_date: formattedDate,
-                  h_resource_id: powner.reg_id,
-                  h_resource: `${powner.first_name} ${powner.last_name}`,
-                  h_description: `${powner.first_name} ${powner.last_name} Added ${new_mem.first_name} ${new_mem.last_name} as a team member`,
-                };
-
-                const paramNamesString1 = Object.keys(hdata).join(", ");
-                const paramValuesString1 = Object.values(hdata)
-                  .map((value) => `'${value}'`)
-                  .join(", ");
-
-                const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [
-                  paramNamesString1,
-                  paramValuesString1,
-                ]);
-              }
-              const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
-              await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
-            }
-          }
-        }
-
-        const [getTasksRes] = await pool.execute(
-          "CALL GoalTMOpenTasks(?,?,?)",
-          [old_reg_id, gid, portfolio_id]
-        );
-
-        const getTasks = getTasksRes[0];
-        if (getTasks) {
-          for (const gt of getTasks) {
-            const updateFieldsValues = `tassignee = '${new_reg_id}'`;
-            const upid = `tid  = '${gt.tid}' AND tassignee  = '${old_reg_id}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [
-              updateFieldsValues,
-              upid,
-            ]);
-
-            const updateFieldsValues2 = `tcreated_by = '${reg_id}'`;
-            const upid2 = `tid  = '${gt.tid}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [
-              updateFieldsValues2,
-              upid2,
-            ]);
-
-            const hdata = {
-              gid: gt.gid,
-              sid: gt.sid,
-              pid: gt.tproject_assign,
-              h_date: formattedDate,
-              h_resource_id: powner.reg_id,
-              h_resource: `${powner.first_name} ${powner.last_name}`,
-              h_description: `${powner.first_name} ${powner.last_name} Transfer Task to ${new_mem.first_name} ${new_mem.last_name}`,
-            };
-
-            const paramNamesString1 = Object.keys(hdata).join(", ");
-            const paramValuesString1 = Object.values(hdata)
-              .map((value) => `'${value}'`)
-              .join(", ");
-
-            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
-          }
-        }
-
-        const [getSubtasksRes] = await pool.execute(
-          "CALL GoalTMOpenSubtasks(?,?,?)",
-          [old_reg_id, gid, portfolio_id]
-        );
-
-        const getSubtasks = getSubtasksRes[0];
-        if (getSubtasks) {
-          for (const gs of getSubtasks) {
-            const updateFieldsValues = `stassignee = '${new_reg_id}'`;
-            const upid = `stid  = '${gs.stid}' AND stassignee  = '${old_reg_id}'`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [
-              updateFieldsValues,
-              upid,
-            ]);
-
-            const updateFieldsValues2 = `stcreated_by = '${reg_id}'`;
-            const upid2 = `stid  = '${gs.stid}'`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [
-              updateFieldsValues2,
-              upid2,
-            ]);
-
-            const hdata = {
-              gid: gs.gid,
-              sid: gs.sid,
-              pid: gs.stproject_assign,
-              h_date: formattedDate,
-              h_resource_id: powner.reg_id,
-              h_resource: `${powner.first_name} ${powner.last_name}`,
-              h_description: `${powner.first_name} ${powner.last_name} Transfer Subtask to ${new_mem.first_name} ${new_mem.last_name}`,
-            };
-
-            const paramNamesString1 = Object.keys(hdata).join(", ");
-            const paramValuesString1 = Object.values(hdata)
-              .map((value) => `'${value}'`)
-              .join(", ");
-
-            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
-          }
-        }
-
-        const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
-        const gmanager = gdetailRes[0][0]?.gmanager;
-
-        if (gmanager == old_reg_id) {
-          const updateFieldsValues2 = `gmanager = ''`;
-          const upid = `gid  = '${gid}'`;
-          await pool.execute("CALL UpdateGoals(?, ?)", [
-            updateFieldsValues2,
+      const getStrategies = getStrategiesRes[0];
+      if (getStrategies) {
+        for (const ggs of getStrategies) {
+          const updateFieldsValues = `screated_by = '${new_reg_id}'`;
+          const upid = `sid  = '${ggs.sid}'`;
+          await pool.execute("CALL UpdateStrategies(?, ?)", [
+            updateFieldsValues,
             upid,
           ]);
+          const hdata = {
+            gid: ggs.gid,
+            sid: ggs.sid,
+            h_date: formattedDate,
+            h_resource_id: powner.reg_id,
+            h_resource: `${powner.first_name} ${powner.last_name}`,
+            h_description: `${powner.first_name} ${powner.last_name} Transfer KPI ${ggs.sname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
+          };
+
+          const paramNamesString1 = Object.keys(hdata).join(", ");
+          const paramValuesString1 = Object.values(hdata)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
         }
-
-        const hdata = {
-          gid: gid,
-          h_date: formattedDate,
-          h_resource_id: powner.reg_id,
-          h_resource: `${powner.first_name} ${powner.last_name}`,
-          h_description: `${powner.first_name} ${powner.last_name} Removed from goal`,
-        };
-
-        const paramNamesString1 = Object.keys(hdata).join(", ");
-        const paramValuesString1 = Object.values(hdata)
-          .map((value) => `'${value}'`)
-          .join(", ");
-
-        const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
-
-        const del1 = `gmid = '${gmid_id}'`;
-        await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
-
-        res.status(200).json({ message: "removed successfully" });
-      } else {
-        res.status(200).json({ message: "member not found" });
       }
-    } catch (error) {
-      console.error("Error:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+
+      const [getProjectsRes] = await pool.execute(
+        "CALL GoalTMOpenProjects(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
+      const getProjects = getProjectsRes[0];
+      if (getProjects) {
+        for (const gp of getProjects) {
+          if (gp.pcreated_by == old_reg_id) {
+            const [check_if_tm] = await pool.execute("CALL TMOpenGoals(?,?)", [
+              new_reg_id,
+              gp.pid,
+            ]);
+            if (check_if_tm[0]) {
+              const del1 = `pmember = '${new_reg_id}' AND pid = '${gp.pid}'`;
+              await pool.execute("CALL DeleteProjectMembers(?)", [del1]);
+            }
+
+            const updateFieldsValues = `pcreated_by = '${new_reg_id}'`;
+            const upid = `pid  = '${gp.pid}'`;
+            await pool.execute("CALL UpdateProject(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
+
+            const hdata = {
+              gid: gp.gid,
+              sid: gp.sid,
+              pid: gp.pid,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${powner.first_name} ${powner.last_name} Transfer Project ${gp.gname} Ownership to ${new_mem.first_name} ${new_mem.last_name}`,
+            };
+
+            const paramNamesString1 = Object.keys(hdata).join(", ");
+            const paramValuesString1 = Object.values(hdata)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
+          }
+          if (gp.pmanager == old_reg_id) {
+            const updateFieldsValues = `pmanager = '${new_reg_id}'`;
+            const upid = `pid  = '${gp.pid}'`;
+            await pool.execute("CALL UpdateProject(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
+            const hdata = {
+              gid: gp.gid,
+              sid: gp.sid,
+              pid: gp.pid,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${powner.first_name} ${powner.last_name} Transfer Project ${gp.gname} Manager to ${new_mem.first_name} ${new_mem.last_name}`,
+            };
+
+            const paramNamesString1 = Object.keys(hdata).join(", ");
+            const paramValuesString1 = Object.values(hdata)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
+          }
+
+          // Check if team member in any project
+          const [checkTM] = await pool.execute("CALL CheckOpenTM(?,?)", [
+            old_reg_id,
+            gp.pid,
+          ]);
+
+          if (checkTM[0][0]) {
+            const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
+            await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
+          }
+        }
+      }
+
+      const [getProjectTMRes] = await pool.execute(
+        "CALL GoalgetProjectOpenTM(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
+      const getProjectTM = getProjectTMRes[0];
+      if (getProjectTM) {
+        for (const gtm of getProjectTM) {
+          const [check_if_already_tmRes] = await pool.execute(
+            "CALL check_if_already_tm(?,?,?)",
+            [new_reg_id, gtm.pid, portfolio_id]
+          );
+
+          const check_if_already_tm = check_if_already_tmRes[0];
+          if (check_if_already_tm.length == 0) {
+            const [check_if_pownerRes] = await pool.execute(
+              "CALL check_if_powner(?,?)",
+              [new_reg_id, gtm.pid]
+            );
+
+            const check_if_powner = check_if_pownerRes[0];
+            if (check_if_powner.length == 0) {
+              const data2 = {
+                pid: gtm.pid,
+                portfolio_id: portfolio_id,
+                pmember: new_reg_id,
+                status: gtm.status,
+                pcreated_by: reg_id,
+                sent_date: formattedDate,
+                sent_notify_clear: gtm.sent_notify_clear,
+              };
+
+              const paramNamesString2 = Object.keys(data2).join(", ");
+              const paramValuesString2 = Object.values(data2)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL2 = `CALL InsertProjectMembers(?, ?)`;
+              await pool.execute(callProcedureSQL2, [
+                paramNamesString2,
+                paramValuesString2,
+              ]);
+
+              const hdata = {
+                gid: gtm.pid,
+                sid: gtm.sid,
+                pid: gtm.pid,
+                h_date: formattedDate,
+                h_resource_id: powner.reg_id,
+                h_resource: `${powner.first_name} ${powner.last_name}`,
+                h_description: `${powner.first_name} ${powner.last_name} Added ${new_mem.first_name} ${new_mem.last_name} as a team member`,
+              };
+
+              const paramNamesString1 = Object.keys(hdata).join(", ");
+              const paramValuesString1 = Object.values(hdata)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+              await pool.execute(callProcedureSQL1, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
+            }
+            const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
+            await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
+          }
+        }
+      }
+
+      const [getTasksRes] = await pool.execute("CALL GoalTMOpenTasks(?,?,?)", [
+        old_reg_id,
+        gid,
+        portfolio_id,
+      ]);
+
+      const getTasks = getTasksRes[0];
+      if (getTasks) {
+        for (const gt of getTasks) {
+          const updateFieldsValues = `tassignee = '${new_reg_id}'`;
+          const upid = `tid  = '${gt.tid}' AND tassignee  = '${old_reg_id}'`;
+          await pool.execute("CALL UpdateTask(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
+
+          const updateFieldsValues2 = `tcreated_by = '${reg_id}'`;
+          const upid2 = `tid  = '${gt.tid}'`;
+          await pool.execute("CALL UpdateTask(?, ?)", [
+            updateFieldsValues2,
+            upid2,
+          ]);
+
+          const hdata = {
+            gid: gt.gid,
+            sid: gt.sid,
+            pid: gt.tproject_assign,
+            h_date: formattedDate,
+            h_resource_id: powner.reg_id,
+            h_resource: `${powner.first_name} ${powner.last_name}`,
+            h_description: `${powner.first_name} ${powner.last_name} Transfer Task to ${new_mem.first_name} ${new_mem.last_name}`,
+          };
+
+          const paramNamesString1 = Object.keys(hdata).join(", ");
+          const paramValuesString1 = Object.values(hdata)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
+        }
+      }
+
+      const [getSubtasksRes] = await pool.execute(
+        "CALL GoalTMOpenSubtasks(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
+
+      const getSubtasks = getSubtasksRes[0];
+      if (getSubtasks) {
+        for (const gs of getSubtasks) {
+          const updateFieldsValues = `stassignee = '${new_reg_id}'`;
+          const upid = `stid  = '${gs.stid}' AND stassignee  = '${old_reg_id}'`;
+          await pool.execute("CALL UpdateSubtask(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
+
+          const updateFieldsValues2 = `stcreated_by = '${reg_id}'`;
+          const upid2 = `stid  = '${gs.stid}'`;
+          await pool.execute("CALL UpdateSubtask(?, ?)", [
+            updateFieldsValues2,
+            upid2,
+          ]);
+
+          const hdata = {
+            gid: gs.gid,
+            sid: gs.sid,
+            pid: gs.stproject_assign,
+            h_date: formattedDate,
+            h_resource_id: powner.reg_id,
+            h_resource: `${powner.first_name} ${powner.last_name}`,
+            h_description: `${powner.first_name} ${powner.last_name} Transfer Subtask to ${new_mem.first_name} ${new_mem.last_name}`,
+          };
+
+          const paramNamesString1 = Object.keys(hdata).join(", ");
+          const paramValuesString1 = Object.values(hdata)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
+        }
+      }
+
+      const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
+      const gmanager = gdetailRes[0][0]?.gmanager;
+
+      if (gmanager == old_reg_id) {
+        const updateFieldsValues2 = `gmanager = ''`;
+        const upid = `gid  = '${gid}'`;
+        await pool.execute("CALL UpdateGoals(?, ?)", [
+          updateFieldsValues2,
+          upid,
+        ]);
+      }
+
+      const hdata = {
+        gid: gid,
+        h_date: formattedDate,
+        h_resource_id: powner.reg_id,
+        h_resource: `${powner.first_name} ${powner.last_name}`,
+        h_description: `${powner.first_name} ${powner.last_name} Removed from goal`,
+      };
+
+      const paramNamesString1 = Object.keys(hdata).join(", ");
+      const paramValuesString1 = Object.values(hdata)
+        .map((value) => `'${value}'`)
+        .join(", ");
+
+      const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+      await pool.execute(callProcedureSQL1, [
+        paramNamesString1,
+        paramValuesString1,
+      ]);
+
+      const del1 = `gmid = '${gmid_id}'`;
+      await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
+
+      res.status(200).json({ message: "removed successfully" });
+    } else {
+      res.status(200).json({ message: "member not found" });
     }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-);
+});
 
 //assign_goalmanager
 router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
@@ -4095,55 +4174,52 @@ router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
 });
 
 //delete_iGMember
-router.patch(
-  "/goal/remove-goal-invited-member/:user_id/:igm_id/:gid/:sent_to",
-  async (req, res) => {
-    try {
-      const user_id = req.params.user_id;
-      const igm_id = req.params.igm_id;
-      const gid = req.params.gid;
-      const sent_to = req.params.sent_to;
+router.patch("/goal/remove-goal-invited-member", async (req, res) => {
+  try {
+    const user_id = req.body.user_id;
+    const igm_id = req.body.igm_id;
+    const gid = req.body.gid;
+    const sent_to = req.body.sent_to;
 
-      const formattedDate = dateConversion();
+    const formattedDate = dateConversion();
 
-      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
-        user_id,
-      ]);
-      const powner = check_powner[0][0];
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      user_id,
+    ]);
+    const powner = check_powner[0][0];
 
-      const hdata = {
-        gid: gid,
-        h_date: formattedDate,
-        h_resource_id: powner.reg_id,
-        h_resource: `${powner.first_name} ${powner.last_name}`,
-        h_description: `${sent_to} Removed from goal`,
-        ginvited_id: igm_id,
-      };
+    const hdata = {
+      gid: gid,
+      h_date: formattedDate,
+      h_resource_id: powner.reg_id,
+      h_resource: `${powner.first_name} ${powner.last_name}`,
+      h_description: `${sent_to} Removed from goal`,
+      ginvited_id: igm_id,
+    };
 
-      const paramNamesString1 = Object.keys(hdata).join(", ");
-      const paramValuesString1 = Object.values(hdata)
-        .map((value) => `'${value}'`)
-        .join(", ");
+    const paramNamesString1 = Object.keys(hdata).join(", ");
+    const paramValuesString1 = Object.values(hdata)
+      .map((value) => `'${value}'`)
+      .join(", ");
 
-      const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL1, [
-        paramNamesString1,
-        paramValuesString1,
-      ]);
+    const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
-      const del1 = `igm_id = '${igm_id}'`;
-      await pool.execute("CALL DeleteGoalsInvitedMembers(?)", [del1]);
+    const del1 = `igm_id = '${igm_id}'`;
+    await pool.execute("CALL DeleteGoalsInvitedMembers(?)", [del1]);
 
-      res.status(201).json({
-        message: "removed successfully.",
-      });
-    } catch (error) {
-      res
-        .status(500)
-        .json({ error: "Internal Server Error", details: error.message });
-    }
+    res.status(201).json({
+      message: "removed successfully.",
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
-);
+});
 
 //add_SuggestedGMember
 router.patch(
