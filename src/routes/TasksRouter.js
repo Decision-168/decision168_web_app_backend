@@ -195,8 +195,8 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
 
             const RequestEmailID = team_member2_row[0][0].email_address;
 
-            const acceptProjectRequest = `http://localhost:3000/project-request/${project_id}/${team_member2}/1`;
-            const rejectProjectRequest = `http://localhost:3000/project-request/${project_id}/${team_member2}/2`;
+            const acceptProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/1`;
+            const rejectProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/2`;
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: RequestEmailID,
@@ -1004,8 +1004,8 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
 
                   const RequestEmailID = txt_row[0][0].email_address;
 
-                  const acceptProjectRequest = `http://localhost:3000/project-request/${tdetail.tproject_assign}/${txt}/1`;
-                  const rejectProjectRequest = `http://localhost:3000/project-request/${tdetail.tproject_assign}/${txt}/2`;
+                  const acceptProjectRequest = `http://localhost:3000/project-request/${tdetail.tproject_assign}/${inserted_pm_id}/1`;
+                  const rejectProjectRequest = `http://localhost:3000/project-request/${tdetail.tproject_assign}/${inserted_pm_id}/2`;
                   const mailOptions = {
                     from: process.env.SMTP_USER,
                     to: RequestEmailID,
@@ -1516,8 +1516,8 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
 
                   const RequestEmailID = txt_row[0][0].email_address;
 
-                  const acceptProjectRequest = `http://localhost:3000/project-request/${tdetail.stproject_assign}/${txt}/1`;
-                  const rejectProjectRequest = `http://localhost:3000/project-request/${tdetail.stproject_assign}/${txt}/2`;
+                  const acceptProjectRequest = `http://localhost:3000/project-request/${tdetail.stproject_assign}/${inserted_pm_id}/1`;
+                  const rejectProjectRequest = `http://localhost:3000/project-request/${tdetail.stproject_assign}/${inserted_pm_id}/2`;
                   const mailOptions = {
                     from: process.env.SMTP_USER,
                     to: RequestEmailID,
@@ -2234,8 +2234,8 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
 
             const RequestEmailID = team_member2_row[0][0].email_address;
 
-            const acceptProjectRequest = `http://localhost:3000/project-request/${project_id}/${team_member2}/1`;
-            const rejectProjectRequest = `http://localhost:3000/project-request/${project_id}/${team_member2}/2`;
+            const acceptProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/1`;
+            const rejectProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/2`;
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: RequestEmailID,
@@ -3011,8 +3011,8 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
 
             const RequestEmailID = team_member2_row[0][0].email_address;
 
-            const acceptProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${team_member2}/1`;
-            const rejectProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${team_member2}/2`;
+            const acceptProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${inserted_pm_id}/1`;
+            const rejectProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${inserted_pm_id}/2`;
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: RequestEmailID,
@@ -3360,8 +3360,8 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
 
                 const RequestEmailID = team_member2_row[0][0].email_address;
 
-                const acceptProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${item.team_member2}/1`;
-                const rejectProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${item.team_member2}/2`;
+                const acceptProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${inserted_pm_id}/1`;
+                const rejectProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${inserted_pm_id}/2`;
                 const mailOptions = {
                   from: process.env.SMTP_USER,
                   to: RequestEmailID,
