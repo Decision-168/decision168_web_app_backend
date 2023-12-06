@@ -5,8 +5,9 @@ const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
 // Get All Archive Modules
-router.get("/archive/data/:portfolio_id/:user_id", async (req, res) => {
-  const { portfolio_id, user_id } = req.params;
+router.get("/archive/data/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  const { user_id } = req.body;
   try {
     const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
     const [archive_kpis] = await pool.execute("CALL ArchiveStrategies(?,?)", [user_id, portfolio_id]);
