@@ -115,16 +115,19 @@ router.get("/user/get-country/:code", async (req, res) => {
 //update profile
 router.patch("/user/update-profile/:id", async (req, res) => {
   const reg_id = req.params.id;
-  const dynamicObject = req.body;
+  const updates = convertObjectToProcedureParams(req.body); // Convert data to the format 'key1 = "value1", key2 = "value2", ...'
   try {
-    // Convert dynamicObject to the format 'key1 = "value1", key2 = "value2", ...'
-    const formattedParams = convertObjectToProcedureParams(dynamicObject);
-
-    const storedProcedure = `CALL UpdateRegistration('${formattedParams}', 'reg_id = ${reg_id}')`;
+    const storedProcedure = `CALL UpdateRegistration('${updates}', 'reg_id = ${reg_id}')`;
 
     const [results] = await pool.execute(storedProcedure);
 
-    res.json({ message: "Profile updated successfully", results });
+    // Check the status returned by the stored procedure or modify as needed
+    if (results && results.affectedRows > 0) {
+      res.status(200).json({ message: "Profile updated successfully" });
+    } else {
+      res.status(404).json({ error: "User not found or no changes applied" });
+    }
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
