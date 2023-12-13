@@ -94,24 +94,206 @@ router.get(
         user_id,
         portfolio_id,
       ]);
+
+      const createpromises = createrows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
+
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
+
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
+
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
+
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "created-goals";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const createresults = await Promise.all(createpromises);
+
       const [acceptedrows] = await pool.execute(
         "CALL AcceptedGoalsAllList(?,?)",
         [user_id, portfolio_id]
       );
+
+      const acceptedpromises = acceptedrows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
+
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
+
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
+
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
+
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "accepted-goals";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const acceptedresults = await Promise.all(acceptedpromises);
+
       const [pendingrows] = await pool.execute(
         "CALL PendingGoalsAllList(?,?)",
         [user_id, portfolio_id]
       );
+      const pendingpromises = pendingrows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
+
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
+
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
+
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
+
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "pending-requests";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const pendingresults = await Promise.all(pendingpromises);
+
       const [moreInforows] = await pool.execute(
         "CALL ReadMoreGoalsAllList(?,?)",
         [user_id, portfolio_id]
       );
 
+      const moreInfopromises = moreInforows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
+
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
+
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
+
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
+
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "more-info-requests";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const moreInforesults = await Promise.all(moreInfopromises);
+
       res.status(200).json({
-        createData: createrows[0],
-        acceptedData: acceptedrows[0],
-        pendingRequest: pendingrows[0],
-        moreInfoRequest: moreInforows[0],
+        createData: createresults,
+        acceptedData: acceptedresults,
+        pendingRequest: pendingresults,
+        moreInfoRequest: moreInforesults,
       });
     } catch (error) {
       console.error("Error executing stored procedure:", error);
@@ -236,49 +418,49 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 //   }
 // });
 
-//GoalProgress
-router.get("/goal/get-goal-progress/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [t_progress_done_rows] = await pool.execute(
-      "CALL Goalprogress_done(?)",
-      [gid]
-    );
+// //GoalProgress
+// router.get("/goal/get-goal-progress/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [t_progress_done_rows] = await pool.execute(
+//       "CALL Goalprogress_done(?)",
+//       [gid]
+//     );
 
-    const [t_progress_total_rows] = await pool.execute(
-      "CALL Goalprogress_total(?)",
-      [gid]
-    );
+//     const [t_progress_total_rows] = await pool.execute(
+//       "CALL Goalprogress_total(?)",
+//       [gid]
+//     );
 
-    const [st_progress_done_rows] = await pool.execute(
-      "CALL Goalsub_progress_done(?)",
-      [gid]
-    );
+//     const [st_progress_done_rows] = await pool.execute(
+//       "CALL Goalsub_progress_done(?)",
+//       [gid]
+//     );
 
-    const [st_progress_total_rows] = await pool.execute(
-      "CALL Goalsub_progress_total(?)",
-      [gid]
-    );
+//     const [st_progress_total_rows] = await pool.execute(
+//       "CALL Goalsub_progress_total(?)",
+//       [gid]
+//     );
 
-    let progressRes = 0;
-    let progress_done = t_progress_done_rows[0][0]?.count_rows;
-    let progress_total = t_progress_total_rows[0][0]?.count_rows;
-    let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
-    let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+//     let progressRes = 0;
+//     let progress_done = t_progress_done_rows[0][0]?.count_rows;
+//     let progress_total = t_progress_total_rows[0][0]?.count_rows;
+//     let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+//     let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
 
-    if (progress_total || sub_progress_total) {
-      let total_pro_progress_done = progress_done + sub_progress_done;
-      let total_pro_progress = progress_total + sub_progress_total;
-      const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
-      progressRes = Math.round(progressCal);
-    }
+//     if (progress_total || sub_progress_total) {
+//       let total_pro_progress_done = progress_done + sub_progress_done;
+//       let total_pro_progress = progress_total + sub_progress_total;
+//       const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+//       progressRes = Math.round(progressCal);
+//     }
 
-    res.status(200).json({ progress: progressRes });
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+//     res.status(200).json({ progress: progressRes });
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //getStrategiesCount
 router.get(
@@ -453,12 +635,10 @@ router.post("/goal/insert-goal", async (req, res) => {
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          res
-            .status(500)
-            .json({ error: "Failed to send portfolio invitation email." });
+          res.status(500).json({ error: "Failed to send invitation." });
         } else {
           res.status(201).json({
-            message: "Goal invitation sent to your email.",
+            message: "Invitation sent successfully.",
           });
         }
       });
@@ -540,12 +720,10 @@ router.post("/goal/insert-goal", async (req, res) => {
 
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-              res
-                .status(500)
-                .json({ error: "Failed to send portfolio invitation email." });
+              res.status(500).json({ error: "Failed to send invitation." });
             } else {
               res.status(201).json({
-                message: "Goal invitation sent to your email.",
+                message: "Invitation sent successfully.",
               });
             }
           });
@@ -672,11 +850,11 @@ router.post("/goal/insert-goal", async (req, res) => {
                 transporter.sendMail(mailOptions, (error, info) => {
                   if (error) {
                     res.status(500).json({
-                      error: "Failed to send portfolio invitation email.",
+                      error: "Failed to send invitation.",
                     });
                   } else {
                     res.status(201).json({
-                      message: "Goal invitation sent to your email.",
+                      message: "Invitation sent successfully.",
                     });
                   }
                 });
@@ -782,11 +960,11 @@ router.post("/goal/insert-goal", async (req, res) => {
               transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   res.status(500).json({
-                    error: "Failed to send portfolio invitation email.",
+                    error: "Failed to send invitation.",
                   });
                 } else {
                   res.status(201).json({
-                    message: "Goal invitation sent to your email.",
+                    message: "Invitation sent successfully.",
                   });
                 }
               });
@@ -869,7 +1047,7 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
 
           res.status(200).json({ user_status: "accepted" });
         } else {
-          res.status(400).json({ user_status: status });
+          res.status(200).json({ user_status: status });
         }
       } else {
         res.status(400).json({ user_status: "pages-404" });
@@ -916,7 +1094,7 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
 
           res.status(200).json({ user_status: "read_more" });
         } else {
-          res.status(400).json({ user_status: status });
+          res.status(200).json({ user_status: status });
         }
       } else {
         res.status(400).json({ user_status: "pages-404" });
@@ -1085,7 +1263,36 @@ router.get("/goal/goal-overview-request/:user_id/:gid", async (req, res) => {
       user_id,
       gid,
     ]);
-    res.status(200).json(rows[0][0]);
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      rows[0][0].gdept,
+    ]);
+    const get_dept_name = getDeptName[0][0].department;
+
+    const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
+      rows[0][0].gcreated_by,
+    ]);
+    const get_created_by_name =
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
+
+    let get_gmanager_name = "";
+    if (rows[0][0].gmanager != 0) {
+      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [
+        rows[0][0].gmanager,
+      ]);
+      get_gmanager_name =
+        getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
+    }
+
+    const results = {
+      ...rows[0][0],
+      get_dept_name,
+      get_created_by_name,
+      get_gmanager_name,
+    };
+
+    res.status(200).json(results);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -1122,41 +1329,84 @@ router.get("/goal/get-department-name/:dept_id", async (req, res) => {
   }
 });
 
-//GoalTeamMember
-router.get("/goal/goal-team-member/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute("CALL GoalTeamMember(?)", [gid]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //GoalTeamMember
+// router.get("/goal/goal-team-member/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL GoalTeamMember(?)", [gid]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//InvitedGoalMember
-router.get("/goal/goal-invited-member/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute("CALL InvitedGoalMember(?)", [
-      gid,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //InvitedGoalMember
+// router.get("/goal/goal-invited-member/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL InvitedGoalMember(?)", [
+//       gid,
+//     ]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //GoalsAllStrategiesList
 router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute(
-      "CALL GoalsAllStrategiesList(?)",
-      [gid]
-    );
-    res.status(200).json(rows[0]);
+    const [rows] = await pool.execute("CALL GoalsAllStrategiesList(?)", [gid]);
+    const promises = rows[0].map(async (item) => {
+      const { sid } = item;
+
+      const [kpi_t_progress_done_rows] = await pool.execute(
+        "CALL Strategyprogress_done(?)",
+        [sid]
+      );
+
+      const [kpi_t_progress_total_rows] = await pool.execute(
+        "CALL Strategyprogress_total(?)",
+        [sid]
+      );
+
+      const [kpi_st_progress_done_rows] = await pool.execute(
+        "CALL Strategysub_progress_done(?)",
+        [sid]
+      );
+
+      const [kpi_st_progress_total_rows] = await pool.execute(
+        "CALL Strategysub_progress_total(?)",
+        [sid]
+      );
+
+      let kpi_progress = 0;
+      let kpi_progress_done = kpi_t_progress_done_rows[0][0]?.count_rows;
+      let kpi_progress_total = kpi_t_progress_total_rows[0][0]?.count_rows;
+      let kpi_sub_progress_done = kpi_st_progress_done_rows[0][0]?.count_rows;
+      let kpi_sub_progress_total = kpi_st_progress_total_rows[0][0]?.count_rows;
+
+      if (kpi_progress_total || kpi_sub_progress_total) {
+        let kpi_total_pro_progress_done =
+          kpi_progress_done + kpi_sub_progress_done;
+        let kpi_total_pro_progress =
+          kpi_progress_total + kpi_sub_progress_total;
+        const kpi_progressCal =
+          (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
+        kpi_progress = Math.round(kpi_progressCal);
+      }
+
+      const data = {
+        ...item,
+        kpi_progress,
+      };
+      return data;
+    });
+    const results = await Promise.all(promises);
+    res.status(200).json(results);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -1167,8 +1417,154 @@ router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
 router.get("/goal/goal-detail/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL GoalDetail(?)", [gid]);
-    res.status(200).json(rows[0][0]);
+    const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]);
+
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      rows[0][0].gdept,
+    ]);
+    const get_dept_name = getDeptName[0][0].department;
+
+    const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
+      rows[0][0].gcreated_by,
+    ]);
+    const get_created_by_name =
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
+
+    let get_gmanager_name = "";
+    if (rows[0][0].gmanager != 0) {
+      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [
+        rows[0][0].gmanager,
+      ]);
+      get_gmanager_name =
+        getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
+    }
+
+    const [t_progress_done_rows] = await pool.execute(
+      "CALL Goalprogress_done(?)",
+      [gid]
+    );
+
+    const [t_progress_total_rows] = await pool.execute(
+      "CALL Goalprogress_total(?)",
+      [gid]
+    );
+
+    const [st_progress_done_rows] = await pool.execute(
+      "CALL Goalsub_progress_done(?)",
+      [gid]
+    );
+
+    const [st_progress_total_rows] = await pool.execute(
+      "CALL Goalsub_progress_total(?)",
+      [gid]
+    );
+
+    let progress = 0;
+    let progress_done = t_progress_done_rows[0][0]?.count_rows;
+    let progress_total = t_progress_total_rows[0][0]?.count_rows;
+    let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+    let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+    if (progress_total || sub_progress_total) {
+      let total_pro_progress_done = progress_done + sub_progress_done;
+      let total_pro_progress = progress_total + sub_progress_total;
+      const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+      progress = Math.round(progressCal);
+    }
+
+    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      rows[0][0].portfolio_id,
+    ]);
+    const get_portfolio_createdby_id = get_portfolio[0][0]?.portfolio_createdby;
+
+    const results = {
+      ...rows[0][0],
+      get_dept_name,
+      get_created_by_name,
+      get_gmanager_name,
+      get_portfolio_createdby_id,
+      progress,
+    };
+
+    const [GoalTeamMember] = await pool.execute("CALL GoalTeamMember(?)", [
+      gid,
+    ]);
+    const [InvitedGoalMember] = await pool.execute(
+      "CALL InvitedGoalMember(?)",
+      [gid]
+    );
+    const [SuggestedGoalMember] = await pool.execute(
+      "CALL SuggestedGoalMember(?)",
+      [gid]
+    );
+
+    const [SuggestedInviteGoalMember] = await pool.execute(
+      "CALL SuggestedInviteGoalMember(?)",
+      [gid]
+    );
+
+    const [GoalsAllStrategiesList] = await pool.execute(
+      "CALL GoalsAllStrategiesList(?)",
+      [gid]
+    );
+
+    const promises = GoalsAllStrategiesList[0].map(async (item) => {
+      const { sid } = item;
+
+      const [kpi_t_progress_done_rows] = await pool.execute(
+        "CALL Strategyprogress_done(?)",
+        [sid]
+      );
+
+      const [kpi_t_progress_total_rows] = await pool.execute(
+        "CALL Strategyprogress_total(?)",
+        [sid]
+      );
+
+      const [kpi_st_progress_done_rows] = await pool.execute(
+        "CALL Strategysub_progress_done(?)",
+        [sid]
+      );
+
+      const [kpi_st_progress_total_rows] = await pool.execute(
+        "CALL Strategysub_progress_total(?)",
+        [sid]
+      );
+
+      let kpi_progress = 0;
+      let kpi_progress_done = kpi_t_progress_done_rows[0][0]?.count_rows;
+      let kpi_progress_total = kpi_t_progress_total_rows[0][0]?.count_rows;
+      let kpi_sub_progress_done = kpi_st_progress_done_rows[0][0]?.count_rows;
+      let kpi_sub_progress_total = kpi_st_progress_total_rows[0][0]?.count_rows;
+
+      if (kpi_progress_total || kpi_sub_progress_total) {
+        let kpi_total_pro_progress_done =
+          kpi_progress_done + kpi_sub_progress_done;
+        let kpi_total_pro_progress =
+          kpi_progress_total + kpi_sub_progress_total;
+        const kpi_progressCal =
+          (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
+        kpi_progress = Math.round(kpi_progressCal);
+      }
+
+      const data = {
+        ...item,
+        kpi_progress,
+      };
+      return data;
+    });
+    const GoalsAllStrategiesListDetails = await Promise.all(promises);
+
+    res.status(200).json({
+      goalRes: results,
+      GoalTeamMemberRes: GoalTeamMember[0],
+      InvitedGoalMemberRes: InvitedGoalMember[0],
+      SuggestedGoalMemberRes: SuggestedGoalMember[0],
+      SuggestedInviteGoalMemberRes: SuggestedInviteGoalMember[0],
+      GoalsAllStrategiesListRes: GoalsAllStrategiesListDetails,
+    });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -1183,7 +1579,11 @@ router.get("/goal/view-history-date-goal/:gid", async (req, res) => {
       "CALL view_history_date_goal(?)",
       [gid]
     );
-    res.status(200).json(rows[0]);
+    const [GoalDetail] = await pool.execute("CALL GoalDetail(?)", [gid]);
+
+    res
+      .status(200)
+      .json({ history_dates: rows[0], goal_detail: GoalDetail[0][0] });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -1255,80 +1655,166 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
   }
 });
 
-//Strategyprogress_done
-router.get("/goal/get-strategy-task-progress-done/:sid", async (req, res) => {
-  const sid = req.params.sid;
-  try {
-    const [rows, fields] = await pool.execute("CALL Strategyprogress_done(?)", [
-      sid,
-    ]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //Strategyprogress_done
+// router.get("/goal/get-strategy-task-progress-done/:sid", async (req, res) => {
+//   const sid = req.params.sid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL Strategyprogress_done(?)", [
+//       sid,
+//     ]);
+//     res.status(200).json(rows[0][0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//Strategyprogress_total
-router.get("/goal/get-strategy-task-progress-total/:sid", async (req, res) => {
-  const sid = req.params.sid;
-  try {
-    const [rows, fields] = await pool.execute(
-      "CALL Strategyprogress_total(?)",
-      [sid]
-    );
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //Strategyprogress_total
+// router.get("/goal/get-strategy-task-progress-total/:sid", async (req, res) => {
+//   const sid = req.params.sid;
+//   try {
+//     const [rows, fields] = await pool.execute(
+//       "CALL Strategyprogress_total(?)",
+//       [sid]
+//     );
+//     res.status(200).json(rows[0][0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//Strategysub_progress_done
-router.get(
-  "/goal/get-strategy-subtask-progress-done/:sid",
-  async (req, res) => {
-    const sid = req.params.sid;
-    try {
-      const [rows, fields] = await pool.execute(
-        "CALL Strategysub_progress_done(?)",
-        [sid]
-      );
-      res.status(200).json(rows[0][0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
+// //Strategysub_progress_done
+// router.get(
+//   "/goal/get-strategy-subtask-progress-done/:sid",
+//   async (req, res) => {
+//     const sid = req.params.sid;
+//     try {
+//       const [rows, fields] = await pool.execute(
+//         "CALL Strategysub_progress_done(?)",
+//         [sid]
+//       );
+//       res.status(200).json(rows[0][0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
 
-//Strategysub_progress_total
-router.get(
-  "/goal/get-strategy-subtask-progress-total/:sid",
-  async (req, res) => {
-    const sid = req.params.sid;
-    try {
-      const [rows, fields] = await pool.execute(
-        "CALL Strategysub_progress_total(?)",
-        [sid]
-      );
-      res.status(200).json(rows[0][0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
+// //Strategysub_progress_total
+// router.get(
+//   "/goal/get-strategy-subtask-progress-total/:sid",
+//   async (req, res) => {
+//     const sid = req.params.sid;
+//     try {
+//       const [rows, fields] = await pool.execute(
+//         "CALL Strategysub_progress_total(?)",
+//         [sid]
+//       );
+//       res.status(200).json(rows[0][0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
+
+// //StrategyProgress
+// router.get("/goal/get-strategy-progress/:sid", async (req, res) => {
+//   const sid = req.params.sid;
+//   try {
+//     const [t_progress_done_rows] = await pool.execute(
+//       "CALL Strategyprogress_done(?)",
+//       [sid]
+//     );
+
+//     const [t_progress_total_rows] = await pool.execute(
+//       "CALL Strategyprogress_total(?)",
+//       [sid]
+//     );
+
+//     const [st_progress_done_rows] = await pool.execute(
+//       "CALL Strategysub_progress_done(?)",
+//       [sid]
+//     );
+
+//     const [st_progress_total_rows] = await pool.execute(
+//       "CALL Strategysub_progress_total(?)",
+//       [sid]
+//     );
+
+//     let progressRes = 0;
+//     let progress_done = t_progress_done_rows[0][0]?.count_rows;
+//     let progress_total = t_progress_total_rows[0][0]?.count_rows;
+//     let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+//     let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+//     if (progress_total || sub_progress_total) {
+//       let total_pro_progress_done = progress_done + sub_progress_done;
+//       let total_pro_progress = progress_total + sub_progress_total;
+//       const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+//       progressRes = Math.round(progressCal);
+//     }
+
+//     res.status(200).json({ progress: progressRes });
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //StrategyAllProjectsList
 router.get("/goal/get-strategy-all-projects-list/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute(
-      "CALL StrategyAllProjectsList(?)",
-      [sid]
-    );
-    res.status(200).json(rows[0]);
+    const [rows] = await pool.execute("CALL StrategyAllProjectsList(?)", [sid]);
+
+    const promises = rows[0].map(async (item) => {
+      const { pid } = item;
+
+      const [t_progress_done_rows] = await pool.execute(
+        "CALL progress_done(?)",
+        [pid]
+      );
+
+      const [t_progress_total_rows] = await pool.execute(
+        "CALL progress_total(?)",
+        [pid]
+      );
+
+      const [st_progress_done_rows] = await pool.execute(
+        "CALL sub_progress_done(?)",
+        [pid]
+      );
+
+      const [st_progress_total_rows] = await pool.execute(
+        "CALL sub_progress_total(?)",
+        [pid]
+      );
+
+      let progressRes = 0;
+      let progress_done = t_progress_done_rows[0][0]?.count_rows;
+      let progress_total = t_progress_total_rows[0][0]?.count_rows;
+      let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+      let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+      if (progress_total || sub_progress_total) {
+        let total_pro_progress_done = progress_done + sub_progress_done;
+        let total_pro_progress = progress_total + sub_progress_total;
+        const progressCal =
+          (total_pro_progress_done / total_pro_progress) * 100;
+        progressRes = Math.round(progressCal);
+      }
+
+      const data = {
+        ...item,
+        progressRes,
+      };
+      return data;
+    });
+    const results = await Promise.all(promises);
+    res.status(200).json(results);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -1359,60 +1845,103 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
   }
 });
 
-//progress_done
-router.get("/goal/get-project-task-progress-done/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows, fields] = await pool.execute("CALL progress_done(?)", [pid]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //progress_done
+// router.get("/goal/get-project-task-progress-done/:pid", async (req, res) => {
+//   const pid = req.params.pid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL progress_done(?)", [pid]);
+//     res.status(200).json(rows[0][0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//progress_total
-router.get("/goal/get-project-task-progress-total/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows, fields] = await pool.execute("CALL progress_total(?)", [pid]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //progress_total
+// router.get("/goal/get-project-task-progress-total/:pid", async (req, res) => {
+//   const pid = req.params.pid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL progress_total(?)", [pid]);
+//     res.status(200).json(rows[0][0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//sub_progress_done
-router.get("/goal/get-project-subtask-progress-done/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows, fields] = await pool.execute("CALL sub_progress_done(?)", [
-      pid,
-    ]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //sub_progress_done
+// router.get("/goal/get-project-subtask-progress-done/:pid", async (req, res) => {
+//   const pid = req.params.pid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL sub_progress_done(?)", [
+//       pid,
+//     ]);
+//     res.status(200).json(rows[0][0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//sub_progress_total
-router.get(
-  "/goal/get-project-subtask-progress-total/:pid",
-  async (req, res) => {
-    const pid = req.params.pid;
-    try {
-      const [rows, fields] = await pool.execute("CALL sub_progress_total(?)", [
-        pid,
-      ]);
-      res.status(200).json(rows[0][0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
+// //sub_progress_total
+// router.get(
+//   "/goal/get-project-subtask-progress-total/:pid",
+//   async (req, res) => {
+//     const pid = req.params.pid;
+//     try {
+//       const [rows, fields] = await pool.execute("CALL sub_progress_total(?)", [
+//         pid,
+//       ]);
+//       res.status(200).json(rows[0][0]);
+//     } catch (error) {
+//       console.error("Error executing stored procedure:", error);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
+
+// //ProjectProgress
+// router.get("/goal/get-project-progress/:pid", async (req, res) => {
+//   const pid = req.params.pid;
+//   try {
+//     const [t_progress_done_rows] = await pool.execute("CALL progress_done(?)", [
+//       pid,
+//     ]);
+
+//     const [t_progress_total_rows] = await pool.execute(
+//       "CALL progress_total(?)",
+//       [pid]
+//     );
+
+//     const [st_progress_done_rows] = await pool.execute(
+//       "CALL sub_progress_done(?)",
+//       [pid]
+//     );
+
+//     const [st_progress_total_rows] = await pool.execute(
+//       "CALL sub_progress_total(?)",
+//       [pid]
+//     );
+
+//     let progressRes = 0;
+//     let progress_done = t_progress_done_rows[0][0]?.count_rows;
+//     let progress_total = t_progress_total_rows[0][0]?.count_rows;
+//     let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+//     let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+//     if (progress_total || sub_progress_total) {
+//       let total_pro_progress_done = progress_done + sub_progress_done;
+//       let total_pro_progress = progress_total + sub_progress_total;
+//       const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+//       progressRes = Math.round(progressCal);
+//     }
+
+//     res.status(200).json({ progress: progressRes });
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 //CheckProjectTeamMember
 router.get(
@@ -1467,34 +1996,81 @@ router.get("/goal/check-notify-goal-suggested/:gid", async (req, res) => {
   }
 });
 
-//SuggestedGoalMember
-router.get("/goal/goal-suggested-member/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute("CALL SuggestedGoalMember(?)", [
-      gid,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// //SuggestedGoalMember
+// router.get("/goal/goal-suggested-member/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute("CALL SuggestedGoalMember(?)", [
+//       gid,
+//     ]);
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-//SuggestedInviteGoalMember
-router.get("/goal/goal-suggested-invite-member/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  try {
-    const [rows, fields] = await pool.execute(
-      "CALL SuggestedInviteGoalMember(?)",
-      [gid]
-    );
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+// //SuggestedInviteGoalMember
+// router.get("/goal/goal-suggested-invite-member/:gid", async (req, res) => {
+//   const gid = req.params.gid;
+//   try {
+//     const [rows, fields] = await pool.execute(
+//       "CALL SuggestedInviteGoalMember(?)",
+//       [gid]
+//     );
+//     res.status(200).json(rows[0]);
+//   } catch (error) {
+//     console.error("Error executing stored procedure:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+//getAccepted_PortTM_GoalList
+router.get(
+  "/goal/get-all-accepted-portfolio-team-member-goal-list/:portfolio_id/:gid",
+  async (req, res) => {
+    const { portfolio_id, gid } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      const promises = rows[0].map(async (item) => {
+        const { sent_to } = item;
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        let data;
+        if (getName && getName[0] && getName[0][0]) {
+          let check_gmem = "";
+          const [check_gmRes] = await pool.execute("CALL check_gm(?,?,?)", [
+            getName[0][0].reg_id,
+            gid,
+            portfolio_id,
+          ]);
+          if (check_gmRes.length > 0 && check_gmRes[0] && check_gmRes[0][0]) {
+            check_gmem = check_gmRes[0][0].gmember;
+          }
+          if (getName[0][0].reg_id != check_gmem) {
+            const label =
+              getName[0][0].first_name + " " + getName[0][0].last_name;
+            const member_reg_id = getName[0][0].reg_id;
+            data = {
+              sent_to,
+              label,
+              member_reg_id,
+            };
+          }
+        }
+        return data;
+      });
+
+      const results = await Promise.all(promises);
+      return res.status(200).json(results.filter(Boolean));
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
   }
-});
+);
 
 //check_gm
 router.get("/goal/check-gm/:user_id/:gid/:portfolio_id", async (req, res) => {
@@ -1757,11 +2333,11 @@ router.patch("/goal/update-goal", async (req, res) => {
             transporter.sendMail(mailOptions, (error, info) => {
               if (error) {
                 res.status(500).json({
-                  error: "Failed to send portfolio invitation email.",
+                  error: "Failed to send invitation.",
                 });
               } else {
                 res.status(201).json({
-                  message: "Goal invitation sent to your email.",
+                  message: "Invitation sent successfully.",
                 });
               }
             });
@@ -1927,11 +2503,11 @@ router.patch("/goal/update-goal", async (req, res) => {
                 transporter.sendMail(mailOptions, (error, info) => {
                   if (error) {
                     res.status(500).json({
-                      error: "Failed to send portfolio invitation email.",
+                      error: "Failed to send invitation.",
                     });
                   } else {
                     res.status(201).json({
-                      message: "Goal invitation sent to your email.",
+                      message: "Invitation sent successfully.",
                     });
                   }
                 });
@@ -2032,11 +2608,11 @@ router.patch("/goal/update-goal", async (req, res) => {
               transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   res.status(500).json({
-                    error: "Failed to send portfolio invitation email.",
+                    error: "Failed to send invitation.",
                   });
                 } else {
                   res.status(201).json({
-                    message: "Goal invitation sent to your email.",
+                    message: "Invitation sent successfully.",
                   });
                 }
               });
@@ -2233,11 +2809,11 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   res.status(500).json({
-                    error: "Failed to send portfolio invitation email.",
+                    error: "Failed to send invitation.",
                   });
                 } else {
                   res.status(201).json({
-                    message: "Goal invitation sent to your email.",
+                    message: "Invitation sent successfully.",
                   });
                 }
               });
@@ -2452,7 +3028,7 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     transporter.sendMail(mailOptions2, (error, info) => {
                       if (error) {
                         res.status(500).json({
-                          error: "Failed to send portfolio invitation email.",
+                          error: "Failed to send invitation.",
                         });
                       } else {
                         res.status(201).json({
@@ -2476,7 +3052,7 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     transporter.sendMail(mailOptions2, (error, info) => {
                       if (error) {
                         res.status(500).json({
-                          error: "Failed to send portfolio invitation email.",
+                          error: "Failed to send invitation.",
                         });
                       } else {
                         res.status(201).json({
@@ -3161,20 +3737,22 @@ router.post("/goal/duplicate-goal", async (req, res) => {
 });
 
 //view_history_date_wise_goal
-router.get("/goal/view-history-date-wise-goal/:gid", async (req, res) => {
-  const gid = req.params.gid;
-  const hdate = req.body.hdate;
-  try {
-    const [rows, fields] = await pool.execute("CALL view_history_goal(?,?)", [
-      gid,
-      hdate,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/view-history-date-wise-goal/:gid/:hdate",
+  async (req, res) => {
+    const { gid, hdate } = req.params;
+    try {
+      const [rows, fields] = await pool.execute("CALL view_history_goal(?,?)", [
+        gid,
+        hdate,
+      ]);
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //view_history_date_range_goal
 router.get("/goal/view-history-date-range-goal/:gid", async (req, res) => {
@@ -3304,11 +3882,11 @@ router.post("/goal/insert-goal-member", async (req, res) => {
             transporter.sendMail(mailOptions, (error, info) => {
               if (error) {
                 res.status(500).json({
-                  error: "Failed to send portfolio invitation email.",
+                  error: "Failed to send invitation.",
                 });
               } else {
                 res.status(201).json({
-                  message: "Goal invitation sent to your email.",
+                  message: "Invitation sent successfully.",
                 });
               }
             });
@@ -3436,11 +4014,11 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                 transporter.sendMail(mailOptions, (error, info) => {
                   if (error) {
                     res.status(500).json({
-                      error: "Failed to send portfolio invitation email.",
+                      error: "Failed to send invitation.",
                     });
                   } else {
                     res.status(201).json({
-                      message: "Goal invitation sent to your email.",
+                      message: "Invitation sent successfully.",
                     });
                   }
                 });
@@ -3546,11 +4124,11 @@ router.post("/goal/insert-goal-member", async (req, res) => {
               transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   res.status(500).json({
-                    error: "Failed to send portfolio invitation email.",
+                    error: "Failed to send invitation.",
                   });
                 } else {
                   res.status(201).json({
-                    message: "Goal invitation sent to your email.",
+                    message: "Invitation sent successfully.",
                   });
                 }
               });
@@ -3740,7 +4318,7 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
         const del1 = `gmid = '${gmid}'`;
         await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
 
-        res.status(200).json({ message: "removed successfully" });
+        res.status(200).json({ message: "Removed successfully" });
       } else {
         res.status(200).json({
           strategies_countResult: strategies_count,
@@ -4212,7 +4790,7 @@ router.patch("/goal/remove-goal-invited-member", async (req, res) => {
     await pool.execute("CALL DeleteGoalsInvitedMembers(?)", [del1]);
 
     res.status(201).json({
-      message: "removed successfully.",
+      message: "Removed successfully.",
     });
   } catch (error) {
     res
@@ -4250,7 +4828,11 @@ router.patch(
         [gid, suggest_id]
       );
       if (check_Goal_members[0].length == 0) {
-        const updateFieldsValues1 = `status = 'approved' AND approve_date = '${formattedDate}'`;
+        const otherFields = {
+          status: "approved",
+          approve_date: "${formattedDate}",
+        };
+        const updateFieldsValues1 = convertObjectToProcedureParams(otherFields);
         const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
         await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
           updateFieldsValues1,
@@ -4346,11 +4928,11 @@ router.patch(
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             res.status(500).json({
-              error: "Failed to send portfolio invitation email.",
+              error: "Failed to send invitation.",
             });
           } else {
             res.status(201).json({
-              message: "added successfully.",
+              message: "Added successfully.",
             });
           }
         });
@@ -4390,8 +4972,12 @@ router.patch(
           suggest_id,
         ]);
         const user = check_user[0][0];
+        const otherFields = {
+          status: "approved",
+          approve_date: "${formattedDate}",
+        };
+        const updateFieldsValues1 = convertObjectToProcedureParams(otherFields);
 
-        const updateFieldsValues1 = `status = 'approved' AND approve_date = '${formattedDate}'`;
         const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
         await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
           updateFieldsValues1,
@@ -4513,11 +5099,11 @@ router.patch(
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             res.status(500).json({
-              error: "Failed to send portfolio invitation email.",
+              error: "Failed to send invitation.",
             });
           } else {
             res.status(201).json({
-              message: "added successfully.",
+              message: "Added successfully.",
             });
           }
         });
@@ -4527,7 +5113,12 @@ router.patch(
           [suggest_id, gid]
         );
         if (check_email[0].length == 0) {
-          const updateFieldsValues1 = `status = 'approved' AND approve_date = '${formattedDate}'`;
+          const otherFields = {
+            status: "approved",
+            approve_date: "${formattedDate}",
+          };
+          const updateFieldsValues1 =
+            convertObjectToProcedureParams(otherFields);
           const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
           await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
             updateFieldsValues1,
@@ -4625,6 +5216,12 @@ router.patch(
             paramValuesString10,
           ]);
 
+          const [check_Portfolio_owner_id] = await pool.execute(
+            "CALL getPortfolio2(?)",
+            [gdetail.portfolio_id]
+          );
+          const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
+
           const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
           const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
           const mailOptions = {
@@ -4642,11 +5239,11 @@ router.patch(
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               res.status(500).json({
-                error: "Failed to send portfolio invitation email.",
+                error: "Failed to send invitation.",
               });
             } else {
               res.status(201).json({
-                message: "Goal invitation sent to your email.",
+                message: "Goal invitation sent.",
               });
             }
           });
@@ -4690,8 +5287,139 @@ router.get("/goal/strategy-subtasks/:sid", async (req, res) => {
 router.get("/goal/strategy-detail/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute("CALL StrategyDetail(?)", [sid]);
-    res.status(200).json(rows[0][0]);
+    const [rows] = await pool.execute("CALL StrategyDetail(?)", [sid]);
+
+    const [getGoalRes] = await pool.execute("CALL GoalDetail(?)", [
+      rows[0][0].gid,
+    ]);
+    const get_goal_name = getGoalRes[0][0].gname;
+    const get_goal_manager = getGoalRes[0][0].gmanager;
+    const get_goal_owner = getGoalRes[0][0].gcreated_by;
+
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      rows[0][0].gdept_id,
+    ]);
+    const get_dept_name = getDeptName[0][0].department;
+
+    const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
+      rows[0][0].screated_by,
+    ]);
+    const get_created_by_name =
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
+
+    const [kpi_t_progress_done_rows] = await pool.execute(
+      "CALL Strategyprogress_done(?)",
+      [sid]
+    );
+
+    const [kpi_t_progress_total_rows] = await pool.execute(
+      "CALL Strategyprogress_total(?)",
+      [sid]
+    );
+
+    const [kpi_st_progress_done_rows] = await pool.execute(
+      "CALL Strategysub_progress_done(?)",
+      [sid]
+    );
+
+    const [kpi_st_progress_total_rows] = await pool.execute(
+      "CALL Strategysub_progress_total(?)",
+      [sid]
+    );
+
+    let kpi_progress = 0;
+    let kpi_total_pro_progress = 0;
+    let kpi_total_pro_progress_done = 0;
+    let kpi_progress_done = kpi_t_progress_done_rows[0][0]?.count_rows;
+    let kpi_progress_total = kpi_t_progress_total_rows[0][0]?.count_rows;
+    let kpi_sub_progress_done = kpi_st_progress_done_rows[0][0]?.count_rows;
+    let kpi_sub_progress_total = kpi_st_progress_total_rows[0][0]?.count_rows;
+
+    if (kpi_progress_total || kpi_sub_progress_total) {
+      kpi_total_pro_progress_done = kpi_progress_done + kpi_sub_progress_done;
+      kpi_total_pro_progress = kpi_progress_total + kpi_sub_progress_total;
+      const kpi_progressCal =
+        (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
+      kpi_progress = Math.round(kpi_progressCal);
+    }
+
+    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      rows[0][0].portfolio_id,
+    ]);
+    const get_portfolio_createdby_id = get_portfolio[0][0]?.portfolio_createdby;
+
+    const results = {
+      ...rows[0][0],
+      get_goal_name,
+      get_goal_manager,
+      get_goal_owner,
+      get_dept_name,
+      get_created_by_name,
+      get_portfolio_createdby_id,
+      kpi_progress,
+      kpi_total_pro_progress,
+      kpi_total_pro_progress_done,
+    };
+
+    const [prorows] = await pool.execute("CALL StrategyAllProjectsList(?)", [
+      sid,
+    ]);
+
+    const promises = prorows[0].map(async (item) => {
+      const { pid } = item;
+
+      const [t_progress_done_rows] = await pool.execute(
+        "CALL progress_done(?)",
+        [pid]
+      );
+
+      const [t_progress_total_rows] = await pool.execute(
+        "CALL progress_total(?)",
+        [pid]
+      );
+
+      const [st_progress_done_rows] = await pool.execute(
+        "CALL sub_progress_done(?)",
+        [pid]
+      );
+
+      const [st_progress_total_rows] = await pool.execute(
+        "CALL sub_progress_total(?)",
+        [pid]
+      );
+
+      let progressRes = 0;
+      let total_pro_progress = 0;
+      let total_pro_progress_done = 0;
+      let progress_done = t_progress_done_rows[0][0]?.count_rows;
+      let progress_total = t_progress_total_rows[0][0]?.count_rows;
+      let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+      let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+
+      if (progress_total || sub_progress_total) {
+        total_pro_progress_done = progress_done + sub_progress_done;
+        total_pro_progress = progress_total + sub_progress_total;
+        const progressCal =
+          (total_pro_progress_done / total_pro_progress) * 100;
+        progressRes = Math.round(progressCal);
+      }
+
+      const data = {
+        ...item,
+        progressRes,
+        total_pro_progress,
+        total_pro_progress_done,
+      };
+      return data;
+    });
+    const projectResults = await Promise.all(promises);
+
+    res.status(200).json({
+      kpiRes: results,
+      projectRes: projectResults,
+    });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -4706,7 +5434,12 @@ router.get("/goal/view-history-date-strategy/:sid", async (req, res) => {
       "CALL view_history_date_strategy(?)",
       [sid]
     );
-    res.status(200).json(rows[0]);
+
+    const [KpiDetail] = await pool.execute("CALL StrategyDetail(?)", [sid]);
+
+    res
+      .status(200)
+      .json({ history_dates: rows[0], KpiDetail: KpiDetail[0][0] });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -4763,20 +5496,22 @@ router.patch("/goal/update-strategies", async (req, res) => {
 });
 
 //view_history_date_wise_strategy
-router.get("/goal/view-history-date-wise-strategy/:sid", async (req, res) => {
-  const sid = req.params.sid;
-  const hdate = req.body.hdate;
-  try {
-    const [rows, fields] = await pool.execute(
-      "CALL view_history_strategy(?,?)",
-      [sid, hdate]
-    );
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/view-history-date-wise-strategy/:sid/:hdate",
+  async (req, res) => {
+    const { sid, hdate } = req.params;
+    try {
+      const [rows, fields] = await pool.execute(
+        "CALL view_history_strategy(?,?)",
+        [sid, hdate]
+      );
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //view_history_date_range_strategy
 router.get("/goal/view-history-date-range-strategy/:sid", async (req, res) => {
@@ -5032,7 +5767,7 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 transporter.sendMail(mailOptions2, (error, info) => {
                   if (error) {
                     res.status(500).json({
-                      error: "Failed to send portfolio invitation email.",
+                      error: "Failed to send invitation.",
                     });
                   } else {
                     res.status(201).json({
@@ -5056,7 +5791,7 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 transporter.sendMail(mailOptions2, (error, info) => {
                   if (error) {
                     res.status(500).json({
-                      error: "Failed to send portfolio invitation email.",
+                      error: "Failed to send invitation.",
                     });
                   } else {
                     res.status(201).json({
@@ -5538,6 +6273,7 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
 
     res.status(201).json({
       message: "KPI Copied successfully.",
+      sid: getKPI.sid
     });
   } catch (error) {
     res
@@ -5779,5 +6515,92 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
       .json({ error: "Internal Server Error", details: error.message });
   }
 });
+
+//getGoalCreateDD
+router.get(
+  "/goal/get-goal-create-dd/:portfolio_id/:user_id",
+  async (req, res) => {
+    const { portfolio_id, user_id } = req.params;
+    try {
+      const [PortfolioDepartment] = await pool.execute(
+        "CALL get_PortfolioDepartment(?)",
+        [portfolio_id]
+      );
+      const Deptpromises = PortfolioDepartment[0].map(async (item) => {
+        const { department } = item;
+        const label = department;
+        const data = {
+          ...item,
+          label,
+        };
+
+        return data;
+      });
+
+      const PortfolioDepartmentResults = await Promise.all(Deptpromises);
+
+      const [AssignList] = await pool.execute("CALL getAccepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      const promises = AssignList[0].map(async (item) => {
+        const { sent_to } = item;
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        let data;
+        let label = "";
+        if (getName && getName[0] && getName[0][0]) {
+          if (user_id == getName[0][0].reg_id) {
+            label = "Assign To Me";
+          } else {
+            label = getName[0][0].first_name + " " + getName[0][0].last_name;
+          }
+
+          const member_reg_id = getName[0][0].reg_id;
+          data = {
+            sent_to,
+            label,
+            member_reg_id,
+          };
+        }
+        return data;
+      });
+
+      const AssignManagerListResults = await Promise.all(promises);
+      const AssignManagerListRes = AssignManagerListResults.filter(Boolean);
+
+      const mempromises = AssignList[0].map(async (item) => {
+        const { sent_to } = item;
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        let data2;
+        let name = "";
+        if (getName && getName[0] && getName[0][0]) {
+          if (user_id != getName[0][0].reg_id) {
+            name = getName[0][0].first_name + " " + getName[0][0].last_name;
+            const id = getName[0][0].reg_id;
+            data2 = {
+              sent_to,
+              name,
+              id,
+            };
+          }
+        }
+        return data2;
+      });
+
+      const AssignMemberListResults = await Promise.all(mempromises);
+      const AssignMemberListRes = AssignMemberListResults.filter(Boolean);
+
+      return res.status(200).json({
+        PortfolioDepartmentRes: PortfolioDepartmentResults,
+        AssignManagerListRes: AssignManagerListRes,
+        AssignMemberListRes: AssignMemberListRes,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
 
 module.exports = router;
