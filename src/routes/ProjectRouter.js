@@ -10,18 +10,35 @@ const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
 
-//ProjectListByPortfolioRegular
+//Project List
 router.get(
   "/project/get-project-list/:user_id/:portfolio_id",
   async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
-      const [rows] = await pool.execute(
+      const [regularList] = await pool.execute(
         "CALL ProjectListByPortfolioRegular(?,?)",
         [portfolio_id, user_id]
       );
-      res.status(200).json(rows[0]);
+      const [acceptedList] = await pool.execute(
+        "CALL AcceptedProjectListByPortfolioRegular(?,?)",
+        [portfolio_id, user_id]
+      );
+      const [pendingList] = await pool.execute(
+        "CALL PendingProjectListByPortfolioRegular(?,?)",
+        [portfolio_id, user_id]
+      );
+      const [readMoreList] = await pool.execute(
+        "CALL ReadMoreProjectListByPortfolioRegular(?,?)",
+        [portfolio_id, user_id]
+      );
+      res.status(200).json({
+        projectRegularList: regularList,
+        projectAcceptedList: acceptedList,
+        projectPendingList: pendingList,
+        projectReadMoreList: readMoreList
+      });
     } catch (error) {
       console.error("Error executing stored procedure:", error);
       res.status(500).json({ error: "Internal Server Error" });

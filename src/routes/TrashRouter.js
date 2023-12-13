@@ -4,61 +4,1037 @@ const pool = require("../database/connection"); // Import the database connectio
 const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
-// Get All Trash Modules
-router.get("/trash/data/:portfolio_id/:user_id", async (req, res) => {
-  const { portfolio_id, user_id } = req.params;
+// Get All Data Trash Modules
+router.get(
+  "/trash/all-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
   try {
-    const [TrashProjectFiles] = await pool.execute(
-      "CALL TrashProjectFiles(?)",
-      [portfolio_id]
-    );
-    const [TrashTaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [
-      portfolio_id,
+    const [trash_goals] = await pool.execute("CALL TrashGoals(?,?)", [user_id, portfolio_id]);
+    const [trash_kpis] = await pool.execute("CALL TrashStrategies(?,?)", [user_id, portfolio_id]);
+    const [trash_projects] = await pool.execute("CALL TrashProjects(?,?)", [portfolio_id, user_id]);
+    const [trash_tasks] = await pool.execute("CALL TrashTasks(?,?)", [user_id, portfolio_id]);
+    const [trash_single_tasks] = await pool.execute("CALL TrashSingleTasks(?,?)", [user_id, portfolio_id]);
+    const [trash_subtasks] = await pool.execute("CALL TrashSubtasks(?,?)", [portfolio_id, user_id]);
+    const [trash_single_subtasks] = await pool.execute("CALL TrashSingleSubtasks(?,?)", [portfolio_id, user_id]);
+    const [trash_ProjectFiles] = await pool.execute("CALL TrashProjectFiles(?)", [portfolio_id]);
+    const [trash_TaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [portfolio_id]);
+    const [trash_SubtaskFiles] = await pool.execute("CALL TrashSubtaskFiles(?)", [portfolio_id]);
+
+    const trash_goals_data = trash_goals[0];
+    let trash_goals_parent = [];
+      if(trash_goals_data){
+        const trash_goals_promises = trash_goals_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const goalDate = row.g_trash_date;
+          const jsDate = new Date(goalDate);
+          const formattedGoalDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `goal-${row.gid}`,
+            table_id: row.gid,
+            all_portfolio: portfolioName,
+            all_trash: row.gname,
+            all_title: "",
+            all_type: "Goal",
+            all_date: formattedGoalDate,
+          };
+        })
+        trash_goals_parent = (await Promise.all(trash_goals_promises)).flat();
+      }
+
+      const trash_kpis_data = trash_kpis[0];
+      let trash_kpis_parent = [];
+      if(trash_kpis_data){
+        const trash_kpis_promises = trash_kpis_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const kpiDate = row.s_trash_date;
+          const jsDate = new Date(kpiDate);
+          const formattedkpiDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `kpi-${row.sid}`,
+            table_id: row.sid,
+            all_portfolio: portfolioName,
+            all_trash: row.sname,
+            all_title: "",
+            all_type: "KPI",
+            all_date: formattedkpiDate,
+          };
+        })
+        trash_kpis_parent = (await Promise.all(trash_kpis_promises)).flat();
+      }
+
+      const trash_projects_data = trash_projects[0];
+      let trash_projects_parent = [];
+      if(trash_projects_data){
+        const trash_projects_promises = trash_projects_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const projectDate = row.ptrash_date;
+          const jsDate = new Date(projectDate);
+          const formattedprojectDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `project-${row.pid}`,
+            table_id: row.pid,
+            all_portfolio: portfolioName,
+            all_trash: row.pname,
+            all_title: "",
+            all_type: "Project",
+            all_date: formattedprojectDate,
+          };
+        })
+        trash_projects_parent = (await Promise.all(trash_projects_promises)).flat();
+      }
+
+      const trash_tasks_data = trash_tasks[0];
+      let trash_tasks_parent = [];
+      if(trash_tasks_data){
+        const trash_tasks_promises = trash_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const taskDate = row.trash_date;
+          const jsDate = new Date(taskDate);
+          const formattedtaskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            all_portfolio: portfolioName,
+            all_trash: row.tname,
+            all_title: row.pname,
+            all_type: "Task",
+            all_date: formattedtaskDate,
+          };
+        })
+        trash_tasks_parent = (await Promise.all(trash_tasks_promises)).flat();
+      }
+
+      const trash_single_tasks_data = trash_single_tasks[0];
+      let trash_single_tasks_parent = [];
+      if(trash_single_tasks_data){
+        const trash_single_tasks_promises = trash_single_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_taskDate = row.trash_date;
+          const jsDate = new Date(single_taskDate);
+          const formattedsingle_taskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            all_portfolio: portfolioName,
+            all_trash: row.tname,
+            all_title: "",
+            all_type: "Task",
+            all_date: formattedsingle_taskDate,
+          };
+        })
+        trash_single_tasks_parent = (await Promise.all(trash_single_tasks_promises)).flat();
+      }
+
+      const trash_subtasks_data = trash_subtasks[0];
+      let trash_subtasks_parent = [];
+      if(trash_subtasks_data){
+        const trash_subtasks_promises = trash_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const subtaskDate = row.strash_date;
+          const jsDate = new Date(subtaskDate);
+          const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            all_portfolio: portfolioName,
+            all_trash: row.stname,
+            all_title: row.pname,
+            all_type: "Subtask",
+            all_date: formattedsubtaskDate,
+          };
+        })
+        trash_subtasks_parent = (await Promise.all(trash_subtasks_promises)).flat();
+      }
+
+      const trash_single_subtasks_data = trash_single_subtasks[0];
+      let trash_single_subtasks_parent = [];
+      if(trash_single_subtasks_data){
+        const trash_single_subtasks_promises = trash_single_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_subtaskDate = row.strash_date;
+          const jsDate = new Date(single_subtaskDate);
+          const formattedsingle_subtaskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            all_portfolio: portfolioName,
+            all_trash: row.stname,
+            all_title: "",
+            all_type: "Subtask",
+            all_date: formattedsingle_subtaskDate,
+          };
+        })
+        trash_single_subtasks_parent = (await Promise.all(trash_single_subtasks_promises)).flat();
+      }
+
+      const trash_projectFiles_data = trash_ProjectFiles[0];
+      let trash_projectFiles_parent = [];
+      if(trash_projectFiles_data){
+        const trash_projectFiles_promises = trash_projectFiles_data.map(async (row) => {
+          const [project_detail] = await pool.execute("CALL file_itgetProjectById2(?)", [row.pid]);
+          const check_project = project_detail[0][0];
+
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          if(check_project){
+            if(check_project.pcreated_by == user_id){
+              const portfolioName = 
+              (portfolioUser == 'company') 
+              ? (portfolio_del[0][0].portfolio_name) 
+              : (portfolioUser == 'individual')
+                ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+                : (portfolio_del[0][0].portfolio_name)
+
+              const projectDate = row.pfptrash_date;
+              const jsDate = new Date(projectDate);
+              const formattedprojectDate = jsDate.toISOString().split('T')[0];
+              return {
+                id: `project-file-${row.pfile_id}`,
+                table_id: row.pfile_id,
+                module_id: row.pid,
+                all_portfolio: portfolioName,
+                all_trash: row.pfile.substring(row.pfile.indexOf('_') + 1),
+                all_title: row.pname,
+                all_type: "Project File",
+                all_date: formattedprojectDate,
+              };
+            }
+          }
+        })
+        trash_projectFiles_parent = await Promise.all(trash_projectFiles_promises);
+      }
+
+      const trash_memberFiles_data = trash_ProjectFiles[0];
+      let trash_memberFiles_parent = [];
+      if (trash_memberFiles_data && trash_memberFiles_data.length > 0) {
+        const trash_memberFiles_promises = trash_memberFiles_data.map(async (row) => {
+          const [pmember_detail] = await pool.execute("CALL file_itgetMemberProject(?)", [row.pid]);
+          const check_pmember = pmember_detail[0];
+
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+            (portfolioUser == 'company') 
+              ? portfolio_del[0][0].portfolio_name
+              : (portfolioUser == 'individual')
+                ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`
+                : portfolio_del[0][0].portfolio_name;
+
+          const projectDate = row.pfptrash_date;
+          const jsDate = new Date(projectDate);
+          const formattedprojectDate = jsDate.toISOString().split('T')[0];
+
+          if (check_pmember) {
+            return check_pmember.map(async (row1) => {
+              if (row1.status == 'accepted' && row1.pmember == user_id) {
+                return {
+                  id: `project-file-${row.pfile_id}`,
+                  table_id: row.pfile_id,
+                  module_id: row.pid,
+                  all_portfolio: portfolioName,
+                  all_trash: row.pfile.substring(row.pfile.indexOf('_') + 1),
+                  all_title: row.pname,
+                  all_type: "Project File",
+                  all_date: formattedprojectDate,
+                };
+              }
+            });
+          }
+        });
+
+        const processedData = (await Promise.all(trash_memberFiles_promises)).flat().filter(item => Object.keys(item).length > 0);
+        trash_memberFiles_parent = processedData.filter(Boolean);
+      }
+
+      const trash_taskFiles_data = trash_TaskFiles[0];
+      let trash_taskFiles_parent = [];
+      if(trash_taskFiles_data){   
+        const trash_taskFiles_promises = trash_taskFiles_data.map(async (row) => {
+          const [task_detail] = await pool.execute("CALL file_itgetProjectById2(?)", [row.pid]);
+          const check_task = task_detail[0][0];
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          if(check_task){
+            if(check_task.pcreated_by == user_id){
+              const portfolioName = 
+              (portfolioUser == 'company') 
+              ? (portfolio_del[0][0].portfolio_name) 
+              : (portfolioUser == 'individual')
+                ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+                : (portfolio_del[0][0].portfolio_name)
+
+              const taskDate = row.task_trash_date;
+              const jsDate = new Date(taskDate);
+              const formattedtaskDate = jsDate.toISOString().split('T')[0];
+              return {
+                id: `task-file-${row.trash_id}`,
+                table_id: row.trash_id,
+                module_id: row.tid,
+                file_name: row.tfile,
+                all_portfolio: portfolioName,
+                all_trash: row.tfile.substring(row.tfile.indexOf('_') + 1),
+                all_title: row.tname,
+                all_type: "Task File",
+                all_date: formattedtaskDate,
+              };
+            }
+          }
+        })
+        trash_taskFiles_parent = await Promise.all(trash_taskFiles_promises);
+      }
+
+      const trash_memberTaskFiles_data = trash_TaskFiles[0];
+      let trash_memberTaskFiles_parent = [];
+      if (trash_memberTaskFiles_data && trash_memberTaskFiles_data.length > 0) {
+        const trash_memberTaskFiles_promises = trash_memberTaskFiles_data.map(async (row) => {
+          const [pmember_detail] = await pool.execute("CALL file_itgetMemberProject(?)", [row.pid]);
+          const check_pmember = pmember_detail[0];
+
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+            (portfolioUser == 'company') 
+              ? portfolio_del[0][0].portfolio_name
+              : (portfolioUser == 'individual')
+                ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`
+                : portfolio_del[0][0].portfolio_name;
+
+          const taskDate = row.task_trash_date;
+          const jsDate = new Date(taskDate);
+          const formattedtaskDate = jsDate.toISOString().split('T')[0];
+
+          if (check_pmember) {
+            return check_pmember.map(async (row1) => {
+              if (row1.status == 'accepted' && row1.pmember == user_id) {
+                return {
+                  id: `task-file-${row.trash_id}`,
+                  table_id: row.trash_id,
+                  module_id: row.tid,
+                  file_name: row.tfile,
+                  all_portfolio: portfolioName,
+                  all_trash: row.tfile.substring(row.tfile.indexOf('_') + 1),
+                  all_title: row.tname,
+                  all_type: "Task File",
+                  all_date: formattedtaskDate,
+                };
+              }
+            });
+          }
+        });
+
+        const processedData = (await Promise.all(trash_memberTaskFiles_promises)).flat().filter(item => Object.keys(item).length > 0);
+        trash_memberTaskFiles_parent = processedData.filter(Boolean);
+      }
+
+      const trash_subtaskFiles_data = trash_SubtaskFiles[0];
+      let trash_subtaskFiles_parent = [];
+      if(trash_subtaskFiles_data){   
+        const trash_subtaskFiles_promises = trash_subtaskFiles_data.map(async (row) => {
+          const [subtask_detail] = await pool.execute("CALL file_itgetProjectById2(?)", [row.pid]);
+          const check_subtask = subtask_detail[0][0];
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          if(check_subtask){
+            if(check_subtask.pcreated_by == user_id){
+              const portfolioName = 
+              (portfolioUser == 'company') 
+              ? (portfolio_del[0][0].portfolio_name) 
+              : (portfolioUser == 'individual')
+                ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+                : (portfolio_del[0][0].portfolio_name)
+
+              const subtaskDate = row.stask_trash_date;
+              const jsDate = new Date(subtaskDate);
+              const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+              return {
+                id: `subtask-file-${row.strash_id}`,
+                table_id: row.strash_id,
+                module_id: row.stid,
+                file_name: row.stfile,
+                all_portfolio: portfolioName,
+                all_trash: row.stfile.substring(row.stfile.indexOf('_') + 1),
+                all_title: row.stname,
+                all_type: "Subtask File",
+                all_date: formattedsubtaskDate,
+              };
+            }
+          }
+        })
+        trash_subtaskFiles_parent = await Promise.all(trash_subtaskFiles_promises);
+      }
+
+      const trash_memberSubtaskFiles_data = trash_SubtaskFiles[0];
+      let trash_memberSubtaskFiles_parent = [];
+      if (trash_memberSubtaskFiles_data && trash_memberSubtaskFiles_data.length > 0) {
+        const trash_memberSubtaskFiles_promises = trash_memberSubtaskFiles_data.map(async (row) => {
+          const [pmember_detail] = await pool.execute("CALL file_itgetMemberProject(?)", [row.pid]);
+          const check_pmember = pmember_detail[0];
+
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+            (portfolioUser == 'company') 
+              ? portfolio_del[0][0].portfolio_name
+              : (portfolioUser == 'individual')
+                ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`
+                : portfolio_del[0][0].portfolio_name;
+
+          const subtaskDate = row.stask_trash_date;
+          const jsDate = new Date(subtaskDate);
+          const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+
+          if (check_pmember) {
+            return check_pmember.map(async (row1) => {
+              if (row1.status == 'accepted' && row1.pmember == user_id) {
+                return {
+                  id: `subtask-file-${row.strash_id}`,
+                  table_id: row.strash_id,
+                  module_id: row.stid,
+                  file_name: row.stfile,
+                  all_portfolio: portfolioName,
+                  all_trash: row.stfile.substring(row.stfile.indexOf('_') + 1),
+                  all_title: row.stname,
+                  all_type: "Subtask File",
+                  all_date: formattedsubtaskDate,
+                };
+              }
+            });
+          }
+        });
+
+        const processedData = (await Promise.all(trash_memberSubtaskFiles_promises)).flat().filter(item => Object.keys(item).length > 0);
+        trash_memberSubtaskFiles_parent = processedData.filter(Boolean);
+      }
+
+      const all_trash_data = [
+        ...trash_goals_parent,
+        ...trash_kpis_parent,
+        ...trash_projects_parent,
+        ...trash_tasks_parent,
+        ...trash_single_tasks_parent,
+        ...trash_subtasks_parent,
+        ...trash_single_subtasks_parent,
+        ...trash_projectFiles_parent,
+        ...trash_memberFiles_parent,
+        ...trash_taskFiles_parent,
+        ...trash_memberTaskFiles_parent,
+        ...trash_subtaskFiles_parent,
+        ...trash_memberSubtaskFiles_parent
+      ];
+
+
+    // res.status(200).json(all_trash_data);
+    return res.status(200).json(all_trash_data.filter(Boolean));
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Goal Trash Modules
+router.get(
+  "/trash/goal-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [trash_goals] = await pool.execute("CALL TrashGoals(?,?)", [user_id, portfolio_id]);
+
+    const trash_goals_data = trash_goals[0];
+    let trash_goals_parent = [];
+      if(trash_goals_data){
+        const trash_goals_promises = trash_goals_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const goalDate = row.g_trash_date;
+          const jsDate = new Date(goalDate);
+          const formattedGoalDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `goal-${row.gid}`,
+            table_id: row.gid,
+            goal_portfolio: portfolioName,
+            goal_goal: row.gname,
+            goal_type: "Goal",
+            goal_date: formattedGoalDate,
+          };
+        })
+        trash_goals_parent = (await Promise.all(trash_goals_promises)).flat();
+      }
+
+    res.status(200).json(trash_goals_parent);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get KPI Trash Modules
+router.get(
+  "/trash/kpi-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [trash_kpis] = await pool.execute("CALL TrashStrategies(?,?)", [user_id, portfolio_id]);
+
+      const trash_kpis_data = trash_kpis[0];
+      let trash_kpis_parent = [];
+      if(trash_kpis_data){
+        const trash_kpis_promises = trash_kpis_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const kpiDate = row.s_trash_date;
+          const jsDate = new Date(kpiDate);
+          const formattedkpiDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `kpi-${row.sid}`,
+            table_id: row.sid,
+            kpi_portfolio: portfolioName,
+            kpi_kpi: row.sname,
+            kpi_type: "KPI",
+            kpi_date: formattedkpiDate,
+          };
+        })
+        trash_kpis_parent = (await Promise.all(trash_kpis_promises)).flat();
+      }
+
+    res.status(200).json(trash_kpis_parent);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Project Trash Modules
+router.get(
+  "/trash/project-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [trash_projects] = await pool.execute("CALL TrashProjects(?,?)", [portfolio_id, user_id]);
+
+      const trash_projects_data = trash_projects[0];
+      let trash_projects_parent = [];
+      if(trash_projects_data){
+        const trash_projects_promises = trash_projects_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const projectDate = row.ptrash_date;
+          const jsDate = new Date(projectDate);
+          const formattedprojectDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `project-${row.pid}`,
+            table_id: row.pid,
+            project_portfolio: portfolioName,
+            project_project: row.pname,
+            project_type: "Project",
+            project_date: formattedprojectDate,
+          };
+        })
+        trash_projects_parent = (await Promise.all(trash_projects_promises)).flat();
+      }
+
+    res.status(200).json(trash_projects_parent);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Task Trash Modules
+router.get(
+  "/trash/task-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [trash_tasks] = await pool.execute("CALL TrashTasks(?,?)", [user_id, portfolio_id]);
+    const [trash_single_tasks] = await pool.execute("CALL TrashSingleTasks(?,?)", [user_id, portfolio_id]);
+    const [trash_subtasks] = await pool.execute("CALL TrashSubtasks(?,?)", [portfolio_id, user_id]);
+    const [trash_single_subtasks] = await pool.execute("CALL TrashSingleSubtasks(?,?)", [portfolio_id, user_id]);
+
+      const trash_tasks_data = trash_tasks[0];
+      let trash_tasks_parent = [];
+      if(trash_tasks_data){
+        const trash_tasks_promises = trash_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const taskDate = row.trash_date;
+          const jsDate = new Date(taskDate);
+          const formattedtaskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.tassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            task_code: row.tcode,
+            task_portfolio: portfolioName,
+            task_project: row.pname,
+            task_task: row.tname,
+            task_assignee: assigneeName,
+            task_type: "Task",
+            task_date: formattedtaskDate,
+          };
+        })
+        trash_tasks_parent = (await Promise.all(trash_tasks_promises)).flat();
+      }
+
+      const trash_single_tasks_data = trash_single_tasks[0];
+      let trash_single_tasks_parent = [];
+      if(trash_single_tasks_data){
+        const trash_single_tasks_promises = trash_single_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_taskDate = row.trash_date;
+          const jsDate = new Date(single_taskDate);
+          const formattedsingle_taskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.tassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            task_code: row.tcode,
+            task_portfolio: portfolioName,
+            task_task: row.tname,
+            task_project: "",
+            task_assignee: assigneeName,
+            task_type: "Task",
+            task_date: formattedsingle_taskDate,
+          };
+        })
+        trash_single_tasks_parent = (await Promise.all(trash_single_tasks_promises)).flat();
+      }
+
+      const trash_subtasks_data = trash_subtasks[0];
+      let trash_subtasks_parent = [];
+      if(trash_subtasks_data){
+        const trash_subtasks_promises = trash_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const subtaskDate = row.strash_date;
+          const jsDate = new Date(subtaskDate);
+          const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.stassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            task_code: row.stcode,
+            task_portfolio: portfolioName,
+            task_task: row.stname,
+            task_project: row.pname,
+            task_assignee: assigneeName,
+            task_type: "Subtask",
+            task_date: formattedsubtaskDate,
+          };
+        })
+        trash_subtasks_parent = (await Promise.all(trash_subtasks_promises)).flat();
+      }
+
+      const trash_single_subtasks_data = trash_single_subtasks[0];
+      let trash_single_subtasks_parent = [];
+      if(trash_single_subtasks_data){
+        const trash_single_subtasks_promises = trash_single_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_subtaskDate = row.strash_date;
+          const jsDate = new Date(single_subtaskDate);
+          const formattedsingle_subtaskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.stassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            task_code: row.stcode,
+            task_portfolio: portfolioName,
+            task_task: row.stname,
+            task_project: "",
+            task_assignee: assigneeName,
+            task_type: "Subtask",
+            task_date: formattedsingle_subtaskDate,
+          };
+        })
+        trash_single_subtasks_parent = (await Promise.all(trash_single_subtasks_promises)).flat();
+      }
+
+      const all_trash_data = [
+        ...trash_tasks_parent,
+        ...trash_single_tasks_parent,
+        ...trash_subtasks_parent,
+        ...trash_single_subtasks_parent,
+      ];
+
+
+    res.status(200).json(all_trash_data);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Files Trash Modules
+router.get(
+  "/trash/files-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+
+  try {
+    const [trash_ProjectFiles] = await pool.execute("CALL TrashProjectFiles(?)", [portfolio_id]);
+    const trash_projectFiles_data = trash_ProjectFiles[0];
+
+    const [trash_TaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [portfolio_id]);
+    const trash_taskFiles_data = trash_TaskFiles[0];
+
+    const [trash_SubtaskFiles] = await pool.execute("CALL TrashSubtaskFiles(?)", [portfolio_id]);
+    const trash_subtaskFiles_data = trash_SubtaskFiles[0];
+
+    let trash_projectFiles_promises = [];
+    let trash_memberFiles_promises = [];
+    let trash_taskFiles_promises = [];
+    let trash_memberTaskFiles_promises = [];
+    let trash_subtaskFiles_promises = [];
+    let trash_memberSubtaskFiles_promises = [];
+
+    if (trash_projectFiles_data) {
+      trash_projectFiles_promises = trash_projectFiles_data.map(async (row) => {
+        const [project_detail] = await pool.execute("CALL file_itgetProjectById2(?)", [row.pid]);
+        const check_project = project_detail[0][0];
+
+        const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+        const portfolioUser = portfolio_del[0][0].portfolio_user;
+
+        if (check_project && check_project.pcreated_by == user_id) {
+          const portfolioName = 
+            (portfolioUser == 'company') 
+              ? portfolio_del[0][0].portfolio_name
+              : (portfolioUser == 'individual')
+                ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`
+                : portfolio_del[0][0].portfolio_name;
+
+          const projectDate = row.pfptrash_date;
+          const jsDate = new Date(projectDate);
+          const formattedprojectDate = jsDate.toISOString().split('T')[0];
+
+          return {
+            id: `project-file-${row.pfile_id}`,
+            table_id: row.pfile_id,
+            module_id: row.pid,
+            file_portfolio: portfolioName,
+            file_file: row.pfile.substring(row.pfile.indexOf('_') + 1),
+            file_title: row.pname,
+            file_type: "Project File",
+            file_date: formattedprojectDate,
+          };
+        }
+      });
+    }
+
+    if (trash_projectFiles_data) {
+      const trash_memberFiles_data = trash_ProjectFiles[0];
+      trash_memberFiles_promises = trash_memberFiles_data.map(async (row) => {
+        const [pmember_detail] = await pool.execute("CALL file_itgetMemberProject(?)", [row.pid]);
+        const check_pmember = pmember_detail[0];
+
+        const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+        const portfolioUser = portfolio_del[0][0].portfolio_user;
+        const portfolioName = 
+          (portfolioUser == 'company') 
+          ? portfolio_del[0][0].portfolio_name 
+          : (portfolioUser == 'individual')
+            ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}` 
+            : portfolio_del[0][0].portfolio_name;
+
+        if (check_pmember) {
+          check_pmember.forEach(async (row1) => {
+            if (row1.status == 'accepted' && row1.pmember == user_id) {
+              const projectDate = row.pfptrash_date;
+              const jsDate = new Date(projectDate);
+              const formattedprojectDate = jsDate.toISOString().split('T')[0];
+
+              return {
+                id: `project-${row.pfile_id}`,
+                table_id: row.pfile_id,
+                module_id: row.pid,
+                file_portfolio: portfolioName,
+                file_file: row.pfile.substring(row.pfile.indexOf('_') + 1),
+                file_title: row.pname,
+                file_type: "Project File",
+                file_date: formattedprojectDate,
+              };
+            }
+          });
+        }
+      });
+    }
+
+    if (trash_taskFiles_data) {
+      trash_taskFiles_promises = trash_taskFiles_data.map(async (row) => {
+        const [task_detail] = await pool.execute("CALL file_itgetProjectById2(?)", [row.pid]);
+        const check_task = task_detail[0][0];
+    
+        const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+        const portfolioUser = portfolio_del[0][0].portfolio_user;
+    
+        if (check_task && check_task.pcreated_by == user_id) {
+          const portfolioName = 
+            (portfolioUser == 'company') 
+              ? portfolio_del[0][0].portfolio_name
+              : (portfolioUser == 'individual')
+                ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`
+                : portfolio_del[0][0].portfolio_name;
+    
+          const taskDate = row.task_trash_date;
+          const jsDate = new Date(taskDate);
+          const formattedtaskDate = jsDate.toISOString().split('T')[0];
+    
+          return {
+            id: `task-file-${row.trash_id}`,
+            table_id: row.trash_id,
+            module_id: row.tid,
+            file_name: row.tfile,
+            file_portfolio: portfolioName,
+            file_file: row.tfile.substring(row.tfile.indexOf('_') + 1),
+            file_title: row.tname,
+            file_type: "Task File",
+            file_date: formattedtaskDate,
+          };
+        }
+      });
+    }
+    
+    if (trash_taskFiles_data) {
+      const trash_memberTaskFiles_data = trash_TaskFiles[0];
+      trash_memberTaskFiles_promises = trash_memberTaskFiles_data.map(async (row) => {
+        const [pmember_detail] = await pool.execute("CALL file_itgetMemberProject(?)", [row.pid]);
+        const check_pmember = pmember_detail[0];
+    
+        const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+        const portfolioUser = portfolio_del[0][0].portfolio_user;
+        const portfolioName = 
+          (portfolioUser == 'company') 
+          ? portfolio_del[0][0].portfolio_name 
+          : (portfolioUser == 'individual')
+            ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}` 
+            : portfolio_del[0][0].portfolio_name;
+    
+        if (check_pmember) {
+          check_pmember.forEach(async (row1) => {
+            if (row1.status == 'accepted' && row1.pmember == user_id) {
+              const taskDate = row.task_trash_date;
+              const jsDate = new Date(taskDate);
+              const formattedtaskDate = jsDate.toISOString().split('T')[0];
+    
+              return {
+                id: `task-${row.trash_id}`,
+                table_id: row.trash_id,
+                module_id: row.tid,
+                file_name: row.tfile,
+                file_portfolio: portfolioName,
+                file_file: row.tfile.substring(row.tfile.indexOf('_') + 1),
+                file_title: row.tname,
+                file_type: "Task File",
+                file_date: formattedtaskDate,
+              };
+            }
+          });
+        }
+      });
+    }
+
+    if (trash_subtaskFiles_data) {
+      trash_subtaskFiles_promises = trash_subtaskFiles_data.map(async (row) => {
+        const [subtask_detail] = await pool.execute("CALL file_itgetProjectById2(?)", [row.pid]);
+        const check_subtask = subtask_detail[0][0];
+    
+        const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+        const portfolioUser = portfolio_del[0][0].portfolio_user;
+    
+        if (check_subtask && check_subtask.pcreated_by == user_id) {
+          const portfolioName = 
+            (portfolioUser == 'company') 
+              ? portfolio_del[0][0].portfolio_name
+              : (portfolioUser == 'individual')
+                ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`
+                : portfolio_del[0][0].portfolio_name;
+    
+          const subtaskDate = row.stask_trash_date;
+          const jsDate = new Date(subtaskDate);
+          const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+    
+          return {
+            id: `subtask-file-${row.strash_id}`,
+            table_id: row.strash_id,
+            module_id: row.stid,
+            file_name: row.stfile,
+            file_portfolio: portfolioName,
+            file_file: row.stfile.substring(row.stfile.indexOf('_') + 1),
+            file_title: row.stname,
+            file_type: "Subtask File",
+            file_date: formattedsubtaskDate,
+          };
+        }
+      });
+    }
+    
+    if (trash_subtaskFiles_data) {
+      const trash_memberSubtaskFiles_data = trash_SubtaskFiles[0];
+      trash_memberSubtaskFiles_promises = trash_memberSubtaskFiles_data.map(async (row) => {
+        const [pmember_detail] = await pool.execute("CALL file_itgetMemberProject(?)", [row.pid]);
+        const check_pmember = pmember_detail[0];
+    
+        const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+        const portfolioUser = portfolio_del[0][0].portfolio_user;
+        const portfolioName = 
+          (portfolioUser == 'company') 
+          ? portfolio_del[0][0].portfolio_name 
+          : (portfolioUser == 'individual')
+            ? `${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}` 
+            : portfolio_del[0][0].portfolio_name;
+    
+        if (check_pmember) {
+          check_pmember.forEach(async (row1) => {
+            if (row1.status == 'accepted' && row1.pmember == user_id) {
+              const subtaskDate = row.stask_trash_date;
+              const jsDate = new Date(subtaskDate);
+              const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+    
+              return {
+                id: `subtask-${row.strash_id}`,
+                table_id: row.strash_id,
+                module_id: row.stid,
+                file_name: row.stfile,
+                file_portfolio: portfolioName,
+                file_file: row.stfile.substring(row.stfile.indexOf('_') + 1),
+                file_title: row.stname,
+                file_type: "Subtask File",
+                file_date: formattedsubtaskDate,
+              };
+            }
+          });
+        }
+      });
+    }
+
+    const [trash_projectFiles_parent, trash_memberFiles_parent, trash_taskFiles_parent, trash_memberTaskFiles_parent, trash_subtaskFiles_parent, trash_memberSubtaskFiles_parent] = await Promise.all([
+      Promise.all(trash_projectFiles_promises),
+      Promise.all(trash_memberFiles_promises),
+      Promise.all(trash_taskFiles_promises),
+      Promise.all(trash_memberTaskFiles_promises),
+      Promise.all(trash_subtaskFiles_promises),
+      Promise.all(trash_memberSubtaskFiles_promises),
     ]);
-    const [TrashProjects] = await pool.execute("CALL TrashProjects(?,?)", [
-      portfolio_id,
-      user_id,
-    ]);
-    const [TrashTasks] = await pool.execute("CALL TrashTasks(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [TrashSingleTasks] = await pool.execute(
-      "CALL TrashSingleTasks(?,?)",
-      [user_id, portfolio_id]
-    );
-    const [TrashSubtasks] = await pool.execute("CALL TrashSubtasks(?,?)", [
-      portfolio_id,
-      user_id,
-    ]);
-    const [TrashSingleSubtasks] = await pool.execute(
-      "CALL TrashSingleSubtasks(?,?)",
-      [portfolio_id, user_id]
-    );
-    const [TrashSubtaskFiles] = await pool.execute(
-      "CALL TrashSubtaskFiles(?)",
-      [portfolio_id]
-    );
-    const [TrashGoals] = await pool.execute("CALL TrashGoals(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const [TrashStrategies] = await pool.execute("CALL TrashStrategies(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    res.status(200).json({
-      trashProjectFiles: TrashProjectFiles[0],
-      trashTaskFiles: TrashTaskFiles[0],
-      trashProjects: TrashProjects[0],
-      trashTasks: TrashTasks[0],
-      trashSingleTasks: TrashSingleTasks[0],
-      trashSubtasks: TrashSubtasks[0],
-      trashSingleSubtasks: TrashSingleSubtasks[0],
-      trashSubtaskFiles: TrashSubtaskFiles[0],
-      trashGoals: TrashGoals[0],
-      trashStrategies: TrashStrategies[0],
-    });
+
+    const project_file_data = [
+      ...trash_projectFiles_parent.flat().filter(Boolean),
+      ...trash_memberFiles_parent.flat().filter(Boolean),
+      ...trash_taskFiles_parent.flat().filter(Boolean),
+      ...trash_memberTaskFiles_parent.flat().filter(Boolean),
+      ...trash_subtaskFiles_parent.flat().filter(Boolean),
+      ...trash_memberSubtaskFiles_parent.flat().filter(Boolean),
+    ];
+
+    return res.status(200).json(project_file_data);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -66,7 +1042,8 @@ router.get("/trash/data/:portfolio_id/:user_id", async (req, res) => {
 });
 
 //  Get User Detail by ID
-router.get("/trash/user/:user_id", async (req, res) => {
+router.get(
+  "/trash/user/:user_id", async (req, res) => {
   const { user_id } = req.params;
   try {
     const [user_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
@@ -78,7 +1055,8 @@ router.get("/trash/user/:user_id", async (req, res) => {
 });
 
 // Delete Portfolio
-router.patch("/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
   const { portf_id, user_id } = req.params;
   try {
     const [portfolio_row] = await pool.execute("CALL getPortfolio(?,?)", [
@@ -216,7 +1194,8 @@ router.patch("/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
 });
 
 // Delete Goal
-router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
   const { goal_id, user_id } = req.params;
   try {
     const [goal_row] = await pool.execute("CALL file_itGoalDetail(?)", [
@@ -350,7 +1329,8 @@ router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
 });
 
 // Delete KPI
-router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
   const { strategy_id, user_id } = req.params;
   try {
     const [kpi_row] = await pool.execute("CALL file_itStrategyDetail(?)", [
@@ -449,7 +1429,8 @@ router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
 });
 
 // Delete Project
-router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete/project/:project_id/:user_id", async (req, res) => {
   const { project_id, user_id } = req.params;
   try {
     const [project_row] = await pool.execute("CALL file_itProjectDetail(?,?)", [
@@ -541,7 +1522,8 @@ router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
 });
 
 // Delete Task
-router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete/task/:task_id/:user_id", async (req, res) => {
   const { task_id, user_id } = req.params;
   try {
     const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
@@ -593,7 +1575,8 @@ router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
 });
 
 // Delete Subtask
-router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [subtask_row] = await pool.execute("CALL file_itcheck_subtask(?)", [
@@ -646,8 +1629,7 @@ router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
 
 // Delete Project File
 router.patch(
-  "/trash/delete/project-file/:project_id/:pfile_id/:user_id",
-  async (req, res) => {
+  "/trash/delete/project-file/:project_id/:pfile_id/:user_id", async (req, res) => {
     const { project_id, pfile_id, user_id } = req.params;
     try {
       const [project_file_row] = await pool.execute(
@@ -712,8 +1694,7 @@ router.patch(
 
 // Delete Task File
 router.patch(
-  "/trash/delete/task-file/:task_id/:task_file_name/:user_id",
-  async (req, res) => {
+  "/trash/delete/task-file/:task_id/:task_file_name/:user_id", async (req, res) => {
     const { task_id, task_file_name, user_id } = req.params;
     try {
       const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
@@ -1492,7 +2473,7 @@ router.patch(
       }
 
       if (limitation == "in_limit") {
-        const [project_row] = await pool.execute("CALL check_ptrash(?,?)", [
+        const [project_row] = await pool.execute("CALL check_project_trash(?,?)", [
           project_id,
           user_id,
         ]);
@@ -1556,7 +2537,7 @@ router.patch(
                 tproject_assign,
               ]);
 
-              const subtaskFieldsValues = `strash = '', strash_date = '', , stsingle_trash = ''`;
+              const subtaskFieldsValues = `strash = '', strash_date = '', stsingle_trash = ''`;
               const stproject_assign = `stproject_assign = '${project_id}'`;
               await pool.execute("CALL UpdateSubtask(?,?)", [
                 subtaskFieldsValues,
@@ -1797,7 +2778,8 @@ router.patch(
 );
 
 // Reopen Project File
-router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
+router.patch(
+  "/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
   async (req, res) => {
     const { project_id, pfile_id, user_id } = req.params;
     try {
@@ -1806,7 +2788,7 @@ router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
         [pfile_id]
       );
       const [project_trash] = await pool.execute(
-        "CALL checkFileProjectTrash(?)",
+        "CALL checkTaskProjectTrash(?)",
         [project_id]
       );
       if (project_trash[0][0]) {
@@ -1869,12 +2851,12 @@ router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id",
 
 // Reopen Task File
 router.patch(
-  "/trash/retrieve/task-file/:tid/:tfile/:trash_id/:user_id",
+  "/trash/retrieve/task-file/:task_id/:tfile/:trash_id/:user_id",
   async (req, res) => {
-    const { tid, tfile, trash_id, user_id } = req.params;
+    const { task_id, tfile, trash_id, user_id } = req.params;
     try {
       const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [
-        tid,
+        task_id,
       ]);
       const [owner_row] = await pool.execute("CALL getStudentById(?)", [
         user_id,
@@ -1898,7 +2880,7 @@ router.patch(
           const task_file = trimmedTfile.substr(indexOfUnderscore + 1);
   
           const historyFieldsNames = "task_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-          const historyFieldsValues = `"${tid}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_file} Restored By ${student.first_name} ${student.last_name}"`;
+          const historyFieldsValues = `"${task_id}", "${task_row[0][0].tproject_assign}", "${task_row[0][0].sid}", "${task_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${task_file} Restored By ${student.first_name} ${student.last_name}"`;
   
           await pool.execute("CALL InsertProjectHistory(?,?)", [
             historyFieldsNames,
@@ -1924,12 +2906,12 @@ if (task_row[0][0].tfile && task_row[0][0].tfile.trim() !== "") {
 }
   
           const taskFieldsValues = `tfile = '${tfile_restore}'`;
-          const tid = `tid = '${tid}'`;
+          const tid = `tid = '${task_id}'`;
           await pool.execute("CALL UpdateTask(?,?)", [
             taskFieldsValues,
             tid,
           ]);
-          await pool.execute("CALL DeleteTaskTrash(?)", [trash_id]);
+          await pool.execute("CALL DeleteTaskTrash(?)", [`trash_id = '${trash_id}'`]);
   
           return res.status(200).json({ message: "Task Restored Successfully." });
         } else {
@@ -1946,13 +2928,11 @@ if (task_row[0][0].tfile && task_row[0][0].tfile.trim() !== "") {
 
 // Reopen Subtask File
 router.patch(
-  "/trash/retrieve/subtask-file/:stid/:stfile/:trash_id/:user_id",
+  "/trash/retrieve/subtask-file/:subtask_id/:stfile/:trash_id/:user_id",
   async (req, res) => {
-    const { stid, stfile, trash_id, user_id } = req.params;
+    const { subtask_id, stfile, trash_id, user_id } = req.params;
     try {
-      const [subtask_row] = await pool.execute("CALL getSubtaskById(?)", [
-        stid,
-      ]);
+      const [subtask_row] = await pool.execute("CALL getSubtaskById(?)", [subtask_id]);
       const [owner_row] = await pool.execute("CALL getStudentById(?)", [
         user_id,
       ]);
@@ -1975,7 +2955,7 @@ router.patch(
           const subtask_file = trimmedTfile.substr(indexOfUnderscore + 1);
   
           const historyFieldsNames = "subtask_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-          const historyFieldsValues = `"${stid}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_file} Restored By ${student.first_name} ${student.last_name}"`;
+          const historyFieldsValues = `"${subtask_id}", "${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].sid}", "${subtask_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${subtask_file} Restored By ${student.first_name} ${student.last_name}"`;
   
           await pool.execute("CALL InsertProjectHistory(?,?)", [
             historyFieldsNames,
@@ -1984,32 +2964,32 @@ router.patch(
   
           let stfile_restore = "";
 
-if (subtask_row[0][0].stfile && subtask_row[0][0].stfile.trim() !== "") {
-  const exist_stfile = subtask_row[0][0].stfile;
+          if (subtask_row[0][0].stfile && subtask_row[0][0].stfile.trim() !== "") {
+            const exist_stfile = subtask_row[0][0].stfile;
 
-  // Split existing tfile and new tfile into arrays
-  const exist_stfile_array = exist_stfile.split(', ');
-  const stfile_new_array = stfile.split(', ');
+            // Split existing tfile and new tfile into arrays
+            const exist_stfile_array = exist_stfile.split(', ');
+            const stfile_new_array = stfile.split(', ');
 
-  // Merge arrays
-  const merge_stfile = [...exist_stfile_array, ...stfile_new_array];
+            // Merge arrays
+            const merge_stfile = [...exist_stfile_array, ...stfile_new_array];
 
-  // Join the merged array into a string
-  stfile_restore = merge_stfile.join(',');
-} else {
-  stfile_restore = stfile; // Replace with the new tfile string
-}
+            // Join the merged array into a string
+            stfile_restore = merge_stfile.join(',');
+          } else {
+            stfile_restore = stfile; // Replace with the new tfile string
+          }
   
           const subtaskFieldsValues = `stfile = '${stfile_restore}'`;
-          const stid = `stid = '${stid}'`;
+          const stid = `stid = '${subtask_id}'`;
           await pool.execute("CALL UpdateSubtask(?,?)", [
             subtaskFieldsValues,
             stid,
           ]);
 
-          await pool.execute("CALL DeleteSubtaskTrash(?)", [trash_id]);
+          await pool.execute("CALL DeleteSubtaskTrash(?)", [`strash_id = '${trash_id}'`]);
   
-          return res.status(200).json({ message: "Task Restored Successfully." });
+          return res.status(200).json({ message: "Subtask Restored Successfully." });
         } else {
           res.status(400).json({ error: "Failed to get Task File details." });
         }
@@ -2024,19 +3004,19 @@ if (subtask_row[0][0].stfile && subtask_row[0][0].stfile.trim() !== "") {
 
 // Delete Forever Goal
 router.patch(
-  "/trash/delete-forever/goal/:goal_id/:user_id",
+  "/trash/delete-forever/goal/:gid/:user_id",
   async (req, res) => {
-    const { goal_id, user_id } = req.params;
+    const { gid, user_id } = req.params;
     try {
       const [goal_row] = await pool.execute("CALL check_goal_trash(?,?)", [
         user_id,
-        goal_id,
+        gid,
       ]);
 
       if (goal_row[0][0]) {
         const [goal_wise_kpis] = await pool.execute(
           "CALL GoalsAllStrategiesList_to_delete(?)",
-          [goal_id]
+          [gid]
         );
         if (goal_wise_kpis[0]) {
           const kpi_array = goal_wise_kpis[0];
@@ -2058,9 +3038,9 @@ router.patch(
                   const task_array = tasks[0];
                   task_array.forEach(async (row) => {
                     const tid = row.tid;
-                    await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+                    await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${tid}'`]);
                   });
-                  await pool.execute("CALL DeleteTask(?)", [pid]);
+                  await pool.execute("CALL DeleteTask(?)", [`tproject_assign = '${pid}'`]);
                 }
                 const [subtasks] = await pool.execute(
                   "CALL getProjectAllSubtaskTrash(?)",
@@ -2070,32 +3050,26 @@ router.patch(
                   const subtask_array = subtasks[0];
                   subtask_array.forEach(async (row) => {
                     const stid = row.stid;
-                    await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+                    await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${stid}'`]);
                   });
-                  await pool.execute("CALL DeleteSubtask(?)", [pid]);
+                  await pool.execute("CALL DeleteSubtask(?)", [`stproject_assign = '${pid}'`]);
                 }
 
-                await pool.execute("CALL DeleteProjectFiles(?)", [pid]);
-                await pool.execute("CALL DeleteProjectInvitedMembers(?)", [
-                  pid,
-                ]);
-                await pool.execute("CALL DeleteProjectManagement(?)", [pid]);
-                await pool.execute("CALL DeleteProjectManagementFields(?)", [
-                  pid,
-                ]);
-                await pool.execute("CALL DeleteProjectMembers(?)", [pid]);
-                await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [
-                  pid,
-                ]);
-                await pool.execute("CALL DeleteProjectHistory(?)", [pid]);
-                await pool.execute("CALL DeleteProjectRequestMember(?)", [pid]);
-                await pool.execute("CALL DeleteProject(?)", [pid]);
+                await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${pid}'`]);
+                await pool.execute("CALL DeleteProject(?)", [`pid = '${pid}'`]);
               });
             }
-            await pool.execute("CALL DeleteStrategies(?)", [sid]);
+            await pool.execute("CALL DeleteStrategies(?)", [`sid = '${sid}'`]);
           });
         }
-        await pool.execute("CALL DeleteGoals(?)", [gid]);
+        await pool.execute("CALL DeleteGoals(?)", [`gid = '${gid}'`]);
         return res.status(200).json({ message: "Goal deleted permanently" });
       } else {
         res.status(400).json({ error: "Failed to get Goal details." });
@@ -2108,7 +3082,8 @@ router.patch(
 );
 
 // Delete Forever KPI
-router.patch("/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
+router.patch(
+  "/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
   const { sid, user_id } = req.params;
   try {
     const [kpi_row] = await pool.execute("CALL check_strategy_trash(?,?)", [
@@ -2132,9 +3107,9 @@ router.patch("/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
             const task_array = tasks[0];
             task_array.forEach(async (row) => {
               const tid = row.tid;
-              await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+              await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${tid}'`]);
             });
-            await pool.execute("CALL DeleteTask(?)", [pid]);
+            await pool.execute("CALL DeleteTask(?)", [`tproject_assign = '${pid}'`]);
           }
           const [subtasks] = await pool.execute(
             "CALL getProjectAllSubtaskTrash(?)",
@@ -2144,23 +3119,23 @@ router.patch("/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
             const subtask_array = subtasks[0];
             subtask_array.forEach(async (row) => {
               const stid = row.stid;
-              await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+              await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${stid}'`]);
             });
-            await pool.execute("CALL DeleteSubtask(?)", [pid]);
+            await pool.execute("CALL DeleteSubtask(?)", [`stproject_assign = '${pid}'`]);
           }
 
-          await pool.execute("CALL DeleteProjectFiles(?)", [pid]);
-          await pool.execute("CALL DeleteProjectInvitedMembers(?)", [pid]);
-          await pool.execute("CALL DeleteProjectManagement(?)", [pid]);
-          await pool.execute("CALL DeleteProjectManagementFields(?)", [pid]);
-          await pool.execute("CALL DeleteProjectMembers(?)", [pid]);
-          await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [pid]);
-          await pool.execute("CALL DeleteProjectHistory(?)", [pid]);
-          await pool.execute("CALL DeleteProjectRequestMember(?)", [pid]);
-          await pool.execute("CALL DeleteProject(?)", [pid]);
+          await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${pid}'`]);
+          await pool.execute("CALL DeleteProject(?)", [`pid = '${pid}'`]);
         });
       }
-      await pool.execute("CALL DeleteStrategies(?)", [sid]);
+      await pool.execute("CALL DeleteStrategies(?)", [`sid = '${sid}'`]);
       return res.status(200).json({ message: "KPI deleted permanently" });
     } else {
       res.status(400).json({ error: "Failed to get KPI details." });
@@ -2190,9 +3165,9 @@ router.patch(
           const task_array = tasks[0];
           task_array.forEach(async (row) => {
             const tid = row.tid;
-            await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
+            await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${tid}'`]);
           });
-          await pool.execute("CALL DeleteTask(?)", [pid]);
+          await pool.execute("CALL DeleteTask(?)", [`tproject_assign = '${pid}'`]);
         }
         const [subtasks] = await pool.execute(
           "CALL getProjectAllSubtaskTrash(?)",
@@ -2202,20 +3177,20 @@ router.patch(
           const subtask_array = subtasks[0];
           subtask_array.forEach(async (row) => {
             const stid = row.stid;
-            await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
+            await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${stid}'`]);
           });
-          await pool.execute("CALL DeleteSubtask(?)", [pid]);
+          await pool.execute("CALL DeleteSubtask(?)", [`stproject_assign = '${pid}'`]);
         }
 
-        await pool.execute("CALL DeleteProjectFiles(?)", [pid]);
-        await pool.execute("CALL DeleteProjectInvitedMembers(?)", [pid]);
-        await pool.execute("CALL DeleteProjectManagement(?)", [pid]);
-        await pool.execute("CALL DeleteProjectManagementFields(?)", [pid]);
-        await pool.execute("CALL DeleteProjectMembers(?)", [pid]);
-        await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [pid]);
-        await pool.execute("CALL DeleteProjectHistory(?)", [pid]);
-        await pool.execute("CALL DeleteProjectRequestMember(?)", [pid]);
-        await pool.execute("CALL DeleteProject(?)", [pid]);
+        await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${pid}'`]);
+        await pool.execute("CALL DeleteProject(?)", [`pid = '${pid}'`]);
         return res.status(200).json({ message: "Project deleted permanently" });
       } else {
         res.status(400).json({ error: "Failed to get Project details." });
@@ -2228,16 +3203,17 @@ router.patch(
 );
 
 // Delete Forever Task
-router.patch("/trash/delete-forever/task/:tid", async (req, res) => {
+router.patch(
+  "/trash/delete-forever/task/:tid", async (req, res) => {
   const { tid } = req.params;
   try {
     const [task_row] = await pool.execute("CALL check_task2_new(?)", [tid]);
 
     if (task_row[0][0]) {
-      await pool.execute("CALL DeleteSubtaskTrash(?)", [tid]);
-      await pool.execute("CALL DeleteSubtaskTrash(?)", [tid]);
-      await pool.execute("CALL DeleteTaskTrash(?)", [tid]);
-      await pool.execute("CALL DeleteTask(?)", [tid]);
+      await pool.execute("CALL DeleteSubtask(?)", [`tid = '${tid}'`]);
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [`tid = '${tid}'`]);
+      await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${tid}'`]);
+      await pool.execute("CALL DeleteTask(?)", [`tid = '${tid}'`]);
       return res.status(200).json({ message: "Task deleted permanently" });
     } else {
       res.status(400).json({ error: "Failed to get Task details." });
@@ -2249,14 +3225,15 @@ router.patch("/trash/delete-forever/task/:tid", async (req, res) => {
 });
 
 // Delete Forever Subtask
-router.patch("/trash/delete-forever/subtask/:stid", async (req, res) => {
+router.patch(
+  "/trash/delete-forever/subtask/:stid", async (req, res) => {
   const { stid } = req.params;
   try {
     const [task_row] = await pool.execute("CALL check_subtask2(?)", [stid]);
 
     if (task_row[0][0]) {
-      await pool.execute("CALL DeleteSubtaskTrash(?)", [stid]);
-      await pool.execute("CALL DeleteSubtask(?)", [stid]);
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${stid}'`]);
+      await pool.execute("CALL DeleteSubtask(?)", [`stid = '${stid}'`]);
       return res.status(200).json({ message: "Subtask deleted permanently" });
     } else {
       res.status(400).json({ error: "Failed to get Subtask details." });
@@ -2268,7 +3245,8 @@ router.patch("/trash/delete-forever/subtask/:stid", async (req, res) => {
 });
 
 // Delete Forever Project File
-router.patch("/trash/delete-forever/project-file/:pfile_id",
+router.patch(
+  "/trash/delete-forever/project-file/:pfile_id",
   async (req, res) => {
     const { pfile_id } = req.params;
     try {
@@ -2277,18 +3255,10 @@ router.patch("/trash/delete-forever/project-file/:pfile_id",
       ]);
 
       if (file_row[0][0]) {
-        await pool.execute("CALL DeleteProjectFiles(?)", [pfile_id]);
-        const fs = require("fs");
-        fs.unlink(`./assets/project_files/${file_row[0][0].pfile}`, (err) => {
-          if (err) {
-            return res
-              .status(400)
-              .json({ message: "Project File not Deleted" });
-          }
-          return res
+        await pool.execute("CALL DeleteProjectFiles(?)", [`pfile_id = '${pfile_id}'`]);
+        return res
             .status(200)
             .json({ message: "Project File deleted permanently" });
-        });
       } else {
         res.status(400).json({ error: "Failed to get Project File details." });
       }
@@ -2310,18 +3280,10 @@ router.patch(
       ]);
 
       if(trash_row[0][0]){
-        await pool.execute("CALL DeleteTaskTrash(?)", [trash_id]);
-        const fs = require("fs");
-        fs.unlink(`./assets/task_files/${trash_row[0][0].tfile}`, (err) => {
-          if (err) {
-            return res
-              .status(400)
-              .json({ message: "Task File not Deleted" });
-          }
-          return res
+        await pool.execute("CALL DeleteTaskTrash(?)", [`trash_id = '${trash_id}'`]);
+        return res
             .status(200)
             .json({ message: "Task File deleted permanently" });
-        });
       } else {
         res.status(400).json({ error: "Failed to get Task File details." });
       }
@@ -2334,27 +3296,19 @@ router.patch(
 
 // Delete Forever Subtask File
 router.patch(
-  "/trash/delete-forever/subtask-file/:subtask_id/:trash_id/:user_id",
+  "/trash/delete-forever/subtask-file/:subtask_id/:strash_id/:user_id",
   async (req, res) => {
-    const { subtask_id, trash_id, user_id } = req.params;
+    const { subtask_id, strash_id, user_id } = req.params;
     try {
       const [trash_row] = await pool.execute("CALL check_stfile_subtask_trash(?,?)", [
-        trash_id, subtask_id
+        strash_id, subtask_id
       ]);
 
       if(trash_row[0][0]){
-        await pool.execute("CALL DeleteSubtaskTrash(?)", [trash_id]);
-        const fs = require("fs");
-        fs.unlink(`./assets/task_files/${trash_row[0][0].stfile}`, (err) => {
-          if (err) {
-            return res
-              .status(400)
-              .json({ message: "Subtask File not Deleted" });
-          }
-          return res
+        await pool.execute("CALL DeleteSubtaskTrash(?)", [`strash_id = '${strash_id}'`]);
+        return res
             .status(200)
             .json({ message: "Subtask File deleted permanently" });
-        });
       } else {
         res.status(400).json({ error: "Failed to get Subtask File details." });
       }
