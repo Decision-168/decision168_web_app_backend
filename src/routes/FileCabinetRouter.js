@@ -4,10 +4,10 @@ const pool = require("../database/connection"); // Import the database connectio
 const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
-// Get All portfolio departments
-router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
+// Get All portfolio departments wise modules
+router.get("/file-cabinet/data/:portfolio_id/:user_id", async (req, res) => {
   const { portfolio_id } = req.params;
-  const { user_id } = req.body;
+  const { user_id } = req.params;
   try {
     const [departments] = await pool.execute(
       "CALL get_PortfolioDepartment(?)",
@@ -20,22 +20,23 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
         "CALL file_itSubtaskFilesTaskWise(?,?,?,?)",
         [user_id, stid, portfolio_dept_id, portfolio_id]
       );
-
+    
       if (subtasks_files[0]) {
         const subtask_files_data = subtasks_files[0];
         const subtask_files_promises = subtask_files_data.map(async (row) => {
-          return {
-            id: `sf-${row.stid}`,
-            name: row.stfile,
+          const stfile = row.stfile;
+          return stfile && stfile.split(',').map((file, index) => ({
+            id: `sf-${row.stid}-${index}`,
+            name: file,
             table_id: row.stid,
             color: "#c7df19",
             type: "subtask-file",
             description: "",
             overview: "yes",
             section: "12",
-          };
+          }));
         });
-        subtask_files_parent = await Promise.all(subtask_files_promises);
+        subtask_files_parent = (await Promise.all(subtask_files_promises)).flat();
       }
       return subtask_files_parent;
     };
@@ -57,7 +58,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.stid,
             color: "#21ff9d",
             type: "subtask-content",
-            description: "",
+            description: row.stdes,
             overview: "yes",
             section: "11",
             children: subtask_files,
@@ -85,7 +86,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.tid,
             color: "#00dd7c",
             type: "task-content",
-            description: "",
+            description: row.tdes,
             overview: "yes",
             section: "9",
             children: [
@@ -129,13 +130,13 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.pid,
             color: "#00c770",
             type: "project-content",
-            description: "",
+            description: row.pdes,
             overview: "yes",
             section: "7",
             children: [
               {
                 id: `p-${row.pid}-0`,
-                name: "Task",
+                name: "Tasks",
                 table_id: 0,
                 color: "#00dd7c",
                 type: "task",
@@ -161,13 +162,13 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.pid,
             color: "#00c770",
             type: "project-content",
-            description: "",
+            description: row.pdes,
             overview: "yes",
             section: "7",
             children: [
               {
                 id: `p-${row.pid}-0`,
-                name: "Task",
+                name: "Tasks",
                 table_id: 0,
                 color: "#00dd7c",
                 type: "task",
@@ -202,7 +203,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.sid,
             color: "#009b57",
             type: "kpi-content",
-            description: "",
+            description: row.sdes,
             overview: "yes",
             section: "5",
             children: [
@@ -247,7 +248,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.gid,
             color: "#006e3e",
             type: "goal-content",
-            description: "",
+            description: row.gdes,
             overview: "yes",
             section: "3",
             children: [
@@ -279,7 +280,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.gid,
             color: "#006e3e",
             type: "goal-content",
-            description: "",
+            description: row.gdes,
             overview: "yes",
             section: "3",
             children: [
@@ -325,16 +326,16 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.sid,
             color: "#006e3e",
             type: "kpi-content",
-            description: "",
+            description: row.sdes,
             overview: "yes",
             section: "3",
             children: [
               {
                 id: `k-${row.sid}-0`,
-                name: "KPIs",
+                name: "Projects",
                 table_id: 0,
                 color: "#00854a",
-                type: "kpi",
+                type: "project",
                 description: "",
                 overview: "no",
                 section: "4",
@@ -357,16 +358,16 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.sid,
             color: "#006e3e",
             type: "kpi-content",
-            description: "",
+            description: row.sdes,
             overview: "yes",
             section: "3",
             children: [
               {
                 id: `k-${row.sid}-0`,
-                name: "KPIs",
+                name: "Projects",
                 table_id: 0,
                 color: "#00854a",
-                type: "kpi",
+                type: "project",
                 description: "",
                 overview: "no",
                 section: "4",
@@ -403,7 +404,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.pid,
             color: "#006e3e",
             type: "project-content",
-            description: "",
+            description: row.pdes,
             overview: "yes",
             section: "3",
             children: [
@@ -435,7 +436,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.pid,
             color: "#006e3e",
             type: "project-content",
-            description: "",
+            description: row.pdes,
             overview: "yes",
             section: "3",
             children: [
@@ -481,16 +482,16 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.tid,
             color: "#006e3e",
             type: "task-content",
-            description: "",
+            description: row.tdes,
             overview: "yes",
             section: "3",
             children: [
               {
                 id: `t-${row.tid}-0`,
-                name: "Tasks",
+                name: "Subtasks",
                 table_id: 0,
                 color: "#00854a",
-                type: "task",
+                type: "subtask",
                 description: "",
                 overview: "no",
                 section: "4",
@@ -513,16 +514,16 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.tid,
             color: "#006e3e",
             type: "task-content",
-            description: "",
+            description: row.tdes,
             overview: "yes",
             section: "3",
             children: [
               {
                 id: `t-${row.tid}-0`,
-                name: "Tasks",
-                table_id: row.tid,
+                name: "Subtasks",
+                table_id: 0,
                 color: "#00854a",
-                type: "task",
+                type: "subtask",
                 description: "",
                 overview: "no",
                 section: "4",
@@ -558,7 +559,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.stid,
             color: "#006e3e",
             type: "subtask-content",
-            description: "",
+            description: row.stdes,
             overview: "yes",
             section: "3",
             children: subtask_files,
@@ -578,7 +579,7 @@ router.get("/file-cabinet/data/:portfolio_id", async (req, res) => {
             table_id: row.stid,
             color: "#006e3e",
             type: "subtask-content",
-            description: "",
+            description: row.stdes,
             overview: "yes",
             section: "3",
             children: subtask_files,
@@ -1976,10 +1977,28 @@ router.get(
       ];
 
       // Sort the merged array by file_date in descending order
-      all_files_data.sort(
-        (a, b) => new Date(b.file_date) - new Date(a.file_date)
-      );
-      res.status(200).json(all_files_data);
+      all_files_data?.sort((a, b) => new Date(b.file_date) - new Date(a.file_date));
+
+      let all_files_parent = [];
+      if(all_files_data){
+        const all_files_promises = all_files_data.map(async (row) => {
+          const fileName = row.file_name;
+          return fileName && fileName.split(',').map((file, index) => ({
+            id: `rf-${row.file_id}-${index}`,
+            name: file,
+            type: `${row.file_type}-file`,
+            table_id: row.file_id,
+            label: row.file_type,
+            color: "#004225",
+            overview: "yes",
+            section: "1",
+            file_date: row.file_date,
+          }));
+        })
+        all_files_parent = (await Promise.all(all_files_promises)).flat();
+        all_files_parent = all_files_parent.slice(0, 5);
+      }
+      res.status(200).json(all_files_parent);
     } catch (error) {
       console.error("Error executing stored procedure:", error);
       res.status(500).json({ error: "Internal Server Error" });
@@ -2062,6 +2081,73 @@ router.get("/file-cabinet/subtask-detail/:stid", async (req, res) => {
       [stid]
     );
     res.status(200).json(subtask_detail[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/file-cabinet/department-detail/:deptId", async (req, res) => {
+  const { deptId } = req.params;
+  try {
+    const [department_detail] = await pool.execute("CALL get_PDepartment(?)", [
+      deptId,
+    ]);
+    res.status(200).json(department_detail[0][0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/file-cabinet/goal-kpi-detail/:gid/:portfolio_dept_id/:portfolio_id", async (req, res) => {
+  const { gid, portfolio_dept_id, portfolio_id } = req.params;
+  try {
+    const [goal_kpi_detail] = await pool.execute("CALL file_itStrategiesCountGoalWise(?,?,?)", [gid, portfolio_dept_id, portfolio_id]);
+    res.status(200).json(goal_kpi_detail[0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/file-cabinet/kpi-project-detail/:reg_id/:sid/:portfolio_dept_id/:portfolio_id", async (req, res) => {
+  const { reg_id, sid, portfolio_dept_id, portfolio_id } = req.params;
+  try {
+
+    const [project_detail] = await pool.execute("CALL file_itProjectsStrategyWise(?,?,?,?)", [reg_id, sid, portfolio_dept_id, portfolio_id]);
+    const [aproject_detail] = await pool.execute("CALL file_itAcceptedProjectsStrategyWise(?,?,?,?)", [reg_id, sid, portfolio_dept_id, portfolio_id]);
+
+    const kpi_project_detail = [...project_detail[0], ...aproject_detail[0]];
+    res.status(200).json(kpi_project_detail);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/file-cabinet/task-subtask-detail/:reg_id/:tid/:portfolio_dept_id/:portfolio_id", async (req, res) => {
+  const { reg_id, tid, portfolio_dept_id, portfolio_id } = req.params;
+  try {
+    const [subtask_detail] = await pool.execute("CALL file_itSubtaskCountTaskWise(?,?,?,?)", [
+      reg_id, tid, portfolio_dept_id, portfolio_id
+    ]);
+    const [single_subtask_detail] = await pool.execute("CALL file_itSingleSubtaskCountTaskWise(?,?,?,?)", [
+      reg_id, tid, portfolio_dept_id, portfolio_id
+    ]);
+    const task_subtask_detail = [...subtask_detail[0], ...single_subtask_detail[0]];
+    res.status(200).json(task_subtask_detail);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/file-cabinet/portfolio-detail/:portfolio_id", async (req, res) => {
+  const { portfolio_id } = req.params;
+  try {
+    const [portfolio_detail] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
+    res.status(200).json(portfolio_detail[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
