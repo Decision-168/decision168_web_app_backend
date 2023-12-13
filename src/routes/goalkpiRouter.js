@@ -2050,13 +2050,13 @@ router.get(
             check_gmem = check_gmRes[0][0].gmember;
           }
           if (getName[0][0].reg_id != check_gmem) {
-            const label =
+            const name =
               getName[0][0].first_name + " " + getName[0][0].last_name;
-            const member_reg_id = getName[0][0].reg_id;
+            const id = getName[0][0].reg_id;
             data = {
               sent_to,
-              label,
-              member_reg_id,
+              name,
+              id,
             };
           }
         }
@@ -2706,23 +2706,11 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       paramValuesString1,
     ]);
 
-    if (copy_detail == "everything") {
-      //Check Project Members
-      const [getMemberGoalRes] = await pool.execute("CALL getMemberGoal(?)", [
-        gid,
-      ]);
-      const getMemberGoal = getMemberGoalRes[0];
-
-      if (getMemberGoal && getMemberGoal.length > 0) {
-        //console.log(getMemberGoal);
-        await Promise.all(
-          getMemberGoal.map(async (t) => {
-            if (gcreated_by == t.gmember) {
-              const data5 = {
+    const data5 = {
                 gid: getGoal.gid,
                 portfolio_id: getGoal.portfolio_id,
                 gmember: gcreated_by,
-                status: `accepted`,
+                status: 'accepted',
                 gcreated_by: gcreated_by,
                 sent_date: formattedDate,
                 sent_notify_clear: `yes`,
@@ -2738,7 +2726,19 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                 paramNamesString5,
                 paramValuesString5,
               ]);
-            } else {
+
+    if (copy_detail == "everything") {
+      //Check Project Members
+      const [getMemberGoalRes] = await pool.execute("CALL getMemberGoal(?)", [
+        gid,
+      ]);
+      const getMemberGoal = getMemberGoalRes[0];
+
+      if (getMemberGoal && getMemberGoal.length > 0) {
+        //console.log(getMemberGoal);
+        await Promise.all(
+          getMemberGoal.map(async (t) => {
+            if (gcreated_by != t.gmember) {
               const data5 = {
                 gid: getGoal.gid,
                 portfolio_id: getGoal.portfolio_id,
@@ -2824,7 +2824,7 @@ router.post("/goal/duplicate-goal", async (req, res) => {
 
       //strategies
       const [g_strategiesRes] = await pool.execute(
-        "CALL GoalsAllStrategiesList_to_delete(?)",
+        "CALL GoalsAllStrategiesListASC(?)",
         [gid]
       );
       const g_strategies = g_strategiesRes[0];
@@ -3012,7 +3012,7 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                   const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
 
                   if (pm.pmember == sp.pmanager) {
-                    console.log("1");
+                    //console.log("1");
                     const mailOptions2 = {
                       from: process.env.SMTP_USER,
                       to: user.email_address,
@@ -3727,9 +3727,9 @@ router.post("/goal/duplicate-goal", async (req, res) => {
 
     res.status(201).json({
       message: "Goal Copied successfully.",
+      gid: getGoal.gid,
     });
   } catch (error) {
-    //console.error('Error in /goal/insert-goal:', error);
     res
       .status(500)
       .json({ error: "Internal Server Error", details: error.message });
@@ -3934,11 +3934,11 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                   paramValuesString7,
                 ]);
 
-                const [getportfolio] = await pool.execute(
+                const [check_portfolio] = await pool.execute(
                   "CALL check_PortfolioMember(?,?)",
-                  [im, portfolio_id]
+                  [im, gdetail.portfolio_id]
                 );
-                if (getportfolio[0].length == 0) {
+                if (check_portfolio[0].length == 0) {
                   const dataPort = {
                     portfolio_id: gdetail.portfolio_id,
                     sent_to: im,
@@ -3962,13 +3962,13 @@ router.post("/goal/insert-goal-member", async (req, res) => {
 
                 const [check_user] = await pool.execute(
                   "CALL getStudentById(?)",
-                  [check_if_registered]
+                  [rid]
                 );
                 const user = check_user[0][0];
 
                 const [getgmid] = await pool.execute(
                   "CALL check_GoalMToClear(?,?)",
-                  [gid, check_if_registered]
+                  [gid, rid]
                 );
                 const gmid = getgmid[0][0]?.gmid;
 
@@ -4049,11 +4049,11 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                 paramValuesString9,
               ]);
 
-              const [getportfolio] = await pool.execute(
+              const [check_portfolio] = await pool.execute(
                 "CALL check_PortfolioMember(?,?)",
                 [im, gdetail.portfolio_id]
               );
-              if (getportfolio[0].length == 0) {
+              if (check_portfolio[0].length == 0) {
                 const dataPort = {
                   portfolio_id: gdetail.portfolio_id,
                   sent_to: im,
@@ -4142,6 +4142,7 @@ router.post("/goal/insert-goal-member", async (req, res) => {
       message: "Goal Member Added successfully.",
     });
   } catch (error) {
+    //console.log(error)
     res
       .status(500)
       .json({ error: "Internal Server Error", details: error.message });
@@ -4206,7 +4207,7 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
     );
 
     const check_mem_id = check_mem_idRes[0];
-    console.log(check_mem_id);
+    //console.log(check_mem_id);
 
     if (check_mem_id && check_mem_id.length > 0) {
       const formattedDate = dateConversion();
@@ -5751,7 +5752,7 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
               const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
 
               if (pm.pmember == sp.pmanager) {
-                console.log("1");
+                //console.log("1");
                 const mailOptions2 = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
@@ -6273,7 +6274,7 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
 
     res.status(201).json({
       message: "KPI Copied successfully.",
-      sid: getKPI.sid
+      sid: getKPI.sid,
     });
   } catch (error) {
     res
