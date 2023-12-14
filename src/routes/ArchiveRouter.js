@@ -697,7 +697,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
         });
       }
     } else {
-      res.status(400).json({ error: "Failed to get Portfolio details." });
+      res.status(400).json({ error: "Permission Denied" });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
