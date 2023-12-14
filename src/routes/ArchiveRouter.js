@@ -5,9 +5,8 @@ const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
 
 // Get All Archive Modules
-router.get("/archive/data/:portfolio_id", async (req, res) => {
-  const { portfolio_id } = req.params;
-  const { user_id } = req.body;
+router.get("/archive/all-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
   try {
     const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
     const [archive_kpis] = await pool.execute("CALL ArchiveStrategies(?,?)", [user_id, portfolio_id]);
@@ -16,15 +15,505 @@ router.get("/archive/data/:portfolio_id", async (req, res) => {
     const [archive_single_tasks] = await pool.execute("CALL ArchiveSingleTasks(?,?)", [user_id, portfolio_id]);
     const [archive_subtasks] = await pool.execute("CALL ArchiveSubtasks(?,?)", [portfolio_id, user_id]);
     const [archive_single_subtasks] = await pool.execute("CALL ArchiveSingleSubtasks(?,?)", [portfolio_id, user_id]);
-    res.status(200).json({
-      archiveGoals: archive_goals[0],
-      archiveKpis: archive_kpis[0],
-      archiveProjects: archive_projects[0],
-      archiveTasks: archive_tasks[0],
-      archiveSingleTasks: archive_single_tasks[0],
-      archiveSubtasks: archive_subtasks[0],
-      archiveSingleSubtasks: archive_single_subtasks[0],
-    });
+
+    const archive_goals_data = archive_goals[0];
+    let archive_goals_parent = [];
+      if(archive_goals_data){
+        const archive_goals_promises = archive_goals_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const goalDate = row.g_archive_date;
+          const jsDate = new Date(goalDate);
+          const formattedGoalDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `goal-${row.gid}`,
+            table_id: row.gid,
+            all_portfolio: portfolioName,
+            all_archived: row.gname,
+            all_title: "",
+            all_type: "Goal",
+            all_date: formattedGoalDate,
+          };
+        })
+        archive_goals_parent = (await Promise.all(archive_goals_promises)).flat();
+      }
+
+      const archive_kpis_data = archive_kpis[0];
+      let archive_kpis_parent = [];
+      if(archive_kpis_data){
+        const archive_kpis_promises = archive_kpis_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const kpiDate = row.s_archive_date;
+          const jsDate = new Date(kpiDate);
+          const formattedkpiDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `kpi-${row.sid}`,
+            table_id: row.sid,
+            all_portfolio: portfolioName,
+            all_archived: row.sname,
+            all_title: "",
+            all_type: "KPI",
+            all_date: formattedkpiDate,
+          };
+        })
+        archive_kpis_parent = (await Promise.all(archive_kpis_promises)).flat();
+      }
+
+      const archive_projects_data = archive_projects[0];
+      let archive_projects_parent = [];
+      if(archive_projects_data){
+        const archive_projects_promises = archive_projects_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const projectDate = row.project_archive_date;
+          const jsDate = new Date(projectDate);
+          const formattedprojectDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `project-${row.pid}`,
+            table_id: row.pid,
+            all_portfolio: portfolioName,
+            all_archived: row.pname,
+            all_title: "",
+            all_type: "Project",
+            all_date: formattedprojectDate,
+          };
+        })
+        archive_projects_parent = (await Promise.all(archive_projects_promises)).flat();
+      }
+
+      const archive_tasks_data = archive_tasks[0];
+      let archive_tasks_parent = [];
+      if(archive_tasks_data){
+        const archive_tasks_promises = archive_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const taskDate = row.task_archive_date;
+          const jsDate = new Date(taskDate);
+          const formattedtaskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            all_portfolio: portfolioName,
+            all_archived: row.tname,
+            all_title: row.pname,
+            all_type: "Task",
+            all_date: formattedtaskDate,
+          };
+        })
+        archive_tasks_parent = (await Promise.all(archive_tasks_promises)).flat();
+      }
+
+      const archive_single_tasks_data = archive_single_tasks[0];
+      let archive_single_tasks_parent = [];
+      if(archive_single_tasks_data){
+        const archive_single_tasks_promises = archive_single_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_taskDate = row.task_archive_date;
+          const jsDate = new Date(single_taskDate);
+          const formattedsingle_taskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            all_portfolio: portfolioName,
+            all_archived: row.tname,
+            all_title: "",
+            all_type: "Task",
+            all_date: formattedsingle_taskDate,
+          };
+        })
+        archive_single_tasks_parent = (await Promise.all(archive_single_tasks_promises)).flat();
+      }
+
+      const archive_subtasks_data = archive_subtasks[0];
+      let archive_subtasks_parent = [];
+      if(archive_subtasks_data){
+        const archive_subtasks_promises = archive_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const subtaskDate = row.subtask_archive_date;
+          const jsDate = new Date(subtaskDate);
+          const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            all_portfolio: portfolioName,
+            all_archived: row.stname,
+            all_title: row.pname,
+            all_type: "Subtask",
+            all_date: formattedsubtaskDate,
+          };
+        })
+        archive_subtasks_parent = (await Promise.all(archive_subtasks_promises)).flat();
+      }
+
+      const archive_single_subtasks_data = archive_single_subtasks[0];
+      let archive_single_subtasks_parent = [];
+      if(archive_single_subtasks_data){
+        const archive_single_subtasks_promises = archive_single_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_subtaskDate = row.subtask_archive_date;
+          const jsDate = new Date(single_subtaskDate);
+          const formattedsingle_subtaskDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            all_portfolio: portfolioName,
+            all_archived: row.stname,
+            all_title: "",
+            all_type: "Subtask",
+            all_date: formattedsingle_subtaskDate,
+          };
+        })
+        archive_single_subtasks_parent = (await Promise.all(archive_single_subtasks_promises)).flat();
+      }
+
+      const all_archive_data = [
+        ...archive_goals_parent,
+        ...archive_kpis_parent,
+        ...archive_projects_parent,
+        ...archive_tasks_parent,
+        ...archive_single_tasks_parent,
+        ...archive_subtasks_parent,
+        ...archive_single_subtasks_parent,
+      ];
+
+
+    res.status(200).json(all_archive_data);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Goal Archive Modules
+router.get("/archive/goal-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
+
+    const archive_goals_data = archive_goals[0];
+    let archive_goals_parent = [];
+      if(archive_goals_data){
+        const archive_goals_promises = archive_goals_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const goalDate = row.g_archive_date;
+          const jsDate = new Date(goalDate);
+          const formattedGoalDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `goal-${row.gid}`,
+            table_id: row.gid,
+            goal_portfolio: portfolioName,
+            goal_goal: row.gname,
+            goal_type: "Goal",
+            goal_date: formattedGoalDate,
+          };
+        })
+        archive_goals_parent = (await Promise.all(archive_goals_promises)).flat();
+      }
+
+    res.status(200).json(archive_goals_parent);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get KPI Archive Modules
+router.get("/archive/kpi-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [archive_kpis] = await pool.execute("CALL ArchiveStrategies(?,?)", [user_id, portfolio_id]);
+
+      const archive_kpis_data = archive_kpis[0];
+      let archive_kpis_parent = [];
+      if(archive_kpis_data){
+        const archive_kpis_promises = archive_kpis_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const kpiDate = row.s_archive_date;
+          const jsDate = new Date(kpiDate);
+          const formattedkpiDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `kpi-${row.sid}`,
+            table_id: row.sid,
+            kpi_portfolio: portfolioName,
+            kpi_kpi: row.sname,
+            kpi_type: "KPI",
+            kpi_date: formattedkpiDate,
+          };
+        })
+        archive_kpis_parent = (await Promise.all(archive_kpis_promises)).flat();
+      }
+
+    res.status(200).json(archive_kpis_parent);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Project Archive Modules
+router.get("/archive/project-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [archive_projects] = await pool.execute("CALL ArchiveProjects(?,?)", [portfolio_id, user_id]);
+
+      const archive_projects_data = archive_projects[0];
+      let archive_projects_parent = [];
+      if(archive_projects_data){
+        const archive_projects_promises = archive_projects_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const projectDate = row.project_archive_date;
+          const jsDate = new Date(projectDate);
+          const formattedprojectDate = jsDate.toISOString().split('T')[0];
+          return {
+            id: `project-${row.pid}`,
+            table_id: row.pid,
+            project_portfolio: portfolioName,
+            project_project: row.pname,
+            project_type: "Project",
+            project_date: formattedprojectDate,
+          };
+        })
+        archive_projects_parent = (await Promise.all(archive_projects_promises)).flat();
+      }
+
+    res.status(200).json(archive_projects_parent);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get Task Archive Modules
+router.get("/archive/task-data/:user_id/:portfolio_id", async (req, res) => {
+  const { user_id, portfolio_id } = req.params;
+  try {
+    const [archive_tasks] = await pool.execute("CALL ArchiveTasks(?,?)", [user_id, portfolio_id]);
+    const [archive_single_tasks] = await pool.execute("CALL ArchiveSingleTasks(?,?)", [user_id, portfolio_id]);
+    const [archive_subtasks] = await pool.execute("CALL ArchiveSubtasks(?,?)", [portfolio_id, user_id]);
+    const [archive_single_subtasks] = await pool.execute("CALL ArchiveSingleSubtasks(?,?)", [portfolio_id, user_id]);
+
+      const archive_tasks_data = archive_tasks[0];
+      let archive_tasks_parent = [];
+      if(archive_tasks_data){
+        const archive_tasks_promises = archive_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const taskDate = row.task_archive_date;
+          const jsDate = new Date(taskDate);
+          const formattedtaskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.tassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            task_code: row.tcode,
+            task_portfolio: portfolioName,
+            task_project: row.pname,
+            task_task: row.tname,
+            task_assignee: assigneeName,
+            task_type: "Task",
+            task_date: formattedtaskDate,
+          };
+        })
+        archive_tasks_parent = (await Promise.all(archive_tasks_promises)).flat();
+      }
+
+      const archive_single_tasks_data = archive_single_tasks[0];
+      let archive_single_tasks_parent = [];
+      if(archive_single_tasks_data){
+        const archive_single_tasks_promises = archive_single_tasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_taskDate = row.task_archive_date;
+          const jsDate = new Date(single_taskDate);
+          const formattedsingle_taskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.tassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `task-${row.tid}`,
+            table_id: row.tid,
+            task_code: row.tcode,
+            task_portfolio: portfolioName,
+            task_task: row.tname,
+            task_project: "",
+            task_assignee: assigneeName,
+            task_type: "Task",
+            task_date: formattedsingle_taskDate,
+          };
+        })
+        archive_single_tasks_parent = (await Promise.all(archive_single_tasks_promises)).flat();
+      }
+
+      const archive_subtasks_data = archive_subtasks[0];
+      let archive_subtasks_parent = [];
+      if(archive_subtasks_data){
+        const archive_subtasks_promises = archive_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const subtaskDate = row.subtask_archive_date;
+          const jsDate = new Date(subtaskDate);
+          const formattedsubtaskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.stassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            task_code: row.stcode,
+            task_portfolio: portfolioName,
+            task_task: row.stname,
+            task_project: row.pname,
+            task_assignee: assigneeName,
+            task_type: "Subtask",
+            task_date: formattedsubtaskDate,
+          };
+        })
+        archive_subtasks_parent = (await Promise.all(archive_subtasks_promises)).flat();
+      }
+
+      const archive_single_subtasks_data = archive_single_subtasks[0];
+      let archive_single_subtasks_parent = [];
+      if(archive_single_subtasks_data){
+        const archive_single_subtasks_promises = archive_single_subtasks_data.map(async (row) => {
+          const [portfolio_del] = await pool.execute("CALL getPortfolioById(?)", [row.portfolio_id]);
+          const portfolioUser = portfolio_del[0][0].portfolio_user;
+          const portfolioName = 
+          (portfolioUser == 'company') 
+          ? (portfolio_del[0][0].portfolio_name) 
+          : (portfolioUser == 'individual')
+            ? (`${portfolio_del[0][0].portfolio_name} ${portfolio_del[0][0].portfolio_mname} ${portfolio_del[0][0].portfolio_lname}`) 
+            : (portfolio_del[0][0].portfolio_name)
+
+          const single_subtaskDate = row.subtask_archive_date;
+          const jsDate = new Date(single_subtaskDate);
+          const formattedsingle_subtaskDate = jsDate.toISOString().split('T')[0];
+
+          const [assignee_del] = await pool.execute("CALL getStudentById(?)", [row.stassignee]);
+          const assigneeName = `${assignee_del[0][0].first_name} ${assignee_del[0][0].last_name}`;
+          return {
+            id: `subtask-${row.stid}`,
+            table_id: row.stid,
+            task_code: row.stcode,
+            task_portfolio: portfolioName,
+            task_task: row.stname,
+            task_project: "",
+            task_assignee: assigneeName,
+            task_type: "Subtask",
+            task_date: formattedsingle_subtaskDate,
+          };
+        })
+        archive_single_subtasks_parent = (await Promise.all(archive_single_subtasks_promises)).flat();
+      }
+
+      const all_archive_data = [
+        ...archive_tasks_parent,
+        ...archive_single_tasks_parent,
+        ...archive_subtasks_parent,
+        ...archive_single_subtasks_parent,
+      ];
+
+
+    res.status(200).json(all_archive_data);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -208,7 +697,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
         });
       }
     } else {
-      res.status(400).json({ error: "Failed to get Portfolio details." });
+      res.status(400).json({ error: "Permission Denied" });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -648,7 +1137,7 @@ router.patch("/archive/task/:task_id/:user_id", async (req, res) => {
         });
       }
     } else {
-      res.status(400).json({ error: "Please Complete Task to file it." });
+      res.status(400).json({ error: "Please Complete Task to Archive." });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -689,7 +1178,7 @@ router.patch("/archive/subtask/:subtask_id/:user_id", async (req, res) => {
         .status(200)
         .json({ message: "Subtask Archived Successfully." });
     } else {
-      res.status(400).json({ error: "Please Complete Subtask to file it." });
+      res.status(400).json({ error: "Please Complete Subtask to Archive." });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1401,8 +1890,8 @@ router.patch(
 
       if (limitation == "in_limit") {
         const [project_row] = await pool.execute(
-          "CALL check_project_archive(?)",
-          [project_id]
+          "CALL check_project_archive(?,?)",
+          [project_id, user_id]
         );
         if (project_row[0][0]) {
           const [portfolio_row] = await pool.execute(
@@ -1673,7 +2162,7 @@ router.patch(
       );
       if (subtask_row[0][0]) {
         const [task_row] = await pool.execute(
-          "CALL checkSubtaskTaskArchive(?)",
+          "CALL check_task_archive(?)",
           [subtask_row[0][0].tid]
         );
         if (task_row[0][0]) {
