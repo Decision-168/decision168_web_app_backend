@@ -1586,10 +1586,18 @@ router.get("/goal/view-history-date-goal/:gid", async (req, res) => {
       [gid]
     );
     const [GoalDetail] = await pool.execute("CALL GoalDetail(?)", [gid]);
+    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      GoalDetail[0][0].portfolio_id,
+    ]);
 
-    res
-      .status(200)
-      .json({ history_dates: rows[0], goal_detail: GoalDetail[0][0] });
+    const get_portfolio_createdby_id = get_portfolio[0][0]?.portfolio_createdby;
+
+    const results = {
+      ...GoalDetail[0][0],
+      get_portfolio_createdby_id,
+    };
+
+    res.status(200).json({ history_dates: rows[0], goal_detail: results });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
