@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const router = express.Router();
-const pool = require("../database/connection"); // Import the database connection 
+const pool = require("../database/connection"); // Import the database connection
 const { dateConversion, transporter } = require("../utils/common-functions");
 const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
@@ -12,9 +12,7 @@ router.get("/task/all-tasks-subtasks/:reg_id", async (req, res) => {
   const { reg_id } = req.params;
   try {
     // Retrieve assigned task list
-    const [assignedTaskList] = await pool.execute("CALL AssignedTasklist(?)", [
-      reg_id,
-    ]);
+    const [assignedTaskList] = await pool.execute("CALL AssignedTasklist(?)", [reg_id]);
 
     // Limit the number of records to 10
     const slicedTaskList = assignedTaskList[0].slice(0, 10);
@@ -24,15 +22,9 @@ router.get("/task/all-tasks-subtasks/:reg_id", async (req, res) => {
       const { tid, tproject_assign } = item;
 
       try {
-        const [subtaskDetails] = await pool.execute(
-          "CALL Check_Task_Subtasks2(?)",
-          [tid]
-        );
+        const [subtaskDetails] = await pool.execute("CALL Check_Task_Subtasks2(?)", [tid]);
 
-        const [projectDetails] = await pool.execute(
-          "CALL getProjectById(?)",
-          [tproject_assign]
-        );
+        const [projectDetails] = await pool.execute("CALL getProjectById(?)", [tproject_assign]);
 
         const subTasks = subtaskDetails[0];
         const projectName = projectDetails[0].length > 0 ? projectDetails[0][0].pname : null;
@@ -42,7 +34,6 @@ router.get("/task/all-tasks-subtasks/:reg_id", async (req, res) => {
           ...item,
           projectName,
           subTasks,
-
         };
 
         return data;
@@ -53,7 +44,6 @@ router.get("/task/all-tasks-subtasks/:reg_id", async (req, res) => {
           ...item,
           projectName: null,
           subTasks: [],
-
         };
       }
     });
@@ -73,20 +63,14 @@ router.get("/task/portfolio-tasks-subtasks-list-view/:portfolio_id/:reg_id", asy
 
   try {
     // Retrieve assigned task list portfolio
-    const [asssignedTasklistPortfolio] = await pool.execute(
-      "CALL AssignedTasklistPortfolio(?,?)",
-      [portfolio_id, reg_id]
-    );
+    const [asssignedTasklistPortfolio] = await pool.execute("CALL AssignedTasklistPortfolio(?,?)", [portfolio_id, reg_id]);
 
     // Use Promise.all to concurrently fetch subtasks for each task
     const promises = asssignedTasklistPortfolio[0].map(async (item) => {
       const { tid } = item;
       try {
         // Retrieve assigned subtask list Task portfolio for a specific task
-        const [assignedSubtasklist_TaskPortfolio] = await pool.execute(
-          "CALL AssignedSubtasklist_TaskPortfolio(?,?)",
-          [portfolio_id, reg_id]
-        );
+        const [assignedSubtasklist_TaskPortfolio] = await pool.execute("CALL AssignedSubtasklist_TaskPortfolio(?,?)", [portfolio_id, reg_id]);
 
         // Filter subtasks for the current task
         const subTasks = assignedSubtasklist_TaskPortfolio[0].filter((i) => i.tid == tid);
@@ -106,13 +90,11 @@ router.get("/task/portfolio-tasks-subtasks-list-view/:portfolio_id/:reg_id", asy
           subTasks: [],
         };
       }
-    })
+    });
     // Wait for all promises to resolve
     const results = await Promise.all(promises);
 
     res.status(200).json(results);
-
-
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -125,25 +107,16 @@ router.get("/task/portfolio-tasks-subtasks-grid-view/:portfolio_id/:reg_id", asy
 
   try {
     // Retrieve assigned task list portfolio
-    const [asssignedTasklistPortfolio] = await pool.execute(
-      "CALL AssignedTasklistPortfolio(?,?)",
-      [portfolio_id, reg_id]
-    );
+    const [asssignedTasklistPortfolio] = await pool.execute("CALL AssignedTasklistPortfolio(?,?)", [portfolio_id, reg_id]);
 
     // Use Promise.all to concurrently fetch subtasks for each task
     const promises = asssignedTasklistPortfolio[0].map(async (item) => {
       const { tid, tproject_assign } = item;
       try {
         // Retrieve assigned subtask list portfolio for a specific task
-        const [assignedSubtasklistPortfolio] = await pool.execute(
-          "CALL AssignedSubtasklistPortfolio(?,?)",
-          [portfolio_id, reg_id]
-        );
+        const [assignedSubtasklistPortfolio] = await pool.execute("CALL AssignedSubtasklistPortfolio(?,?)", [portfolio_id, reg_id]);
 
-        const [projectDetails] = await pool.execute(
-          "CALL getProjectById(?)",
-          [tproject_assign]
-        );
+        const [projectDetails] = await pool.execute("CALL getProjectById(?)", [tproject_assign]);
 
         // Filter subtasks for the current task
         const subTasks = assignedSubtasklistPortfolio[0].filter((i) => i.tid == tid);
@@ -166,7 +139,7 @@ router.get("/task/portfolio-tasks-subtasks-grid-view/:portfolio_id/:reg_id", asy
           subTasks: [],
         };
       }
-    })
+    });
     // Wait for all promises to resolve
     const results = await Promise.all(promises);
     res.status(200).json(results);
@@ -176,28 +149,19 @@ router.get("/task/portfolio-tasks-subtasks-grid-view/:portfolio_id/:reg_id", asy
   }
 });
 
-//(Not In use) get Portfolio Task list by portfolio id and reg_id  
+//(Not In use) get Portfolio Task list by portfolio id and reg_id
 router.get("/task/portfolio-tasks-list/:portfolio_id/:reg_id", async (req, res) => {
   const { portfolio_id, reg_id } = req.params;
 
   try {
-    const [asssignedTasklistPortfolio] = await pool.execute(
-      "CALL AssignedTasklistPortfolio(?,?)",
-      [portfolio_id, reg_id]
-    );
-    const [assignedSubtasklist_TaskPortfolio] = await pool.execute(
-      "CALL AssignedSubtasklist_TaskPortfolio(?,?)",
-      [portfolio_id, reg_id]
-    );
-    const [assignedSubtasklistPortfolio] = await pool.execute(
-      "CALL AssignedSubtasklistPortfolio(?,?)",
-      [portfolio_id, reg_id]
-    );
+    const [asssignedTasklistPortfolio] = await pool.execute("CALL AssignedTasklistPortfolio(?,?)", [portfolio_id, reg_id]);
+    const [assignedSubtasklist_TaskPortfolio] = await pool.execute("CALL AssignedSubtasklist_TaskPortfolio(?,?)", [portfolio_id, reg_id]);
+    const [assignedSubtasklistPortfolio] = await pool.execute("CALL AssignedSubtasklistPortfolio(?,?)", [portfolio_id, reg_id]);
     res.status(200).json({
       check_port_id: portfolio_id,
       assignedTasklist: asssignedTasklistPortfolio[0], // grid view or list view
-      assignedSubtasklist_Task: assignedSubtasklist_TaskPortfolio[0], //list view 
-      assignedSubtasklist: assignedSubtasklistPortfolio[0],//grid view
+      assignedSubtasklist_Task: assignedSubtasklist_TaskPortfolio[0], //list view
+      assignedSubtasklist: assignedSubtasklistPortfolio[0], //grid view
     });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -210,39 +174,31 @@ router.get("/task/task-detail/:task_id", async (req, res) => {
   const { task_id } = req.params;
   try {
     const [taskDetails] = await pool.execute("CALL TaskDetail(?)", [task_id]);
-    const { tproject_assign, portfolio_id, tcreated_by, tassignee } = taskDetails[0][0];
 
-    const [getUserDetailsByTcreatedBy] = await pool.execute("CALL getStudentById(?)", [
-      tcreated_by,
-    ]);
+    if (taskDetails[0][0]) {
+      const { tproject_assign, portfolio_id, tcreated_by, tassignee } = taskDetails[0][0];
 
-    const [getUserDetailsbyTassignee] = await pool.execute("CALL getStudentById(?)", [
-      tassignee,
-    ]);
+      const [getUserDetailsByTcreatedBy] = await pool.execute("CALL getStudentById(?)", [tcreated_by]);
 
-    const [projectDetails] = await pool.execute(
-      "CALL getProjectById(?)",
-      [tproject_assign]
-    );
+      const [getUserDetailsbyTassignee] = await pool.execute("CALL getStudentById(?)", [tassignee]);
 
-    const [portfolioDetails] = await pool.execute(
-      "CALL getPortfolioById(?)",
-      [portfolio_id]
-    );
+      const [projectDetails] = await pool.execute("CALL getProjectById(?)", [tproject_assign]);
 
-    const [subtaskDetails] = await pool.execute(
-      "CALL Check_Task_Subtasks2(?)",
-      [task_id]
-    );
+      const [portfolioDetails] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
 
-    res.status(200).json({
-      ...taskDetails[0][0],
-      projectName: projectDetails[0][0].pname,
-      portfolioName: portfolioDetails[0][0].portfolio_name,
-      taskCreatedByName: `${getUserDetailsByTcreatedBy[0][0].first_name} ${getUserDetailsByTcreatedBy[0][0].last_name}`,
-      taskAssigneeName: `${getUserDetailsbyTassignee[0][0].first_name} ${getUserDetailsbyTassignee[0][0].last_name}`,
-      subTasks: subtaskDetails[0],
-    });
+      const [subtaskDetails] = await pool.execute("CALL Check_Task_Subtasks2(?)", [task_id]);
+
+      res.status(200).json({
+        ...taskDetails[0][0],
+        projectName: projectDetails[0][0].pname,
+        portfolioName: portfolioDetails[0][0].portfolio_name,
+        taskCreatedByName: `${getUserDetailsByTcreatedBy[0][0].first_name} ${getUserDetailsByTcreatedBy[0][0].last_name}`,
+        taskAssigneeName: `${getUserDetailsbyTassignee[0][0].first_name} ${getUserDetailsbyTassignee[0][0].last_name}`,
+        subTasks: subtaskDetails[0],
+      });
+    } else {
+      res.status(404).json({ error: "Task not found" });
+    }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -253,39 +209,29 @@ router.get("/task/task-detail/:task_id", async (req, res) => {
 router.get("/subtask/subtask-detail/:subtask_id", async (req, res) => {
   const { subtask_id } = req.params;
   try {
-    const [subtaskDetails] = await pool.execute("CALL SubtaskDetail(?)", [
-      subtask_id,
-    ]);
+    const [subtaskDetails] = await pool.execute("CALL SubtaskDetail(?)", [subtask_id]);
 
-    const { stproject_assign, portfolio_id, stcreated_by, stassignee } = subtaskDetails[0][0];
+    if (subtaskDetails[0][0]) {
+      const { stproject_assign, portfolio_id, stcreated_by, stassignee } = subtaskDetails[0][0];
 
-    const [getUserDetailsByTcreatedBy] = await pool.execute("CALL getStudentById(?)", [
-      stcreated_by,
-    ]);
+      const [getUserDetailsByTcreatedBy] = await pool.execute("CALL getStudentById(?)", [stcreated_by]);
 
-    const [getUserDetailsbyTassignee] = await pool.execute("CALL getStudentById(?)", [
-      stassignee,
-    ]);
+      const [getUserDetailsbyTassignee] = await pool.execute("CALL getStudentById(?)", [stassignee]);
 
-    const [projectDetails] = await pool.execute(
-      "CALL getProjectById(?)",
-      [stproject_assign]
-    );
+      const [projectDetails] = await pool.execute("CALL getProjectById(?)", [stproject_assign]);
 
-    const [portfolioDetails] = await pool.execute(
-      "CALL getPortfolioById(?)",
-      [portfolio_id]
-    );
+      const [portfolioDetails] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
 
-
-    res.status(200).json({
-      ...subtaskDetails[0][0], projectName: projectDetails[0][0].pname,
-      portfolioName: portfolioDetails[0][0].portfolio_name,
-      subTaskCreatedByName: `${getUserDetailsByTcreatedBy[0][0].first_name} ${getUserDetailsByTcreatedBy[0][0].last_name}`,
-      subTaskAssigneeName: `${getUserDetailsbyTassignee[0][0].first_name} ${getUserDetailsbyTassignee[0][0].last_name}`,
+      res.status(200).json({
+        ...subtaskDetails[0][0],
+        projectName: projectDetails[0][0].pname,
+        portfolioName: portfolioDetails[0][0].portfolio_name,
+        subTaskCreatedByName: `${getUserDetailsByTcreatedBy[0][0].first_name} ${getUserDetailsByTcreatedBy[0][0].last_name}`,
+        subTaskAssigneeName: `${getUserDetailsbyTassignee[0][0].first_name} ${getUserDetailsbyTassignee[0][0].last_name}`,
+      });
+    } else {
+      res.status(404).json({ error: "Subtask not found" });
     }
-
-    );
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -295,44 +241,18 @@ router.get("/subtask/subtask-detail/:subtask_id", async (req, res) => {
 // Insert Task
 router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
   let { user_id, portfolio_id } = req.params;
-  const {
-    project_id,
-    team_member2,
-    links,
-    link_comments,
-    sid,
-    gid,
-    tname,
-    tdes,
-    tnote,
-    tfile,
-    tpriority,
-    dept,
-    tdue_date,
-  } = req.body;
+  const { project_id, team_member2, links, link_comments, sid, gid, tname, tdes, tnote, tfile, tpriority, dept, tdue_date } = req.body;
   try {
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      project_id,
-    ]);
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [project_id]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const formattedDate = dateConversion();
     const format = "Y-MM-DD H:m:s";
     if (student) {
-      const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [
-        team_member2,
-      ]);
-      const links_string = links
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
-      const link_comments_string = link_comments
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
-      const tfile_string = tfile
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
+      const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [team_member2]);
+      const links_string = links.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+      const link_comments_string = link_comments.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+      const tfile_string = tfile.map((linkObj) => Object.values(linkObj).join(",")).join(",");
 
       let get_tcode = "";
       let pro_owner = "";
@@ -351,10 +271,7 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
         pro_manager = project_row[0][0].pmanager;
         pname = project_row[0][0].pname;
         pdes = project_row[0][0].pdes;
-        const [check_Portfolio_owner_id] = await pool.execute(
-          "CALL getPortfolioById(?)",
-          [portfolio_id]
-        );
+        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
         portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
       } else {
         const random_num = Math.floor(Math.random() * 10000) + 1;
@@ -363,10 +280,7 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
 
       let index = "";
       if (pro_owner != team_member2) {
-        const [pdetail_member] = await pool.execute(
-          "CALL getMemberProject(?)",
-          [project_id]
-        );
+        const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [project_id]);
         let pro_member = [];
         if (pdetail_member[0]) {
           pdetail_member[0].forEach(async (pm) => {
@@ -376,57 +290,32 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
         index = pro_member.indexOf(team_member2);
       }
 
-      if (
-        pro_owner == user_id ||
-        pro_manager == user_id ||
-        portfolio_owner_id == user_id
-      ) {
+      if (pro_owner == user_id || pro_manager == user_id || portfolio_owner_id == user_id) {
         if (pro_owner != team_member2) {
           if (index === -1) {
-            const [check_if_suggested] = await pool.execute(
-              "CALL check_suggested(?,?)",
-              [project_id, team_member2]
-            );
+            const [check_if_suggested] = await pool.execute("CALL check_suggested(?,?)", [project_id, team_member2]);
             if (check_if_suggested[0][0]) {
               const suggestTMFieldsValues = `status = 'approved', approve_date = '${formattedDate}'`;
               const suggestTM1 = `pid = '${project_id}'`;
               const suggestTM2 = `suggest_id = '${team_member2}'`;
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [
-                suggestTMFieldsValues,
-                suggestTM1,
-                suggestTM2,
-              ]);
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [suggestTMFieldsValues, suggestTM1, suggestTM2]);
             }
 
-            const tmFieldsNames =
-              "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
+            const tmFieldsNames = "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
             const tmFieldsValues = `"${project_id}", "${portfolio_id}", "${team_member2}", "send", "${user_id}", "${formattedDate}", "no"`;
 
-            await pool.execute("CALL InsertProjectMembers(?,?)", [
-              tmFieldsNames,
-              tmFieldsValues,
-            ]);
+            await pool.execute("CALL InsertProjectMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-            const [inserted_pm] = await pool.execute(
-              "CALL LastInsertedProjectMembers(?)",
-              [user_id]
-            );
+            const [inserted_pm] = await pool.execute("CALL LastInsertedProjectMembers(?)", [user_id]);
             const inserted_pm_id = inserted_pm[0][0].pm_id;
 
-            const tmHistoryFieldsNames =
-              "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
+            const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
             const tmHistoryFieldsValues = `"${project_id}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${student.first_name} ${student.last_name} sent team member request to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${inserted_pm_id}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?,?)", [
-              tmHistoryFieldsNames,
-              tmHistoryFieldsValues,
-            ]);
+            await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
 
             let get_portfolio_name = "";
-            const [check_portfolio_name] = await pool.execute(
-              "CALL getPortfolioName(?)",
-              [portfolio_id]
-            );
+            const [check_portfolio_name] = await pool.execute("CALL getPortfolioName(?)", [portfolio_id]);
             if (check_portfolio_name) {
               if (check_portfolio_name[0][0].portfolio_user == "individual") {
                 get_portfolio_name = `${check_portfolio_name[0][0].portfolio_name} ${check_portfolio_name[0][0].portfolio_lname}`;
@@ -445,8 +334,7 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
               subject: "Project Request | Decision 168",
               html: generateEmailTemplate(
                 `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name
-                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                 `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -470,39 +358,22 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
       } else {
         if (pro_owner != team_member2) {
           if (index === -1) {
-            const [check] = await pool.execute("CALL check_suggested(?,?)", [
-              project_id,
-              team_member2,
-            ]);
-            const [check_pmem] = await pool.execute(
-              "CALL check_pro_member2(?,?)",
-              [project_id, team_member2]
-            );
+            const [check] = await pool.execute("CALL check_suggested(?,?)", [project_id, team_member2]);
+            const [check_pmem] = await pool.execute("CALL check_pro_member2(?,?)", [project_id, team_member2]);
 
             if (!check[0][0] && !check_pmem[0][0]) {
-              const tmFieldsNames =
-                "pid, suggest_id, status, already_register, suggested_by, suggested_date";
+              const tmFieldsNames = "pid, suggest_id, status, already_register, suggested_by, suggested_date";
               const tmFieldsValues = `"${project_id}", "${team_member2}", "suggested", "yes", "${user_id}", "${formattedDate}"`;
 
-              await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [
-                tmFieldsNames,
-                tmFieldsValues,
-              ]);
+              await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-              const [inserted_tm] = await pool.execute(
-                "CALL LastInsertProjectSuggestedMembers(?)",
-                [user_id]
-              );
+              const [inserted_tm] = await pool.execute("CALL LastInsertProjectSuggestedMembers(?)", [user_id]);
               const inserted_tm_id = inserted_tm[0][0].s_id;
 
-              const tmHistoryFieldsNames =
-                "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
+              const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
               const tmHistoryFieldsValues = `"${project_id}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name} is suggested by ${student.first_name} ${student.last_name}", "${inserted_tm_id}"`;
 
-              await pool.execute("CALL InsertProjectHistory(?,?)", [
-                tmHistoryFieldsNames,
-                tmHistoryFieldsValues,
-              ]);
+              await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
             }
           }
         }
@@ -513,28 +384,18 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
       // Formatting the date as "YYYY-MM-DD"
       const taskformattedDueDate = dueTDate.toISOString().split("T")[0];
 
-      const taskFieldsNames =
-        "tcode, tname, tdes, tlink, tlink_comment, tnote, tfile, tpriority, tstatus, tstatus_date, tproject_assign, portfolio_id, tassignee, tcreated_by, tcreated_date, tnotify, tnotify_clear, tnotify_date, tdue_date, tdue_date_clear, gid, sid, dept_id";
+      const taskFieldsNames = "tcode, tname, tdes, tlink, tlink_comment, tnote, tfile, tpriority, tstatus, tstatus_date, tproject_assign, portfolio_id, tassignee, tcreated_by, tcreated_date, tnotify, tnotify_clear, tnotify_date, tdue_date, tdue_date_clear, gid, sid, dept_id";
       const taskFieldsValues = `"${get_tcode}", "${tname}", "${tdes}", "${links_string}", "${link_comments_string}", "${tnote}", "${tfile_string}", "${tpriority}", 'to_do', "${formattedDate}", "${project_id}", "${portfolio_id}", "${team_member2}", "${user_id}", "${formattedDate}", 'yes', 'no', "${formattedDate}", "${taskformattedDueDate}", 'no', "${gid}", "${sid}", "${dept}"`;
 
-      await pool.execute("CALL InsertTask(?,?)", [
-        taskFieldsNames,
-        taskFieldsValues,
-      ]);
+      await pool.execute("CALL InsertTask(?,?)", [taskFieldsNames, taskFieldsValues]);
 
-      const [inserted_task] = await pool.execute("CALL LastInsertTask(?)", [
-        user_id,
-      ]);
+      const [inserted_task] = await pool.execute("CALL LastInsertTask(?)", [user_id]);
       const inserted_task_id = inserted_task[0][0].tid;
 
-      const historyFieldsNames =
-        "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, task_id";
+      const historyFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, task_id";
       const historyFieldsValues = `"${project_id}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Task Code: ${get_tcode}, Task Name: ${tname}, Created By ${student.first_name} ${student.last_name} and assigned to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${inserted_task_id}"`;
 
-      await pool.execute("CALL InsertProjectHistory(?,?)", [
-        historyFieldsNames,
-        historyFieldsValues,
-      ]);
+      await pool.execute("CALL InsertProjectHistory(?,?)", [historyFieldsNames, historyFieldsValues]);
     }
     return res.status(200).json({ message: "Task Created Successfully." });
   } catch (error) {
@@ -547,10 +408,7 @@ router.post("/task/insert-task/:user_id/:portfolio_id", async (req, res) => {
 router.get("/subtask/portfolio-subtasks/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [portfolio_subtasks] = await pool.execute(
-      "CALL portfolio_subtasks(?)",
-      [portfolio_id]
-    );
+    const [portfolio_subtasks] = await pool.execute("CALL portfolio_subtasks(?)", [portfolio_id]);
     res.status(200).json({
       portfolioSubtasks: portfolio_subtasks[0],
     });
@@ -565,12 +423,8 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
   let { user_id, portfolio_id } = req.params;
   const { tid, stproject_assign, sid, gid, dept, taskArray } = req.body;
   try {
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      stproject_assign,
-    ]);
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [stproject_assign]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const formattedDate = dateConversion();
     const format = "Y-MM-DD H:m:s";
@@ -592,10 +446,7 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
         pro_manager = project_row[0][0].pmanager;
         pname = project_row[0][0].pname;
         pdes = project_row[0][0].pdes;
-        const [check_Portfolio_owner_id] = await pool.execute(
-          "CALL getPortfolioById(?)",
-          [portfolio_id]
-        );
+        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
         portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
       } else {
         const random_num = Math.floor(Math.random() * 10000) + 1;
@@ -603,26 +454,14 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
       }
       const results = await Promise.all(
         taskArray.map(async (item) => {
-          const [team_member2_row] = await pool.execute(
-            "CALL getStudentById(?)",
-            [item.team_member2]
-          );
-          const slinks_string = item.slinks
-            .map((linkObj) => Object.values(linkObj).join(","))
-            .join(",");
-          const slink_comments_string = item.slink_comments
-            .map((linkObj) => Object.values(linkObj).join(","))
-            .join(",");
-          const stfile_string = item.stfile
-            .map((linkObj) => Object.values(linkObj).join(","))
-            .join(",");
+          const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [item.team_member2]);
+          const slinks_string = item.slinks.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+          const slink_comments_string = item.slink_comments.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+          const stfile_string = item.stfile.map((linkObj) => Object.values(linkObj).join(",")).join(",");
 
           let index = "";
           if (pro_owner != item.team_member2) {
-            const [pdetail_member] = await pool.execute(
-              "CALL getMemberProject(?)",
-              [stproject_assign]
-            );
+            const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [stproject_assign]);
             let pro_member = [];
             if (pdetail_member[0]) {
               pdetail_member[0].forEach(async (pm) => {
@@ -632,64 +471,37 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
             index = pro_member.indexOf(item.team_member2);
           }
 
-          if (
-            pro_owner == user_id ||
-            pro_manager == user_id ||
-            portfolio_owner_id == user_id
-          ) {
+          if (pro_owner == user_id || pro_manager == user_id || portfolio_owner_id == user_id) {
             if (pro_owner != item.team_member2) {
               if (index === -1) {
-                const [check_if_suggested] = await pool.execute(
-                  "CALL check_suggested(?,?)",
-                  [stproject_assign, item.team_member2]
-                );
+                const [check_if_suggested] = await pool.execute("CALL check_suggested(?,?)", [stproject_assign, item.team_member2]);
                 if (check_if_suggested[0][0]) {
                   const suggestTMFieldsValues = `status = 'approved', approve_date = '${formattedDate}'`;
                   const suggestTM1 = `pid = '${stproject_assign}'`;
                   const suggestTM2 = `suggest_id = '${item.team_member2}'`;
-                  await pool.execute(
-                    "CALL UpdateProjectSuggestedMembers(?,?,?)",
-                    [suggestTMFieldsValues, suggestTM1, suggestTM2]
-                  );
+                  await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [suggestTMFieldsValues, suggestTM1, suggestTM2]);
                 }
 
-                const tmFieldsNames =
-                  "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
+                const tmFieldsNames = "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
                 const tmFieldsValues = `"${stproject_assign}", "${portfolio_id}", "${item.team_member2}", "send", "${user_id}", "${formattedDate}", "no"`;
 
-                await pool.execute("CALL InsertProjectMembers(?,?)", [
-                  tmFieldsNames,
-                  tmFieldsValues,
-                ]);
+                await pool.execute("CALL InsertProjectMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-                const [inserted_pm] = await pool.execute(
-                  "CALL LastInsertedProjectMembers(?)",
-                  [user_id]
-                );
+                const [inserted_pm] = await pool.execute("CALL LastInsertedProjectMembers(?)", [user_id]);
                 const inserted_pm_id = inserted_pm[0][0].pm_id;
 
-                const tmHistoryFieldsNames =
-                  "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
+                const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
                 const tmHistoryFieldsValues = `"${stproject_assign}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${student.first_name} ${student.last_name} sent team member request to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${inserted_pm_id}"`;
 
-                await pool.execute("CALL InsertProjectHistory(?,?)", [
-                  tmHistoryFieldsNames,
-                  tmHistoryFieldsValues,
-                ]);
+                await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
 
                 let get_portfolio_name = "";
-                const [check_portfolio_name] = await pool.execute(
-                  "CALL getPortfolioName(?)",
-                  [portfolio_id]
-                );
+                const [check_portfolio_name] = await pool.execute("CALL getPortfolioName(?)", [portfolio_id]);
                 if (check_portfolio_name) {
-                  if (
-                    check_portfolio_name[0][0].portfolio_user == "individual"
-                  ) {
+                  if (check_portfolio_name[0][0].portfolio_user == "individual") {
                     get_portfolio_name = `${check_portfolio_name[0][0].portfolio_name} ${check_portfolio_name[0][0].portfolio_lname}`;
                   } else {
-                    get_portfolio_name =
-                      check_portfolio_name[0][0].portfolio_name;
+                    get_portfolio_name = check_portfolio_name[0][0].portfolio_name;
                   }
                 }
 
@@ -703,8 +515,7 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
                   subject: "Project Request | Decision 168",
                   html: generateEmailTemplate(
                     `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name
-                    } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                     `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -728,39 +539,22 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
           } else {
             if (pro_owner != item.team_member2) {
               if (index === -1) {
-                const [check] = await pool.execute(
-                  "CALL check_suggested(?,?)",
-                  [stproject_assign, item.team_member2]
-                );
-                const [check_pmem] = await pool.execute(
-                  "CALL check_pro_member2(?,?)",
-                  [stproject_assign, item.team_member2]
-                );
+                const [check] = await pool.execute("CALL check_suggested(?,?)", [stproject_assign, item.team_member2]);
+                const [check_pmem] = await pool.execute("CALL check_pro_member2(?,?)", [stproject_assign, item.team_member2]);
 
                 if (!check[0][0] && !check_pmem[0][0]) {
-                  const tmFieldsNames =
-                    "pid, suggest_id, status, already_register, suggested_by, suggested_date";
+                  const tmFieldsNames = "pid, suggest_id, status, already_register, suggested_by, suggested_date";
                   const tmFieldsValues = `"${stproject_assign}", "${item.team_member2}", "suggested", "yes", "${user_id}", "${formattedDate}"`;
 
-                  await pool.execute(
-                    "CALL InsertProjectSuggestedMembers(?,?)",
-                    [tmFieldsNames, tmFieldsValues]
-                  );
+                  await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-                  const [inserted_tm] = await pool.execute(
-                    "CALL LastInsertProjectSuggestedMembers(?)",
-                    [user_id]
-                  );
+                  const [inserted_tm] = await pool.execute("CALL LastInsertProjectSuggestedMembers(?)", [user_id]);
                   const inserted_tm_id = inserted_tm[0][0].s_id;
 
-                  const tmHistoryFieldsNames =
-                    "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
+                  const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
                   const tmHistoryFieldsValues = `"${stproject_assign}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name} is suggested by ${student.first_name} ${student.last_name}", "${inserted_tm_id}"`;
 
-                  await pool.execute("CALL InsertProjectHistory(?,?)", [
-                    tmHistoryFieldsNames,
-                    tmHistoryFieldsValues,
-                  ]);
+                  await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
                 }
               }
             }
@@ -771,35 +565,21 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
           // Formatting the date as "YYYY-MM-DD"
           const taskformattedDueDate = dueTDate.toISOString().split("T")[0];
 
-          const taskFieldsNames =
-            "tid, stcode, stname, stdes, stlink, stlink_comment, stnote, stfile, stpriority, ststatus, ststatus_date, stproject_assign, portfolio_id, stassignee, stcreated_by, stcreated_date, stnotify, stnotify_clear, stnotify_date, stdue_date, stdue_date_clear, gid, sid, dept_id";
+          const taskFieldsNames = "tid, stcode, stname, stdes, stlink, stlink_comment, stnote, stfile, stpriority, ststatus, ststatus_date, stproject_assign, portfolio_id, stassignee, stcreated_by, stcreated_date, stnotify, stnotify_clear, stnotify_date, stdue_date, stdue_date_clear, gid, sid, dept_id";
           const taskFieldsValues = `"${tid}", "${get_tcode}", "${item.stname}", "${item.stdes}", "${slinks_string}", "${slink_comments_string}", "${item.stnote}", "${stfile_string}", "${item.stpriority}", 'to_do', "${formattedDate}", "${stproject_assign}", "${portfolio_id}", "${item.team_member2}", "${user_id}", "${formattedDate}", 'yes', 'no', "${formattedDate}", "${taskformattedDueDate}", 'no', "${gid}", "${sid}", "${dept}"`;
 
-          await pool.execute("CALL InsertSubtask(?,?)", [
-            taskFieldsNames,
-            taskFieldsValues,
-          ]);
+          await pool.execute("CALL InsertSubtask(?,?)", [taskFieldsNames, taskFieldsValues]);
 
-          const [inserted_task] = await pool.execute(
-            "CALL LastInsertSubTask(?)",
-            [user_id]
-          );
+          const [inserted_task] = await pool.execute("CALL LastInsertSubTask(?)", [user_id]);
           const inserted_task_id = inserted_task[0][0].stid;
 
-          const historyFieldsNames =
-            "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, subtask_id";
+          const historyFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, subtask_id";
           const historyFieldsValues = `"${stproject_assign}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Subtask Code: ${get_tcode}, Subtask Name: ${item.stname}, Created By ${student.first_name} ${student.last_name} and assigned to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${inserted_task_id}"`;
 
-          await pool.execute("CALL InsertProjectHistory(?,?)", [
-            historyFieldsNames,
-            historyFieldsValues,
-          ]);
+          await pool.execute("CALL InsertProjectHistory(?,?)", [historyFieldsNames, historyFieldsValues]);
 
           if (inserted_task_id) {
-            const [t_changestatus] = await pool.execute(
-              "CALL getTasksDetailsbyID(?)",
-              [tid]
-            );
+            const [t_changestatus] = await pool.execute("CALL getTasksDetailsbyID(?)", [tid]);
             let new_tstatus = "in_progress";
             if (t_changestatus[0][0]) {
               if (t_changestatus[0][0].tstatus == "to_do") {
@@ -809,10 +589,7 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
             const tFieldsValues = `tstatus = "${new_tstatus}", review = "", review_clear = "", review_notify = "", po_review_clear = "", po_review_notify = "", tstatus_date = "${formattedDate}"`;
             const task_id = `tid = '${tid}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              tFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [tFieldsValues, task_id]);
           }
         })
       );
@@ -830,22 +607,15 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
   const { tid, tassignee, status_but } = req.body;
   try {
     const formattedDate = dateConversion();
-    const [taskDetail] = await pool.execute(
-      "CALL check_task_assignProOwner(?)",
-      [tid]
-    );
+    const [taskDetail] = await pool.execute("CALL check_task_assignProOwner(?)", [tid]);
     const task_detail = taskDetail[0][0];
 
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      tassignee,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [tassignee]);
     const student = getMydetail[0][0];
 
     let status = "";
     if (status_but == "to_do" || status_but == "in_progress") {
-      (status_but == "to_do") && (status = "To Do") || (status_but == "in_progress") && (status = "In Progress")
-
-
+      (status_but == "to_do" && (status = "To Do")) || (status_but == "in_progress" && (status = "In Progress"));
 
       const statusFieldsValues = `tstatus = '${status_but}', review = '', review_clear = '', review_notify = '', po_review_clear = '', po_review_notify = '', tstatus_date = '${formattedDate}' `;
       const task_id = `tid = '${tid}'`;
@@ -870,20 +640,12 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
+        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
       }
       return res.status(200).json({ message: "Status Changed Successfully." });
     } else if (status_but == "in_review" || status_but == "done") {
-      const [check_st] = await pool.execute("CALL subtask_progress_total(?)", [
-        tid,
-      ]);
-      const [check_stdone] = await pool.execute(
-        "CALL subtask_progress_done(?)",
-        [tid]
-      );
+      const [check_st] = await pool.execute("CALL subtask_progress_total(?)", [tid]);
+      const [check_stdone] = await pool.execute("CALL subtask_progress_done(?)", [tid]);
       let task_with_subtasks = "";
       let task_with_no_subtasks = "";
       if (check_st[0][0]) {
@@ -893,8 +655,7 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
           task_with_subtasks = "yes";
         } else {
           return res.status(400).json({
-            message:
-              "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
+            message: "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
           });
         }
       } else {
@@ -903,35 +664,21 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
 
       if (task_with_subtasks == "yes" || task_with_no_subtasks == "yes") {
         if (task_detail.tproject_assign) {
-          const [getPcreated_by] = await pool.execute(
-            "CALL getProjectById(?)",
-            [task_detail.tproject_assign]
-          );
+          const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [task_detail.tproject_assign]);
           const project_detail = getPcreated_by[0][0];
           const project_createdby = project_detail.pcreated_by;
           const project_manager = project_detail.pmanager;
           let portfolio_owner_id = "";
-          const [check_Portfolio_owner_id] = await pool.execute(
-            "CALL getPortfolioById(?)",
-            [project_detail.portfolio_id]
-          );
+          const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [project_detail.portfolio_id]);
           if (!check_Portfolio_owner_id[0][0]) {
-            portfolio_owner_id =
-              check_Portfolio_owner_id[0][0].portfolio_createdby;
+            portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
           }
 
-          if (
-            project_createdby != user_id &&
-            project_manager != user_id &&
-            portfolio_owner_id != user_id
-          ) {
+          if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
             const statusFieldsValues = `tstatus = 'in_review', review = 'sent', review_clear = 'no', review_notify= 'sent_yes', po_review_clear = 'no', po_review_notify = 'sent_yes', review_notdate = '${formattedDate}', tstatus_date = '${formattedDate}'`;
             const task_id = `tid = '${tid}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              statusFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
             if (task_detail.tproject_assign) {
               const history = {
                 pid: task_detail.tproject_assign,
@@ -950,22 +697,14 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
-            return res
-              .status(200)
-              .json({ message: "Status Changed Successfully." });
+            return res.status(200).json({ message: "Status Changed Successfully." });
           } else {
             const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
             const task_id = `tid = '${tid}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              statusFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
             if (task_detail.tproject_assign) {
               const history = {
                 pid: task_detail.tproject_assign,
@@ -984,31 +723,20 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
-            return res
-              .status(200)
-              .json({ message: "Status Changed Successfully." });
+            return res.status(200).json({ message: "Status Changed Successfully." });
           }
         } else {
           const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
           const task_id = `tid = '${tid}'`;
 
-          await pool.execute("CALL UpdateTask(?,?)", [
-            statusFieldsValues,
-            task_id,
-          ]);
-          return res
-            .status(200)
-            .json({ message: "Status Changed Successfully." });
+          await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
+          return res.status(200).json({ message: "Status Changed Successfully." });
         }
       } else {
         return res.status(400).json({
-          message:
-            "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
+          message: "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
         });
       }
     }
@@ -1023,30 +751,16 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { tid, tassignee } = req.body;
   try {
-    const [taskDetail] = await pool.execute("CALL check_task_assign(?,?)", [
-      tid,
-      tassignee,
-    ]);
+    const [taskDetail] = await pool.execute("CALL check_task_assign(?,?)", [tid, tassignee]);
     const task_detail = taskDetail[0][0];
     const formattedDate = dateConversion();
 
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      tassignee,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [tassignee]);
     const student = getMydetail[0][0];
 
-    if (
-      task_detail.tstatus == "to_do" ||
-      task_detail.tstatus == "in_progress" ||
-      task_detail.tstatus == "in_review"
-    ) {
-      const [check_st] = await pool.execute("CALL subtask_progress_total(?)", [
-        tid,
-      ]);
-      const [check_stdone] = await pool.execute(
-        "CALL subtask_progress_done(?)",
-        [tid]
-      );
+    if (task_detail.tstatus == "to_do" || task_detail.tstatus == "in_progress" || task_detail.tstatus == "in_review") {
+      const [check_st] = await pool.execute("CALL subtask_progress_total(?)", [tid]);
+      const [check_stdone] = await pool.execute("CALL subtask_progress_done(?)", [tid]);
       let task_with_subtasks = "";
       let task_with_no_subtasks = "";
       if (check_st[0][0]) {
@@ -1056,8 +770,7 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
           task_with_subtasks = "yes";
         } else {
           return res.status(400).json({
-            error:
-              "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
+            error: "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
           });
         }
       } else {
@@ -1066,10 +779,7 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
 
       if (task_with_subtasks == "yes" || task_with_no_subtasks == "yes") {
         if (task_detail.tproject_assign) {
-          const [getPcreated_by] = await pool.execute(
-            "CALL getProjectById(?)",
-            [task_detail.tproject_assign]
-          );
+          const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [task_detail.tproject_assign]);
 
           if (getPcreated_by[0].length > 0) {
             const project_detail = getPcreated_by[0][0];
@@ -1077,28 +787,17 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
             const project_manager = project_detail.pmanager;
             let portfolio_owner_id = "";
 
-            const [check_Portfolio_owner_id] = await pool.execute(
-              "CALL getPortfolioById(?)",
-              [project_detail.portfolio_id]
-            );
+            const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [project_detail.portfolio_id]);
 
             if (check_Portfolio_owner_id[0].length > 0) {
-              portfolio_owner_id =
-                check_Portfolio_owner_id[0][0].portfolio_createdby;
+              portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
             }
 
-            if (
-              project_createdby !== user_id &&
-              project_manager !== user_id &&
-              portfolio_owner_id !== user_id
-            ) {
+            if (project_createdby !== user_id && project_manager !== user_id && portfolio_owner_id !== user_id) {
               const statusFieldsValues = `tstatus = 'in_review', review = 'sent', review_clear = 'no', review_notify= 'sent_yes', po_review_clear = 'no', po_review_notify = 'sent_yes', review_notdate = '${formattedDate}', tstatus_date = '${formattedDate}'`;
               const task_id = `tid = '${tid}'`;
 
-              await pool.execute("CALL UpdateTask(?,?)", [
-                statusFieldsValues,
-                task_id,
-              ]);
+              await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
 
               if (task_detail.tproject_assign) {
                 const history = {
@@ -1118,23 +817,15 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [
-                  paramNamesString1,
-                  paramValuesString1,
-                ]);
+                await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
               }
 
-              return res
-                .status(200)
-                .json({ message: "Status Changed Successfully." });
+              return res.status(200).json({ message: "Status Changed Successfully." });
             } else {
               const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
               const task_id = `tid = '${tid}'`;
 
-              await pool.execute("CALL UpdateTask(?,?)", [
-                statusFieldsValues,
-                task_id,
-              ]);
+              await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
 
               if (task_detail.tproject_assign) {
                 const history = {
@@ -1154,15 +845,10 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [
-                  paramNamesString1,
-                  paramValuesString1,
-                ]);
+                await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
               }
 
-              return res
-                .status(200)
-                .json({ message: "Status Changed Successfully." });
+              return res.status(200).json({ message: "Status Changed Successfully." });
             }
           } else {
             // Handle the case when getProjectById returns no results
@@ -1174,19 +860,13 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
           const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
           const task_id = `tid = '${tid}'`;
 
-          await pool.execute("CALL UpdateTask(?,?)", [
-            statusFieldsValues,
-            task_id,
-          ]);
+          await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
 
-          return res
-            .status(200)
-            .json({ message: "Status Changed Successfully." });
+          return res.status(200).json({ message: "Status Changed Successfully." });
         }
       } else {
         return res.status(400).json({
-          error:
-            "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
+          error: "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
         });
       }
     }
@@ -1195,10 +875,7 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
       const statusFieldsValues = `tstatus = 'to_do', review = '', review_clear = '', review_notify = '', po_review_clear = '', po_review_notify = '', tstatus_date = '${formattedDate}' `;
       const task_id = `tid = '${tid}'`;
 
-      await pool.execute("CALL UpdateTask(?,?)", [
-        statusFieldsValues,
-        task_id,
-      ]);
+      await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
 
       if (task_detail.tproject_assign) {
         const history = {
@@ -1218,15 +895,10 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
+        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
       }
 
-      return res
-        .status(200)
-        .json({ message: "Task Status Changed to Incomplete." });
+      return res.status(200).json({ message: "Task Status Changed to Incomplete." });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1240,19 +912,14 @@ router.patch("/subtask/change-status/:user_id", async (req, res) => {
   const { stid, stassignee, status_but } = req.body;
   try {
     const formattedDate = dateConversion();
-    const [subtaskDetail] = await pool.execute(
-      "CALL check_subtask_assign2(?)",
-      [stid]
-    );
+    const [subtaskDetail] = await pool.execute("CALL check_subtask_assign2(?)", [stid]);
     const subtask_detail = subtaskDetail[0][0];
 
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      stassignee,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [stassignee]);
     const student = getMydetail[0][0];
 
     let status = "";
-    if ((status_but == "to_do") && (status = "To Do") || (status_but == "in_progress") && (status = "In Progress")) {
+    if ((status_but == "to_do" && (status = "To Do")) || (status_but == "in_progress" && (status = "In Progress"))) {
       const statusFieldsValues = `ststatus = '${status_but}', sreview = '', sreview_clear = '', sreview_notify = '', po_sreview_clear = '', po_sreview_notify = '', ststatus_date = '${formattedDate}' `;
       const subtask_id = `stid = '${stid}'`;
 
@@ -1276,43 +943,26 @@ router.patch("/subtask/change-status/:user_id", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
+        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
       }
       return res.status(200).json({ message: "Status Changed Successfully." });
     } else if (status_but == "in_review" || status_but == "done") {
       if (subtask_detail.stproject_assign) {
-        const [getPcreated_by] = await pool.execute(
-          "CALL getProjectById(?)",
-          [subtask_detail.stproject_assign]
-        );
+        const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [subtask_detail.stproject_assign]);
         const project_detail = getPcreated_by[0][0];
         const project_createdby = project_detail.pcreated_by;
         const project_manager = project_detail.pmanager;
         let portfolio_owner_id = "";
-        const [check_Portfolio_owner_id] = await pool.execute(
-          "CALL getPortfolioById(?)",
-          [project_detail.portfolio_id]
-        );
+        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [project_detail.portfolio_id]);
         if (!check_Portfolio_owner_id[0][0]) {
-          portfolio_owner_id =
-            check_Portfolio_owner_id[0][0].portfolio_createdby;
+          portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
         }
 
-        if (
-          project_createdby != user_id &&
-          project_manager != user_id &&
-          portfolio_owner_id != user_id
-        ) {
+        if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
           const statusFieldsValues = `ststatus = 'in_review', sreview = 'sent', sreview_clear = 'no', sreview_notify= 'sent_yes', po_sreview_clear = 'no', po_sreview_notify = 'sent_yes', sreview_notdate = '${formattedDate}', ststatus_date = '${formattedDate}'`;
           const subtask_id = `stid = '${stid}'`;
 
-          await pool.execute("CALL UpdateSubtask(?,?)", [
-            statusFieldsValues,
-            subtask_id,
-          ]);
+          await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
           if (subtask_detail.stproject_assign) {
             const history = {
               pid: subtask_detail.stproject_assign,
@@ -1331,22 +981,14 @@ router.patch("/subtask/change-status/:user_id", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
+            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
           }
-          return res
-            .status(200)
-            .json({ message: "Status Changed Successfully." });
+          return res.status(200).json({ message: "Status Changed Successfully." });
         } else {
           const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
           const subtask_id = `stid = '${stid}'`;
 
-          await pool.execute("CALL UpdateSubtask(?,?)", [
-            statusFieldsValues,
-            subtask_id,
-          ]);
+          await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
           if (subtask_detail.stproject_assign) {
             const history = {
               pid: subtask_detail.stproject_assign,
@@ -1365,26 +1007,16 @@ router.patch("/subtask/change-status/:user_id", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
+            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
           }
-          return res
-            .status(200)
-            .json({ message: "Status Changed Successfully." });
+          return res.status(200).json({ message: "Status Changed Successfully." });
         }
       } else {
         const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
         const subtask_id = `stid = '${stid}'`;
 
-        await pool.execute("CALL UpdateSubtask(?,?)", [
-          statusFieldsValues,
-          subtask_id,
-        ]);
-        return res
-          .status(200)
-          .json({ message: "Status Changed Successfully." });
+        await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
+        return res.status(200).json({ message: "Status Changed Successfully." });
       }
     }
   } catch (error) {
@@ -1398,61 +1030,33 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { stid, stassignee } = req.body;
   try {
-    const [subtaskDetail] = await pool.execute("CALL check_subtask_assign2(?)", [
-      stid,
-    ]);
+    const [subtaskDetail] = await pool.execute("CALL check_subtask_assign2(?)", [stid]);
     const subtask_detail = subtaskDetail[0][0];
     const formattedDate = dateConversion();
 
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      stassignee,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [stassignee]);
     const student = getMydetail[0][0];
 
-    if (
-      subtask_detail.ststatus == "to_do" ||
-      subtask_detail.ststatus == "in_progress" ||
-      subtask_detail.ststatus == "in_review"
-    ) {
+    if (subtask_detail.ststatus == "to_do" || subtask_detail.ststatus == "in_progress" || subtask_detail.ststatus == "in_review") {
       if (subtask_detail.stproject_assign) {
-        const [getPcreated_by] = await pool.execute(
-          "CALL getProjectById(?)",
-          [subtask_detail.stproject_assign]
-        );
+        const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [subtask_detail.stproject_assign]);
         const project_detail = getPcreated_by[0][0];
         const project_createdby = project_detail.pcreated_by;
         const project_manager = project_detail.pmanager;
         let portfolio_owner_id = "";
-        const [check_Portfolio_owner_id] = await pool.execute(
-          "CALL getPortfolioById(?)",
-          [project_detail.portfolio_id]
-        );
+        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [project_detail.portfolio_id]);
         if (!check_Portfolio_owner_id[0][0]) {
-          portfolio_owner_id =
-            check_Portfolio_owner_id[0][0].portfolio_createdby;
+          portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
         }
 
-        if (
-          project_createdby != user_id &&
-          project_manager != user_id &&
-          portfolio_owner_id != user_id
-        ) {
+        if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
           const statusFieldsValues = `ststatus = 'in_review', sreview = 'sent', sreview_clear = 'no', sreview_notify= 'sent_yes', po_sreview_clear = 'no', po_sreview_notify = 'sent_yes', sreview_notdate = '${formattedDate}', ststatus_date = '${formattedDate}'`;
           const subtask_id = `stid = '${stid}'`;
 
-          await pool.execute("CALL UpdateSubtask(?,?)", [
-            statusFieldsValues,
-            subtask_id,
-          ]);
+          await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
 
-          const [subt_detail] = await pool.execute(
-            "CALL getSubtasksDetailsbyID(?)",
-            [stid]
-          );
-          const [t_changestatus] = await pool.execute(
-            "CALL getTasksDetailsbyID(?)",
-            [subt_detail[0][0].tid]
-          );
+          const [subt_detail] = await pool.execute("CALL getSubtasksDetailsbyID(?)", [stid]);
+          const [t_changestatus] = await pool.execute("CALL getTasksDetailsbyID(?)", [subt_detail[0][0].tid]);
           let new_tstatus = "in_progress";
           if (t_changestatus[0][0]) {
             if (t_changestatus[0][0].tstatus == "to_do") {
@@ -1462,10 +1066,7 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
           const tFieldsValues = `tstatus = "${new_tstatus}", review = "", review_clear = "", review_notify = "", po_review_clear = "", po_review_notify = "", tstatus_date = "${formattedDate}"`;
           const task_id = `tid = '${subt_detail[0][0].tid}'`;
 
-          await pool.execute("CALL UpdateTask(?,?)", [
-            tFieldsValues,
-            task_id,
-          ]);
+          await pool.execute("CALL UpdateTask(?,?)", [tFieldsValues, task_id]);
 
           if (subtask_detail.stproject_assign) {
             const history = {
@@ -1485,22 +1086,14 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
+            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
           }
-          return res
-            .status(200)
-            .json({ message: "Status Changed Successfully." });
+          return res.status(200).json({ message: "Status Changed Successfully." });
         } else {
           const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
           const subtask_id = `stid = '${stid}'`;
 
-          await pool.execute("CALL UpdateSubtask(?,?)", [
-            statusFieldsValues,
-            subtask_id,
-          ]);
+          await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
           if (subtask_detail.stproject_assign) {
             const history = {
               pid: subtask_detail.stproject_assign,
@@ -1519,28 +1112,17 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [
-              paramNamesString1,
-              paramValuesString1,
-            ]);
+            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
           }
-          return res
-            .status(200)
-            .json({ message: "Status Changed Successfully." });
+          return res.status(200).json({ message: "Status Changed Successfully." });
         }
       } else {
         const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
         const subtask_id = `stid = '${stid}'`;
 
-        await pool.execute("CALL UpdateSubtask(?,?)", [
-          statusFieldsValues,
-          subtask_id,
-        ]);
-        return res
-          .status(200)
-          .json({ message: "Status Changed Successfully." });
+        await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
+        return res.status(200).json({ message: "Status Changed Successfully." });
       }
-
     }
 
     if (subtask_detail.ststatus == "done") {
@@ -1549,14 +1131,8 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
 
       await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
 
-      const [subt_detail] = await pool.execute(
-        "CALL getSubtasksDetailsbyID(?)",
-        [stid]
-      );
-      const [t_changestatus] = await pool.execute(
-        "CALL getTasksDetailsbyID(?)",
-        [subt_detail[0][0].tid]
-      );
+      const [subt_detail] = await pool.execute("CALL getSubtasksDetailsbyID(?)", [stid]);
+      const [t_changestatus] = await pool.execute("CALL getTasksDetailsbyID(?)", [subt_detail[0][0].tid]);
       let new_tstatus = "in_progress";
       if (t_changestatus[0][0]) {
         if (t_changestatus[0][0].tstatus == "to_do") {
@@ -1566,10 +1142,7 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
       const tFieldsValues = `tstatus = "${new_tstatus}", review = "", review_clear = "", review_notify = "", po_review_clear = "", po_review_notify = "", tstatus_date = "${formattedDate}"`;
       const task_id = `tid = '${subt_detail[0][0].tid}'`;
 
-      await pool.execute("CALL UpdateTask(?,?)", [
-        tFieldsValues,
-        task_id,
-      ]);
+      await pool.execute("CALL UpdateTask(?,?)", [tFieldsValues, task_id]);
 
       if (subtask_detail.stproject_assign) {
         const history = {
@@ -1589,14 +1162,9 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
+        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
       }
-      return res
-        .status(200)
-        .json({ message: "Subtask Status Changed to Incomplete." });
+      return res.status(200).json({ message: "Subtask Status Changed to Incomplete." });
     }
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1608,18 +1176,9 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
 router.get("/task/team-member-tasks-list/:project_id/:task_assignee", async (req, res) => {
   const { project_id, task_assignee } = req.params;
   try {
-    const [ProjectDetailCheck] = await pool.execute(
-      "CALL ProjectDetailCheck(?)",
-      [project_id]
-    );
-    const [team_member_tasks_listNew] = await pool.execute(
-      "CALL team_member_tasks_listNew(?,?)",
-      [project_id, task_assignee]
-    );
-    const [team_member_subtasks_listNew] = await pool.execute(
-      "CALL team_member_subtasks_listNew(?,?)",
-      [project_id, task_assignee]
-    );
+    const [ProjectDetailCheck] = await pool.execute("CALL ProjectDetailCheck(?)", [project_id]);
+    const [team_member_tasks_listNew] = await pool.execute("CALL team_member_tasks_listNew(?,?)", [project_id, task_assignee]);
+    const [team_member_subtasks_listNew] = await pool.execute("CALL team_member_subtasks_listNew(?,?)", [project_id, task_assignee]);
     res.status(200).json({
       pid: project_id,
       tassignee: task_assignee,
@@ -1639,14 +1198,8 @@ router.get("/task/portfolios-edit-task/:user_id", async (req, res) => {
   const { tid, portfolio_id } = req.body;
   try {
     const [check_task] = await pool.execute("CALL check_task(?)", [tid]);
-    const [ProjectListbyPortCookie] = await pool.execute(
-      "CALL ProjectListbyPortCookie(?,?)",
-      [portfolio_id, user_id]
-    );
-    const [AcceptedProjectListbyPortCookie] = await pool.execute(
-      "CALL AcceptedProjectListbyPortCookie(?,?)",
-      [portfolio_id, user_id]
-    );
+    const [ProjectListbyPortCookie] = await pool.execute("CALL ProjectListbyPortCookie(?,?)", [portfolio_id, user_id]);
+    const [AcceptedProjectListbyPortCookie] = await pool.execute("CALL AcceptedProjectListbyPortCookie(?,?)", [portfolio_id, user_id]);
     res.status(200).json({
       tdetail: check_task[0][0],
       plist: ProjectListbyPortCookie[0],
@@ -1662,14 +1215,8 @@ router.get("/task/portfolios-edit-task/:user_id", async (req, res) => {
 router.get("/task/project-tasks-list/:project_id", async (req, res) => {
   const { project_id } = req.params;
   try {
-    const [ProjectDetailCheck] = await pool.execute(
-      "CALL ProjectDetailCheck(?)",
-      [project_id]
-    );
-    const [project_tasks_listNew] = await pool.execute(
-      "CALL project_tasks_listNew(?)",
-      [project_id]
-    );
+    const [ProjectDetailCheck] = await pool.execute("CALL ProjectDetailCheck(?)", [project_id]);
+    const [project_tasks_listNew] = await pool.execute("CALL project_tasks_listNew(?)", [project_id]);
     res.status(200).json({
       pid: project_id,
       pdetail: ProjectDetailCheck[0][0],
@@ -1688,9 +1235,7 @@ router.get("/task/download-history", async (req, res) => {
     const [taskDetail] = await pool.execute("CALL getTaskById(?)", [tid]);
     const task_detail = taskDetail[0][0];
 
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
 
     if (task_detail.tproject_assign) {
@@ -1717,10 +1262,7 @@ router.get("/task/download-history", async (req, res) => {
         .join(", ");
 
       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL1, [
-        paramNamesString1,
-        paramValuesString1,
-      ]);
+      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
     }
     res.status(200).json({ message: "File Downloaded Successfully." });
   } catch (error) {
@@ -1733,9 +1275,7 @@ router.get("/task/download-history", async (req, res) => {
 router.get("/task/trash-tasks-files/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [TrashTaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [
-      portfolio_id,
-    ]);
+    const [TrashTaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [portfolio_id]);
     res.status(200).json({
       trash_task_files: TrashTaskFiles[0],
     });
@@ -1751,26 +1291,19 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
   const { div_class, div_field, div_id, txt, user_id } = req.body;
   try {
     if (txt) {
-      const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-        user_id,
-      ]);
+      const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
       const student = getMydetail[0][0];
       const formattedDate = dateConversion();
 
       if (div_class == "task_editable") {
-        const [task_detail] = await pool.execute("CALL getTaskById(?)", [
-          div_id,
-        ]);
+        const [task_detail] = await pool.execute("CALL getTaskById(?)", [div_id]);
         const tdetail = task_detail[0][0];
         if (tdetail) {
           if (div_field == "tname_field") {
             const statusFieldsValues = `tname = '${txt}' `;
             const task_id = `tid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              statusFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
             if (tdetail.tproject_assign) {
               const history = {
                 pid: tdetail.tproject_assign,
@@ -1789,10 +1322,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
           if (div_field == "tassignee_field") {
@@ -1805,9 +1335,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
               tnotify = "yes";
               tnotify_clear = "no";
             }
-            const [project_row] = await pool.execute("CALL getProjectById(?)", [
-              tdetail.tproject_assign,
-            ]);
+            const [project_row] = await pool.execute("CALL getProjectById(?)", [tdetail.tproject_assign]);
             const check_Pro_Owner = project_row[0][0];
 
             let pro_owner = "";
@@ -1823,22 +1351,15 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
               pname = check_Pro_Owner.pname;
               pdes = check_Pro_Owner.pdes;
 
-              const [portfolio_row] = await pool.execute(
-                "CALL getPortfolioById(?)",
-                [check_Pro_Owner.portfolio_id]
-              );
+              const [portfolio_row] = await pool.execute("CALL getPortfolioById(?)", [check_Pro_Owner.portfolio_id]);
               const check_Portfolio_owner_id = portfolio_row[0][0];
               if (check_Portfolio_owner_id) {
-                portfolio_owner_id =
-                  check_Portfolio_owner_id.portfolio_createdby;
+                portfolio_owner_id = check_Portfolio_owner_id.portfolio_createdby;
               }
             }
             let index = "";
             if (pro_owner != txt) {
-              const [pdetail_member] = await pool.execute(
-                "CALL getMemberProject(?)",
-                [tdetail.tproject_assign]
-              );
+              const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [tdetail.tproject_assign]);
               let pro_member = [];
               if (pdetail_member[0]) {
                 pdetail_member[0].forEach(async (pm) => {
@@ -1848,68 +1369,38 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
               index = pro_member.indexOf(txt);
             }
 
-            if (
-              pro_owner == user_id ||
-              pro_manager == user_id ||
-              portfolio_owner_id == user_id
-            ) {
+            if (pro_owner == user_id || pro_manager == user_id || portfolio_owner_id == user_id) {
               if (pro_owner != txt) {
                 if (index === -1) {
-                  const [check_if_suggested] = await pool.execute(
-                    "CALL check_suggested(?,?)",
-                    [tdetail.tproject_assign, txt]
-                  );
+                  const [check_if_suggested] = await pool.execute("CALL check_suggested(?,?)", [tdetail.tproject_assign, txt]);
                   if (check_if_suggested[0][0]) {
                     const suggestTMFieldsValues = `status = 'approved', approve_date = '${formattedDate}'`;
                     const suggestTM1 = `pid = '${tdetail.tproject_assign}'`;
                     const suggestTM2 = `suggest_id = '${txt}'`;
-                    await pool.execute(
-                      "CALL UpdateProjectSuggestedMembers(?,?,?)",
-                      [suggestTMFieldsValues, suggestTM1, suggestTM2]
-                    );
+                    await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [suggestTMFieldsValues, suggestTM1, suggestTM2]);
                   }
 
-                  const tmFieldsNames =
-                    "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
+                  const tmFieldsNames = "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
                   const tmFieldsValues = `"${tdetail.tproject_assign}", "${portfolio_id}", "${txt}", "send", "${user_id}", "${formattedDate}", "no"`;
 
-                  await pool.execute("CALL InsertProjectMembers(?,?)", [
-                    tmFieldsNames,
-                    tmFieldsValues,
-                  ]);
+                  await pool.execute("CALL InsertProjectMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-                  const [inserted_pm] = await pool.execute(
-                    "CALL LastInsertedProjectMembers(?)",
-                    [user_id]
-                  );
+                  const [inserted_pm] = await pool.execute("CALL LastInsertedProjectMembers(?)", [user_id]);
                   const inserted_pm_id = inserted_pm[0][0].pm_id;
-                  const [txt_row] = await pool.execute(
-                    "CALL getStudentById(?)",
-                    [txt]
-                  );
+                  const [txt_row] = await pool.execute("CALL getStudentById(?)", [txt]);
 
-                  const tmHistoryFieldsNames =
-                    "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
+                  const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
                   const tmHistoryFieldsValues = `"${tdetail.tproject_assign}", "${tdetail.gid}", "${tdetail.sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${student.first_name} ${student.last_name} sent team member request to ${txt_row[0][0].first_name} ${txt_row[0][0].last_name}", "${inserted_pm_id}"`;
 
-                  await pool.execute("CALL InsertProjectHistory(?,?)", [
-                    tmHistoryFieldsNames,
-                    tmHistoryFieldsValues,
-                  ]);
+                  await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
 
                   let get_portfolio_name = "";
-                  const [check_portfolio_name] = await pool.execute(
-                    "CALL getPortfolioName(?)",
-                    [portfolio_id]
-                  );
+                  const [check_portfolio_name] = await pool.execute("CALL getPortfolioName(?)", [portfolio_id]);
                   if (check_portfolio_name) {
-                    if (
-                      check_portfolio_name[0][0].portfolio_user == "individual"
-                    ) {
+                    if (check_portfolio_name[0][0].portfolio_user == "individual") {
                       get_portfolio_name = `${check_portfolio_name[0][0].portfolio_name} ${check_portfolio_name[0][0].portfolio_lname}`;
                     } else {
-                      get_portfolio_name =
-                        check_portfolio_name[0][0].portfolio_name;
+                      get_portfolio_name = check_portfolio_name[0][0].portfolio_name;
                     }
                   }
 
@@ -1923,8 +1414,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                     subject: "Project Request | Decision 168",
                     html: generateEmailTemplate(
                       `Hello ${txt_row[0][0].first_name},
-                  ${student.first_name} ${student.last_name
-                      } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+                  ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
                   Portfolio: ${get_portfolio_name}
                   Project Short Description: ${pdes.substring(0, 100)}...`,
                       `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -1948,44 +1438,24 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
             } else {
               if (pro_owner != txt) {
                 if (index === -1) {
-                  const [check] = await pool.execute(
-                    "CALL check_suggested(?,?)",
-                    [tdetail.tproject_assign, txt]
-                  );
-                  const [check_pmem] = await pool.execute(
-                    "CALL check_pro_member2(?,?)",
-                    [tdetail.tproject_assign, txt]
-                  );
+                  const [check] = await pool.execute("CALL check_suggested(?,?)", [tdetail.tproject_assign, txt]);
+                  const [check_pmem] = await pool.execute("CALL check_pro_member2(?,?)", [tdetail.tproject_assign, txt]);
 
                   if (!check[0][0] && !check_pmem[0][0]) {
-                    const tmFieldsNames =
-                      "pid, suggest_id, status, already_register, suggested_by, suggested_date";
+                    const tmFieldsNames = "pid, suggest_id, status, already_register, suggested_by, suggested_date";
                     const tmFieldsValues = `"${tdetail.tproject_assign}", "${txt}", "suggested", "yes", "${user_id}", "${formattedDate}"`;
 
-                    await pool.execute(
-                      "CALL InsertProjectSuggestedMembers(?,?)",
-                      [tmFieldsNames, tmFieldsValues]
-                    );
+                    await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-                    const [inserted_tm] = await pool.execute(
-                      "CALL LastInsertProjectSuggestedMembers(?)",
-                      [user_id]
-                    );
+                    const [inserted_tm] = await pool.execute("CALL LastInsertProjectSuggestedMembers(?)", [user_id]);
                     const inserted_tm_id = inserted_tm[0][0].s_id;
 
-                    const [txt_row] = await pool.execute(
-                      "CALL getStudentById(?)",
-                      [txt]
-                    );
+                    const [txt_row] = await pool.execute("CALL getStudentById(?)", [txt]);
 
-                    const tmHistoryFieldsNames =
-                      "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
+                    const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
                     const tmHistoryFieldsValues = `"${tdetail.tproject_assign}", "${tdetail.gid}", "${tdetail.sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${txt_row[0][0].first_name} ${txt_row[0][0].last_name} is suggested by ${student.first_name} ${student.last_name}", "${inserted_tm_id}"`;
 
-                    await pool.execute("CALL InsertProjectHistory(?,?)", [
-                      tmHistoryFieldsNames,
-                      tmHistoryFieldsValues,
-                    ]);
+                    await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
                   }
                 }
               }
@@ -1994,10 +1464,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
             const statusFieldsValues = `tassignee = '${txt}', tnotify = '${tnotify}', tnotify_clear = '${tnotify_clear}', tnotify_date = '${formattedDate}' `;
             const task_id = `tid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              statusFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
             if (tdetail.tproject_assign) {
               const history = {
                 pid: tdetail.tproject_assign,
@@ -2016,20 +1483,14 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
           if (div_field == "tpriority_field") {
             const statusFieldsValues = `tpriority = '${txt}' `;
             const task_id = `tid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              statusFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
             if (tdetail.tproject_assign) {
               const history = {
                 pid: tdetail.tproject_assign,
@@ -2048,25 +1509,19 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
           if (div_field == "tstatus_field") {
             let status = "";
             if (txt == "to_do" || txt == "in_progress") {
-              (txt == "to_do") && (status = "To Do");
-              (txt == "in_progress") && (status = "In Progress");
+              txt == "to_do" && (status = "To Do");
+              txt == "in_progress" && (status = "In Progress");
 
               const statusFieldsValues = `tstatus = '${txt}', tstatus_date = '${formattedDate}' `;
               const task_id = `tid = '${div_id}'`;
 
-              await pool.execute("CALL UpdateTask(?,?)", [
-                statusFieldsValues,
-                task_id,
-              ]);
+              await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
 
               if (tdetail.tproject_assign) {
                 const history = {
@@ -2086,23 +1541,12 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [
-                  paramNamesString1,
-                  paramValuesString1,
-                ]);
+                await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
               }
-              return res
-                .status(200)
-                .json({ message: "Status Changed Successfully." });
+              return res.status(200).json({ message: "Status Changed Successfully." });
             } else if (txt == "in_review" || txt == "done") {
-              const [check_st] = await pool.execute(
-                "CALL subtask_progress_total(?)",
-                [div_id]
-              );
-              const [check_stdone] = await pool.execute(
-                "CALL subtask_progress_done(?)",
-                [div_id]
-              );
+              const [check_st] = await pool.execute("CALL subtask_progress_total(?)", [div_id]);
+              const [check_stdone] = await pool.execute("CALL subtask_progress_done(?)", [div_id]);
               let task_with_subtasks = "";
               let task_with_no_subtasks = "";
               if (check_st[0][0]) {
@@ -2112,48 +1556,30 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                   task_with_subtasks = "yes";
                 } else {
                   return res.status(400).json({
-                    message:
-                      "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
+                    message: "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
                   });
                 }
               } else {
                 task_with_no_subtasks = "yes";
               }
 
-              if (
-                task_with_subtasks == "yes" ||
-                task_with_no_subtasks == "yes"
-              ) {
+              if (task_with_subtasks == "yes" || task_with_no_subtasks == "yes") {
                 if (tdetail.tproject_assign) {
-                  const [getPcreated_by] = await pool.execute(
-                    "CALL getProjectById(?)",
-                    [tdetail.tproject_assign]
-                  );
+                  const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [tdetail.tproject_assign]);
                   const project_detail = getPcreated_by[0][0];
                   const project_createdby = project_detail.pcreated_by;
                   const project_manager = project_detail.pmanager;
                   let portfolio_owner_id = "";
-                  const [check_Portfolio_owner_id] = await pool.execute(
-                    "CALL getPortfolioById(?)",
-                    [project_detail.portfolio_id]
-                  );
+                  const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [project_detail.portfolio_id]);
                   if (!check_Portfolio_owner_id[0][0]) {
-                    portfolio_owner_id =
-                      check_Portfolio_owner_id[0][0].portfolio_createdby;
+                    portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
                   }
 
-                  if (
-                    project_createdby != user_id &&
-                    project_manager != user_id &&
-                    portfolio_owner_id != user_id
-                  ) {
+                  if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
                     const statusFieldsValues = `tstatus = 'in_review', review = 'sent', review_clear = 'no', review_notify= 'sent_yes', po_review_clear = 'no', po_review_notify = 'sent_yes', review_notdate = '${formattedDate}', tstatus_date = '${formattedDate}'`;
                     const task_id = `tid = '${div_id}'`;
 
-                    await pool.execute("CALL UpdateTask(?,?)", [
-                      statusFieldsValues,
-                      task_id,
-                    ]);
+                    await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
                     if (tdetail.tproject_assign) {
                       const history = {
                         pid: tdetail.tproject_assign,
@@ -2172,22 +1598,14 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                         .join(", ");
 
                       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                      await pool.execute(callProcedureSQL1, [
-                        paramNamesString1,
-                        paramValuesString1,
-                      ]);
+                      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
                     }
-                    return res
-                      .status(200)
-                      .json({ message: "Status Changed Successfully." });
+                    return res.status(200).json({ message: "Status Changed Successfully." });
                   } else {
                     const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
                     const task_id = `tid = '${div_id}'`;
 
-                    await pool.execute("CALL UpdateTask(?,?)", [
-                      statusFieldsValues,
-                      task_id,
-                    ]);
+                    await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
                     if (tdetail.tproject_assign) {
                       const history = {
                         pid: tdetail.tproject_assign,
@@ -2206,31 +1624,20 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                         .join(", ");
 
                       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                      await pool.execute(callProcedureSQL1, [
-                        paramNamesString1,
-                        paramValuesString1,
-                      ]);
+                      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
                     }
-                    return res
-                      .status(200)
-                      .json({ message: "Status Changed Successfully." });
+                    return res.status(200).json({ message: "Status Changed Successfully." });
                   }
                 } else {
                   const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
                   const task_id = `tid = '${div_id}'`;
 
-                  await pool.execute("CALL UpdateTask(?,?)", [
-                    statusFieldsValues,
-                    task_id,
-                  ]);
-                  return res
-                    .status(200)
-                    .json({ message: "Status Changed Successfully." });
+                  await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
+                  return res.status(200).json({ message: "Status Changed Successfully." });
                 }
               } else {
                 return res.status(400).json({
-                  message:
-                    "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
+                  message: "Subtasks are not completed, so you are unable to change the task status to 'Done'.",
                 });
               }
             }
@@ -2239,10 +1646,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
             const statusFieldsValues = `tdue_date = '${txt}' `;
             const task_id = `tid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateTask(?,?)", [
-              statusFieldsValues,
-              task_id,
-            ]);
+            await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
             if (tdetail.tproject_assign) {
               const history = {
                 pid: tdetail.tproject_assign,
@@ -2261,29 +1665,20 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
         }
         res.status(200).json({ message: "Updated Successfully." });
       } else if (div_class == "subtask_editable") {
-        const [subtask_detail] = await pool.execute(
-          "CALL check_subtask_assign2(?)",
-          [div_id]
-        );
+        const [subtask_detail] = await pool.execute("CALL check_subtask_assign2(?)", [div_id]);
         const tdetail = subtask_detail[0][0];
         if (tdetail) {
           if (div_field == "stname_field") {
             const statusFieldsValues = `stname = '${txt}' `;
             const subtask_id = `stid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateSubtask(?,?)", [
-              statusFieldsValues,
-              subtask_id,
-            ]);
+            await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
             if (tdetail.stproject_assign) {
               const history = {
                 pid: tdetail.stproject_assign,
@@ -2302,10 +1697,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
           if (div_field == "stassignee_field") {
@@ -2318,9 +1710,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
               stnotify = "yes";
               stnotify_clear = "no";
             }
-            const [project_row] = await pool.execute("CALL getProjectById(?)", [
-              tdetail.stproject_assign,
-            ]);
+            const [project_row] = await pool.execute("CALL getProjectById(?)", [tdetail.stproject_assign]);
             const check_Pro_Owner = project_row[0][0];
 
             let pro_owner = "";
@@ -2334,22 +1724,15 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
               pname = check_Pro_Owner.pname;
               pdes = check_Pro_Owner.pdes;
 
-              const [portfolio_row] = await pool.execute(
-                "CALL getPortfolioById(?)",
-                [check_Pro_Owner.portfolio_id]
-              );
+              const [portfolio_row] = await pool.execute("CALL getPortfolioById(?)", [check_Pro_Owner.portfolio_id]);
               const check_Portfolio_owner_id = portfolio_row[0][0];
               if (check_Portfolio_owner_id) {
-                portfolio_owner_id =
-                  check_Portfolio_owner_id.portfolio_createdby;
+                portfolio_owner_id = check_Portfolio_owner_id.portfolio_createdby;
               }
             }
             let index = "";
             if (pro_owner != txt) {
-              const [pdetail_member] = await pool.execute(
-                "CALL getMemberProject(?)",
-                [tdetail.stproject_assign]
-              );
+              const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [tdetail.stproject_assign]);
               let pro_member = [];
               if (pdetail_member[0]) {
                 pdetail_member[0].forEach(async (pm) => {
@@ -2359,68 +1742,38 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
               index = pro_member.indexOf(txt);
             }
 
-            if (
-              pro_owner == user_id ||
-              pro_manager == user_id ||
-              portfolio_owner_id == user_id
-            ) {
+            if (pro_owner == user_id || pro_manager == user_id || portfolio_owner_id == user_id) {
               if (pro_owner != txt) {
                 if (index === -1) {
-                  const [check_if_suggested] = await pool.execute(
-                    "CALL check_suggested(?,?)",
-                    [tdetail.stproject_assign, txt]
-                  );
+                  const [check_if_suggested] = await pool.execute("CALL check_suggested(?,?)", [tdetail.stproject_assign, txt]);
                   if (check_if_suggested[0][0]) {
                     const suggestTMFieldsValues = `status = 'approved', approve_date = '${formattedDate}'`;
                     const suggestTM1 = `pid = '${tdetail.stproject_assign}'`;
                     const suggestTM2 = `suggest_id = '${txt}'`;
-                    await pool.execute(
-                      "CALL UpdateProjectSuggestedMembers(?,?,?)",
-                      [suggestTMFieldsValues, suggestTM1, suggestTM2]
-                    );
+                    await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [suggestTMFieldsValues, suggestTM1, suggestTM2]);
                   }
 
-                  const tmFieldsNames =
-                    "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
+                  const tmFieldsNames = "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
                   const tmFieldsValues = `"${tdetail.stproject_assign}", "${portfolio_id}", "${txt}", "send", "${user_id}", "${formattedDate}", "no"`;
 
-                  await pool.execute("CALL InsertProjectMembers(?,?)", [
-                    tmFieldsNames,
-                    tmFieldsValues,
-                  ]);
+                  await pool.execute("CALL InsertProjectMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-                  const [inserted_pm] = await pool.execute(
-                    "CALL LastInsertedProjectMembers(?)",
-                    [user_id]
-                  );
+                  const [inserted_pm] = await pool.execute("CALL LastInsertedProjectMembers(?)", [user_id]);
                   const inserted_pm_id = inserted_pm[0][0].pm_id;
-                  const [txt_row] = await pool.execute(
-                    "CALL getStudentById(?)",
-                    [txt]
-                  );
+                  const [txt_row] = await pool.execute("CALL getStudentById(?)", [txt]);
 
-                  const tmHistoryFieldsNames =
-                    "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
+                  const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
                   const tmHistoryFieldsValues = `"${tdetail.stproject_assign}", "${tdetail.gid}", "${tdetail.sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${student.first_name} ${student.last_name} sent team member request to ${txt_row[0][0].first_name} ${txt_row[0][0].last_name}", "${inserted_pm_id}"`;
 
-                  await pool.execute("CALL InsertProjectHistory(?,?)", [
-                    tmHistoryFieldsNames,
-                    tmHistoryFieldsValues,
-                  ]);
+                  await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
 
                   let get_portfolio_name = "";
-                  const [check_portfolio_name] = await pool.execute(
-                    "CALL getPortfolioName(?)",
-                    [portfolio_id]
-                  );
+                  const [check_portfolio_name] = await pool.execute("CALL getPortfolioName(?)", [portfolio_id]);
                   if (check_portfolio_name) {
-                    if (
-                      check_portfolio_name[0][0].portfolio_user == "individual"
-                    ) {
+                    if (check_portfolio_name[0][0].portfolio_user == "individual") {
                       get_portfolio_name = `${check_portfolio_name[0][0].portfolio_name} ${check_portfolio_name[0][0].portfolio_lname}`;
                     } else {
-                      get_portfolio_name =
-                        check_portfolio_name[0][0].portfolio_name;
+                      get_portfolio_name = check_portfolio_name[0][0].portfolio_name;
                     }
                   }
 
@@ -2434,8 +1787,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                     subject: "Project Request | Decision 168",
                     html: generateEmailTemplate(
                       `Hello ${txt_row[0][0].first_name},
-                  ${student.first_name} ${student.last_name
-                      } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+                  ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
                   Portfolio: ${get_portfolio_name}
                   Project Short Description: ${pdes.substring(0, 100)}...`,
                       `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -2459,44 +1811,24 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
             } else {
               if (pro_owner != txt) {
                 if (index === -1) {
-                  const [check] = await pool.execute(
-                    "CALL check_suggested(?,?)",
-                    [tdetail.stproject_assign, txt]
-                  );
-                  const [check_pmem] = await pool.execute(
-                    "CALL check_pro_member2(?,?)",
-                    [tdetail.stproject_assign, txt]
-                  );
+                  const [check] = await pool.execute("CALL check_suggested(?,?)", [tdetail.stproject_assign, txt]);
+                  const [check_pmem] = await pool.execute("CALL check_pro_member2(?,?)", [tdetail.stproject_assign, txt]);
 
                   if (!check[0][0] && !check_pmem[0][0]) {
-                    const tmFieldsNames =
-                      "pid, suggest_id, status, already_register, suggested_by, suggested_date";
+                    const tmFieldsNames = "pid, suggest_id, status, already_register, suggested_by, suggested_date";
                     const tmFieldsValues = `"${tdetail.stproject_assign}", "${txt}", "suggested", "yes", "${user_id}", "${formattedDate}"`;
 
-                    await pool.execute(
-                      "CALL InsertProjectSuggestedMembers(?,?)",
-                      [tmFieldsNames, tmFieldsValues]
-                    );
+                    await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-                    const [inserted_tm] = await pool.execute(
-                      "CALL LastInsertProjectSuggestedMembers(?)",
-                      [user_id]
-                    );
+                    const [inserted_tm] = await pool.execute("CALL LastInsertProjectSuggestedMembers(?)", [user_id]);
                     const inserted_tm_id = inserted_tm[0][0].s_id;
 
-                    const [txt_row] = await pool.execute(
-                      "CALL getStudentById(?)",
-                      [txt]
-                    );
+                    const [txt_row] = await pool.execute("CALL getStudentById(?)", [txt]);
 
-                    const tmHistoryFieldsNames =
-                      "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
+                    const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
                     const tmHistoryFieldsValues = `"${tdetail.stproject_assign}", "${tdetail.gid}", "${tdetail.sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${txt_row[0][0].first_name} ${txt_row[0][0].last_name} is suggested by ${student.first_name} ${student.last_name}", "${inserted_tm_id}"`;
 
-                    await pool.execute("CALL InsertProjectHistory(?,?)", [
-                      tmHistoryFieldsNames,
-                      tmHistoryFieldsValues,
-                    ]);
+                    await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
                   }
                 }
               }
@@ -2505,10 +1837,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
             const statusFieldsValues = `stassignee = '${txt}', stnotify = '${stnotify}', stnotify_clear = '${stnotify_clear}', stnotify_date = '${formattedDate}' `;
             const subtask_id = `stid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateSubtask(?,?)", [
-              statusFieldsValues,
-              subtask_id,
-            ]);
+            await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
             if (tdetail.stproject_assign) {
               const history = {
                 pid: tdetail.stproject_assign,
@@ -2527,20 +1856,14 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
           if (div_field == "stpriority_field") {
             const statusFieldsValues = `stpriority = '${txt}' `;
             const subtask_id = `stid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateSubtask(?,?)", [
-              statusFieldsValues,
-              subtask_id,
-            ]);
+            await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
             if (tdetail.stproject_assign) {
               const history = {
                 pid: tdetail.stproject_assign,
@@ -2559,25 +1882,19 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
           if (div_field == "ststatus_field") {
             let status = "";
             if (txt == "to_do" || txt == "in_progress") {
-              (txt == "to_do") && (status = "To Do");
-              (txt == "in_progress") && (status = "In Progress");
+              txt == "to_do" && (status = "To Do");
+              txt == "in_progress" && (status = "In Progress");
 
               const statusFieldsValues = `ststatus = '${txt}', ststatus_date = '${formattedDate}' `;
               const subtask_id = `stid = '${div_id}'`;
 
-              await pool.execute("CALL UpdateSubtask(?,?)", [
-                statusFieldsValues,
-                subtask_id,
-              ]);
+              await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
 
               if (tdetail.stproject_assign) {
                 const history = {
@@ -2597,45 +1914,26 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [
-                  paramNamesString1,
-                  paramValuesString1,
-                ]);
+                await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
               }
-              return res
-                .status(200)
-                .json({ message: "Status Changed Successfully." });
+              return res.status(200).json({ message: "Status Changed Successfully." });
             } else if (txt == "in_review" || txt == "done") {
               if (tdetail.stproject_assign) {
-                const [getPcreated_by] = await pool.execute(
-                  "CALL getProjectById(?)",
-                  [tdetail.stproject_assign]
-                );
+                const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [tdetail.stproject_assign]);
                 const project_detail = getPcreated_by[0][0];
                 const project_createdby = project_detail.pcreated_by;
                 const project_manager = project_detail.pmanager;
                 let portfolio_owner_id = "";
-                const [check_Portfolio_owner_id] = await pool.execute(
-                  "CALL getPortfolioById(?)",
-                  [project_detail.portfolio_id]
-                );
+                const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [project_detail.portfolio_id]);
                 if (!check_Portfolio_owner_id[0][0]) {
-                  portfolio_owner_id =
-                    check_Portfolio_owner_id[0][0].portfolio_createdby;
+                  portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
                 }
 
-                if (
-                  project_createdby != user_id &&
-                  project_manager != user_id &&
-                  portfolio_owner_id != user_id
-                ) {
+                if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
                   const statusFieldsValues = `ststatus = 'in_review', sreview = 'sent', sreview_clear = 'no', sreview_notify = 'sent_yes', po_sreview_clear = 'no', po_sreview_notify = 'sent_yes', sreview_notdate = '${formattedDate}', ststatus_date = '${formattedDate}'`;
                   const subtask_id = `stid = '${div_id}'`;
 
-                  await pool.execute("CALL UpdateSubtask(?,?)", [
-                    statusFieldsValues,
-                    subtask_id,
-                  ]);
+                  await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
                   if (tdetail.stproject_assign) {
                     const history = {
                       pid: tdetail.stproject_assign,
@@ -2654,22 +1952,14 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                       .join(", ");
 
                     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                    await pool.execute(callProcedureSQL1, [
-                      paramNamesString1,
-                      paramValuesString1,
-                    ]);
+                    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
                   }
-                  return res
-                    .status(200)
-                    .json({ message: "Status Changed Successfully." });
+                  return res.status(200).json({ message: "Status Changed Successfully." });
                 } else {
                   const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
                   const subtask_id = `stid = '${div_id}'`;
 
-                  await pool.execute("CALL UpdateSubtask(?,?)", [
-                    statusFieldsValues,
-                    subtask_id,
-                  ]);
+                  await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
                   if (tdetail.stproject_assign) {
                     const history = {
                       pid: tdetail.stproject_assign,
@@ -2688,26 +1978,16 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                       .join(", ");
 
                     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                    await pool.execute(callProcedureSQL1, [
-                      paramNamesString1,
-                      paramValuesString1,
-                    ]);
+                    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
                   }
-                  return res
-                    .status(200)
-                    .json({ message: "Status Changed Successfully." });
+                  return res.status(200).json({ message: "Status Changed Successfully." });
                 }
               } else {
                 const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
                 const subtask_id = `stid = '${div_id}'`;
 
-                await pool.execute("CALL UpdateSubtask(?,?)", [
-                  statusFieldsValues,
-                  subtask_id,
-                ]);
-                return res
-                  .status(200)
-                  .json({ message: "Status Changed Successfully." });
+                await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
+                return res.status(200).json({ message: "Status Changed Successfully." });
               }
             }
           }
@@ -2715,10 +1995,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
             const statusFieldsValues = `stdue_date = '${txt}' `;
             const subtask_id = `stid = '${div_id}'`;
 
-            await pool.execute("CALL UpdateSubtask(?,?)", [
-              statusFieldsValues,
-              subtask_id,
-            ]);
+            await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
             if (tdetail.stproject_assign) {
               const history = {
                 pid: tdetail.stproject_assign,
@@ -2737,20 +2014,15 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [
-                paramNamesString1,
-                paramValuesString1,
-              ]);
+              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
           }
         }
         res.status(200).json({ message: "Updated Successfully." });
-
       } else {
         return res.status(400).json({ message: "No Text Provided." });
       }
-    }
-    else {
+    } else {
       return res.status(400).json({ message: "No Text Provided." });
     }
   } catch (error) {
@@ -2767,14 +2039,10 @@ router.post("/task/duplicate-task", async (req, res) => {
     const [task_detail] = await pool.execute("CALL TaskDetail(?)", [tid]);
     const check_Task = task_detail[0][0];
     if (check_Task) {
-      const [student_detail] = await pool.execute("CALL getStudentById(?)", [
-        user_id,
-      ]);
+      const [student_detail] = await pool.execute("CALL getStudentById(?)", [user_id]);
       const P_Owner = student_detail[0][0];
       const project_id = check_Task.tproject_assign;
-      const [project_row] = await pool.execute("CALL getProjectById(?)", [
-        project_id,
-      ]);
+      const [project_row] = await pool.execute("CALL getProjectById(?)", [project_id]);
       let get_tcode = "";
       if (project_id) {
         const project_name = project_row[0][0].pname;
@@ -2820,14 +2088,9 @@ router.post("/task/duplicate-task", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertTask(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
+        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
 
-        const [inserted_task] = await pool.execute("CALL LastInsertTask(?)", [
-          user_id,
-        ]);
+        const [inserted_task] = await pool.execute("CALL LastInsertTask(?)", [user_id]);
         const inserted_task_id = inserted_task[0][0].tid;
 
         const task_history = {
@@ -2847,16 +2110,10 @@ router.post("/task/duplicate-task", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL2 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL2, [
-          paramNamesString2,
-          paramValuesString2,
-        ]);
+        await pool.execute(callProcedureSQL2, [paramNamesString2, paramValuesString2]);
 
         if (cust_tws == "2" && copy_detail == "custom") {
-          const [subtask_detail] = await pool.execute(
-            "CALL Check_Task_ALL_Subtasks2(?)",
-            [tid]
-          );
+          const [subtask_detail] = await pool.execute("CALL Check_Task_ALL_Subtasks2(?)", [tid]);
           const Check_Task_Subtasks = subtask_detail[0];
           if (Check_Task_Subtasks) {
             Check_Task_Subtasks.forEach(async (ts) => {
@@ -2895,15 +2152,9 @@ router.post("/task/duplicate-task", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL3 = `CALL InsertSubtask(?, ?)`;
-              await pool.execute(callProcedureSQL3, [
-                paramNamesString3,
-                paramValuesString3,
-              ]);
+              await pool.execute(callProcedureSQL3, [paramNamesString3, paramValuesString3]);
 
-              const [inserted_subtask] = await pool.execute(
-                "CALL LastInsertSubTask(?)",
-                [user_id]
-              );
+              const [inserted_subtask] = await pool.execute("CALL LastInsertSubTask(?)", [user_id]);
               const inserted_subtask_id = inserted_subtask[0][0].stid;
 
               const subtask_history = {
@@ -2923,10 +2174,7 @@ router.post("/task/duplicate-task", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL4 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL4, [
-                paramNamesString4,
-                paramValuesString4,
-              ]);
+              await pool.execute(callProcedureSQL4, [paramNamesString4, paramValuesString4]);
             });
           }
         }
@@ -2947,65 +2195,32 @@ router.post("/task/duplicate-task", async (req, res) => {
 router.patch("/task/edit-task/:user_id", async (req, res) => {
   const { user_id } = req.params;
   let portfolio_id = req.body;
-  const {
-    tid,
-    project_id,
-    team_member2,
-    links,
-    link_comments,
-    sid,
-    gid,
-    tname,
-    tdes,
-    tnote,
-    tfile,
-    tpriority,
-    dept,
-    tdue_date,
-  } = req.body;
+  const { tid, project_id, team_member2, links, link_comments, sid, gid, tname, tdes, tnote, tfile, tpriority, dept, tdue_date } = req.body;
   try {
     const [task_row] = await pool.execute("CALL getTasksDetail(?)", [tid]);
     const getTasksDetail = task_row[0][0];
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      project_id,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [project_id]);
     const pdetail = project_row[0][0];
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const formattedDate = dateConversion();
     const format = "Y-MM-DD H:m:s";
     if (student) {
-      const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [
-        team_member2,
-      ]);
-      const links_string = links
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
-      const link_comments_string = link_comments
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
-      const tfile_string = tfile
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
+      const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [team_member2]);
+      const links_string = links.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+      const link_comments_string = link_comments.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+      const tfile_string = tfile.map((linkObj) => Object.values(linkObj).join(",")).join(",");
 
       if (project_id) {
         if (project_row[0][0].portfolio_id) {
           portfolio_id = project_row[0][0].portfolio_id;
           const taskFieldsValues = `stproject_assign = '${project_id}', portfolio_id = '${portfolio_id}', dept_id = '${dept}', gid = '${project_row[0][0].gid}', sid = '${project_row[0][0].sid}'`;
           const task_id = `tid = '${tid}'`;
-          await pool.execute("CALL UpdateSubtask(?,?)", [
-            taskFieldsValues,
-            task_id,
-          ]);
+          await pool.execute("CALL UpdateSubtask(?,?)", [taskFieldsValues, task_id]);
         } else {
           const taskFieldsValues = `stproject_assign = '${project_id}', dept_id = '${dept}', gid = '${gid}', sid = '${sid}'`;
           const task_id = `tid = '${tid}'`;
-          await pool.execute("CALL UpdateSubtask(?,?)", [
-            taskFieldsValues,
-            task_id,
-          ]);
+          await pool.execute("CALL UpdateSubtask(?,?)", [taskFieldsValues, task_id]);
         }
       }
 
@@ -3020,9 +2235,7 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
         get_tcode = `T-${random_num}`;
       }
 
-      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
-        project_id,
-      ]);
+      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [project_id]);
 
       let pro_member = [];
       let pro_member1 = [];
@@ -3068,10 +2281,7 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
         pro_manager = project_row[0][0].pmanager;
         pname = project_row[0][0].pname;
         pdes = project_row[0][0].pdes;
-        const [check_Portfolio_owner_id] = await pool.execute(
-          "CALL getPortfolioById(?)",
-          [portfolio_id]
-        );
+        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
         portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
       }
 
@@ -3086,57 +2296,32 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
         index = pro_member.indexOf(team_member2);
       }
 
-      if (
-        pro_owner == user_id ||
-        pro_manager == user_id ||
-        portfolio_owner_id == user_id
-      ) {
+      if (pro_owner == user_id || pro_manager == user_id || portfolio_owner_id == user_id) {
         if (pro_owner != team_member2) {
           if (index === -1) {
-            const [check_if_suggested] = await pool.execute(
-              "CALL check_suggested(?,?)",
-              [project_id, team_member2]
-            );
+            const [check_if_suggested] = await pool.execute("CALL check_suggested(?,?)", [project_id, team_member2]);
             if (check_if_suggested[0][0]) {
               const suggestTMFieldsValues = `status = 'approved', approve_date = '${formattedDate}'`;
               const suggestTM1 = `pid = '${project_id}'`;
               const suggestTM2 = `suggest_id = '${team_member2}'`;
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [
-                suggestTMFieldsValues,
-                suggestTM1,
-                suggestTM2,
-              ]);
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [suggestTMFieldsValues, suggestTM1, suggestTM2]);
             }
 
-            const tmFieldsNames =
-              "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
+            const tmFieldsNames = "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
             const tmFieldsValues = `"${project_id}", "${portfolio_id}", "${team_member2}", "send", "${user_id}", "${formattedDate}", "no"`;
 
-            await pool.execute("CALL InsertProjectMembers(?,?)", [
-              tmFieldsNames,
-              tmFieldsValues,
-            ]);
+            await pool.execute("CALL InsertProjectMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-            const [inserted_pm] = await pool.execute(
-              "CALL LastInsertedProjectMembers(?)",
-              [user_id]
-            );
+            const [inserted_pm] = await pool.execute("CALL LastInsertedProjectMembers(?)", [user_id]);
             const inserted_pm_id = inserted_pm[0][0].pm_id;
 
-            const tmHistoryFieldsNames =
-              "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
+            const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
             const tmHistoryFieldsValues = `"${project_id}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${student.first_name} ${student.last_name} sent team member request to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${inserted_pm_id}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?,?)", [
-              tmHistoryFieldsNames,
-              tmHistoryFieldsValues,
-            ]);
+            await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
 
             let get_portfolio_name = "";
-            const [check_portfolio_name] = await pool.execute(
-              "CALL getPortfolioName(?)",
-              [portfolio_id]
-            );
+            const [check_portfolio_name] = await pool.execute("CALL getPortfolioName(?)", [portfolio_id]);
             if (check_portfolio_name) {
               if (check_portfolio_name[0][0].portfolio_user == "individual") {
                 get_portfolio_name = `${check_portfolio_name[0][0].portfolio_name} ${check_portfolio_name[0][0].portfolio_lname}`;
@@ -3155,8 +2340,7 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
               subject: "Project Request | Decision 168",
               html: generateEmailTemplate(
                 `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name
-                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                 `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -3180,39 +2364,22 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
       } else {
         if (pro_owner != team_member2) {
           if (index === -1) {
-            const [check] = await pool.execute("CALL check_suggested(?,?)", [
-              project_id,
-              team_member2,
-            ]);
-            const [check_pmem] = await pool.execute(
-              "CALL check_pro_member2(?,?)",
-              [project_id, team_member2]
-            );
+            const [check] = await pool.execute("CALL check_suggested(?,?)", [project_id, team_member2]);
+            const [check_pmem] = await pool.execute("CALL check_pro_member2(?,?)", [project_id, team_member2]);
 
             if (!check[0][0] && !check_pmem[0][0]) {
-              const tmFieldsNames =
-                "pid, suggest_id, status, already_register, suggested_by, suggested_date";
+              const tmFieldsNames = "pid, suggest_id, status, already_register, suggested_by, suggested_date";
               const tmFieldsValues = `"${project_id}", "${team_member2}", "suggested", "yes", "${user_id}", "${formattedDate}"`;
 
-              await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [
-                tmFieldsNames,
-                tmFieldsValues,
-              ]);
+              await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-              const [inserted_tm] = await pool.execute(
-                "CALL LastInsertProjectSuggestedMembers(?)",
-                [user_id]
-              );
+              const [inserted_tm] = await pool.execute("CALL LastInsertProjectSuggestedMembers(?)", [user_id]);
               const inserted_tm_id = inserted_tm[0][0].s_id;
 
-              const tmHistoryFieldsNames =
-                "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
+              const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
               const tmHistoryFieldsValues = `"${project_id}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name} is suggested by ${student.first_name} ${student.last_name}", "${inserted_tm_id}"`;
 
-              await pool.execute("CALL InsertProjectHistory(?,?)", [
-                tmHistoryFieldsNames,
-                tmHistoryFieldsValues,
-              ]);
+              await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
             }
           }
         }
@@ -3228,14 +2395,10 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
 
       await pool.execute("CALL UpdateTask(?,?)", [tFieldsValues, task_id]);
 
-      const historyFieldsNames =
-        "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, task_id";
+      const historyFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, task_id";
       const historyFieldsValues = `"${project_id}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Task Code: ${get_tcode}, Task Name: ${tname}, Edited By ${student.first_name} ${student.last_name} and assigned to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${tid}"`;
 
-      await pool.execute("CALL InsertProjectHistory(?,?)", [
-        historyFieldsNames,
-        historyFieldsValues,
-      ]);
+      await pool.execute("CALL InsertProjectHistory(?,?)", [historyFieldsNames, historyFieldsValues]);
     }
     return res.status(200).json({ message: "Task Edited Successfully." });
   } catch (error) {
@@ -3249,13 +2412,9 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { project_id, tid, stid, message } = req.body;
   try {
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      project_id,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [project_id]);
     let get_tcode = "";
     let portfolio_id = "";
     if (project_id) {
@@ -3270,9 +2429,7 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
     }
 
     const pdetail = project_row[0][0];
-    const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
-      project_id,
-    ]);
+    const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [project_id]);
 
     let pro_member = [];
     let pro_member1 = [];
@@ -3318,9 +2475,7 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
     const callProcedureSQL = `CALL InsertComments(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
-    const [inserted_cm] = await pool.execute("CALL LastInsertedComment(?)", [
-      user_id,
-    ]);
+    const [inserted_cm] = await pool.execute("CALL LastInsertedComment(?)", [user_id]);
     const inserted_cm_id = inserted_cm[0][0].cid;
 
     const history = {
@@ -3340,10 +2495,7 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [
-      paramNamesString1,
-      paramValuesString1,
-    ]);
+    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
 
     let currentDate = new Date();
     let formattedCommentDate = currentDate.toLocaleTimeString([], {
@@ -3372,14 +2524,10 @@ router.get("/task/delete-comment/:user_id", async (req, res) => {
     const [comment_row] = await pool.execute("CALL get_comment(?)", [cid]);
     const comment = comment_row[0][0];
 
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
 
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      comment.project_id,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [comment.project_id]);
     const pdetail = project_row[0][0];
 
     const formattedDate = dateConversion();
@@ -3387,10 +2535,7 @@ router.get("/task/delete-comment/:user_id", async (req, res) => {
     const cmFieldsNames = `delete_msg = "yes", deleted_date = "${formattedDate}"`;
     const comment_id = `cid = "${cid}"`;
 
-    await pool.execute("CALL UpdateComments(?,?)", [
-      cmFieldsNames,
-      comment_id,
-    ]);
+    await pool.execute("CALL UpdateComments(?,?)", [cmFieldsNames, comment_id]);
 
     const history = {
       pid: comment.project_id,
@@ -3409,10 +2554,7 @@ router.get("/task/delete-comment/:user_id", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [
-      paramNamesString1,
-      paramValuesString1,
-    ]);
+    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
 
     res.status(200).json({ message: "Comment Deleted Successfully." });
   } catch (error) {
@@ -3426,18 +2568,12 @@ router.get("/task/insert-task-file/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { tid, task_file, tcode } = req.body;
   try {
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const [task_row] = await pool.execute("CALL getTasksDetail(?)", [tid]);
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      task_row[0][0].pid,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [task_row[0][0].pid]);
     const pdetail = project_row[0][0];
-    const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
-      task_row[0][0].pid,
-    ]);
+    const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [task_row[0][0].pid]);
 
     let pro_member = [];
     let pro_member1 = [];
@@ -3494,10 +2630,7 @@ router.get("/task/insert-task-file/:user_id", async (req, res) => {
         .join(", ");
 
       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL1, [
-        paramNamesString1,
-        paramValuesString1,
-      ]);
+      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
     }
 
     res.status(200).json({});
@@ -3512,18 +2645,9 @@ router.get("/task/today-tasks/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { tdue_date } = req.body;
   try {
-    const [TodayTasks] = await pool.execute("CALL TodayTasks(?,?)", [
-      user_id,
-      tdue_date,
-    ]);
-    const [TodaySubtasklist_Task] = await pool.execute(
-      "CALL TodaySubtasklist_Task(?,?)",
-      [user_id, tdue_date]
-    );
-    const [TodaySubtasks] = await pool.execute("CALL TodaySubtasks(?,?)", [
-      user_id,
-      tdue_date,
-    ]);
+    const [TodayTasks] = await pool.execute("CALL TodayTasks(?,?)", [user_id, tdue_date]);
+    const [TodaySubtasklist_Task] = await pool.execute("CALL TodaySubtasklist_Task(?,?)", [user_id, tdue_date]);
+    const [TodaySubtasks] = await pool.execute("CALL TodaySubtasks(?,?)", [user_id, tdue_date]);
     res.status(200).json({
       todayTasks: TodayTasks[0],
       todaySubtasklist_Task: TodaySubtasklist_Task[0],
@@ -3549,20 +2673,9 @@ router.get("/task/week-tasks/:user_id", async (req, res) => {
     let formattedFirstDay = firstDay.toISOString().split("T")[0];
     let formattedLastDay = lastDay.toISOString().split("T")[0];
 
-    const [WeekTasks] = await pool.execute("CALL WeekTasks(?,?,?)", [
-      user_id,
-      formattedFirstDay,
-      formattedLastDay,
-    ]);
-    const [WeekSubtaskslist_Task] = await pool.execute(
-      "CALL WeekSubtaskslist_Task(?,?,?)",
-      [user_id, formattedFirstDay, formattedLastDay]
-    );
-    const [WeekSubtasks] = await pool.execute("CALL WeekSubtasks(?,?,?)", [
-      user_id,
-      formattedFirstDay,
-      formattedLastDay,
-    ]);
+    const [WeekTasks] = await pool.execute("CALL WeekTasks(?,?,?)", [user_id, formattedFirstDay, formattedLastDay]);
+    const [WeekSubtaskslist_Task] = await pool.execute("CALL WeekSubtaskslist_Task(?,?,?)", [user_id, formattedFirstDay, formattedLastDay]);
+    const [WeekSubtasks] = await pool.execute("CALL WeekSubtasks(?,?,?)", [user_id, formattedFirstDay, formattedLastDay]);
     res.status(200).json({
       weekTasks: WeekTasks[0],
       weekSubtaskslist_Task: WeekSubtaskslist_Task[0],
@@ -3578,14 +2691,8 @@ router.get("/task/week-tasks/:user_id", async (req, res) => {
 router.get("/task/tasks-list/:user_id/:portfolio_id", async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
-    const [createdTaskList] = await pool.execute("CALL CreatedTaskList(?,?)", [
-      portfolio_id,
-      user_id,
-    ]);
-    const [createdSubTaskList] = await pool.execute(
-      "CALL CreatedSubTaskList(?)",
-      [portfolio_id, user_id]
-    );
+    const [createdTaskList] = await pool.execute("CALL CreatedTaskList(?,?)", [portfolio_id, user_id]);
+    const [createdSubTaskList] = await pool.execute("CALL CreatedSubTaskList(?)", [portfolio_id, user_id]);
     res.status(200).json({
       CreatedTaskList: createdTaskList[0],
       CreatedSubTaskList: createdSubTaskList[0],
@@ -3600,10 +2707,7 @@ router.get("/task/tasks-list/:user_id/:portfolio_id", async (req, res) => {
 router.get("/task/project-tasks", async (req, res) => {
   const { project_id } = req.body;
   try {
-    const [p_tasks] = await pool.execute(
-      "CALL p_tasks(?)",
-      [project_id]
-    );
+    const [p_tasks] = await pool.execute("CALL p_tasks(?)", [project_id]);
     res.status(200).json({
       projectTasks: p_tasks[0],
     });
@@ -3617,13 +2721,8 @@ router.get("/task/project-tasks", async (req, res) => {
 router.get("/task/portfolio-tasks/:portfolio_id", async (req, res) => {
   const { portfolio_id } = req.params;
   try {
-    const [portfolio_tasksNew] = await pool.execute(
-      "CALL portfolio_tasksNew(?)",
-      [portfolio_id]
-    );
-    res.status(200).json(
-      portfolio_tasksNew[0]
-    );
+    const [portfolio_tasksNew] = await pool.execute("CALL portfolio_tasksNew(?)", [portfolio_id]);
+    res.status(200).json(portfolio_tasksNew[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -3634,10 +2733,7 @@ router.get("/task/portfolio-tasks/:portfolio_id", async (req, res) => {
 router.get("/task/kpi-tasks", async (req, res) => {
   const { sid } = req.body;
   try {
-    const [Strategy_tasks] = await pool.execute(
-      "CALL Strategy_tasks(?)",
-      [sid]
-    );
+    const [Strategy_tasks] = await pool.execute("CALL Strategy_tasks(?)", [sid]);
     res.status(200).json({
       strategyTasks: Strategy_tasks[0],
     });
@@ -3651,10 +2747,7 @@ router.get("/task/kpi-tasks", async (req, res) => {
 router.get("/task/goal-tasks", async (req, res) => {
   const { gid } = req.body;
   try {
-    const [Goal_tasks] = await pool.execute(
-      "CALL Goal_tasks(?)",
-      [gid]
-    );
+    const [Goal_tasks] = await pool.execute("CALL Goal_tasks(?)", [gid]);
     res.status(200).json({
       goalTasks: Goal_tasks[0],
     });
@@ -3668,10 +2761,7 @@ router.get("/task/goal-tasks", async (req, res) => {
 router.get("/task/user-tasks", async (req, res) => {
   const { reg_id } = req.body;
   try {
-    const [get_all_task] = await pool.execute(
-      "CALL get_all_task(?)",
-      [reg_id]
-    );
+    const [get_all_task] = await pool.execute("CALL get_all_task(?)", [reg_id]);
     res.status(200).json({
       getAllTasks: get_all_task[0],
     });
@@ -3685,10 +2775,7 @@ router.get("/task/user-tasks", async (req, res) => {
 router.get("/task/task-comments", async (req, res) => {
   const { tid } = req.body;
   try {
-    const [getTaskComments] = await pool.execute(
-      "CALL getTaskComments(?)",
-      [tid]
-    );
+    const [getTaskComments] = await pool.execute("CALL getTaskComments(?)", [tid]);
     res.status(200).json({
       taskComments: getTaskComments[0],
     });
@@ -3702,52 +2789,23 @@ router.get("/task/task-comments", async (req, res) => {
 router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
   const { user_id } = req.params;
   let portfolio_id = req.body;
-  const {
-    stid,
-    stproject_assign,
-    team_member2,
-    slinks,
-    slink_comments,
-    sid,
-    gid,
-    stname,
-    stdes,
-    stnote,
-    stfile,
-    tpriority,
-    dept,
-    tdue_date,
-  } = req.body;
+  const { stid, stproject_assign, team_member2, slinks, slink_comments, sid, gid, stname, stdes, stnote, stfile, tpriority, dept, tdue_date } = req.body;
   try {
     const [subtask_row] = await pool.execute("CALL check_subtask(?)", [stid]);
     const check_subtask = subtask_row[0][0];
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [
-      stproject_assign,
-    ]);
+    const [project_row] = await pool.execute("CALL getProjectById(?)", [stproject_assign]);
     const pdetail = project_row[0][0];
-    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [
-      user_id,
-    ]);
+    const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const formattedDate = dateConversion();
     const format = "Y-MM-DD H:m:s";
     if (student) {
-      const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [
-        team_member2,
-      ]);
-      const slinks_string = slinks
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
-      const slink_comments_string = slink_comments
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
-      const stfile_string = stfile
-        .map((linkObj) => Object.values(linkObj).join(","))
-        .join(",");
+      const [team_member2_row] = await pool.execute("CALL getStudentById(?)", [team_member2]);
+      const slinks_string = slinks.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+      const slink_comments_string = slink_comments.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+      const stfile_string = stfile.map((linkObj) => Object.values(linkObj).join(",")).join(",");
 
-      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
-        stproject_assign,
-      ]);
+      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [stproject_assign]);
 
       let stnotify = "";
       let stnotify_clear = "";
@@ -3802,10 +2860,7 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
         pro_manager = project_row[0][0].pmanager;
         pname = project_row[0][0].pname;
         pdes = project_row[0][0].pdes;
-        const [check_Portfolio_owner_id] = await pool.execute(
-          "CALL getPortfolioById(?)",
-          [portfolio_id]
-        );
+        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);
         portfolio_owner_id = check_Portfolio_owner_id[0][0].portfolio_createdby;
       }
 
@@ -3820,57 +2875,32 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
         index = pro_member.indexOf(team_member2);
       }
 
-      if (
-        pro_owner == user_id ||
-        pro_manager == user_id ||
-        portfolio_owner_id == user_id
-      ) {
+      if (pro_owner == user_id || pro_manager == user_id || portfolio_owner_id == user_id) {
         if (pro_owner != team_member2) {
           if (index === -1) {
-            const [check_if_suggested] = await pool.execute(
-              "CALL check_suggested(?,?)",
-              [stproject_assign, team_member2]
-            );
+            const [check_if_suggested] = await pool.execute("CALL check_suggested(?,?)", [stproject_assign, team_member2]);
             if (check_if_suggested[0][0]) {
               const suggestTMFieldsValues = `status = 'approved', approve_date = '${formattedDate}'`;
               const suggestTM1 = `pid = '${stproject_assign}'`;
               const suggestTM2 = `suggest_id = '${team_member2}'`;
-              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [
-                suggestTMFieldsValues,
-                suggestTM1,
-                suggestTM2,
-              ]);
+              await pool.execute("CALL UpdateProjectSuggestedMembers(?,?,?)", [suggestTMFieldsValues, suggestTM1, suggestTM2]);
             }
 
-            const tmFieldsNames =
-              "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
+            const tmFieldsNames = "pid, portfolio_id, pmember, status, pcreated_by, sent_date, sent_notify_clear";
             const tmFieldsValues = `"${stproject_assign}", "${portfolio_id}", "${team_member2}", "send", "${user_id}", "${formattedDate}", "no"`;
 
-            await pool.execute("CALL InsertProjectMembers(?,?)", [
-              tmFieldsNames,
-              tmFieldsValues,
-            ]);
+            await pool.execute("CALL InsertProjectMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-            const [inserted_pm] = await pool.execute(
-              "CALL LastInsertedProjectMembers(?)",
-              [user_id]
-            );
+            const [inserted_pm] = await pool.execute("CALL LastInsertedProjectMembers(?)", [user_id]);
             const inserted_pm_id = inserted_pm[0][0].pm_id;
 
-            const tmHistoryFieldsNames =
-              "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
+            const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmember_id";
             const tmHistoryFieldsValues = `"${stproject_assign}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${student.first_name} ${student.last_name} sent team member request to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${inserted_pm_id}"`;
 
-            await pool.execute("CALL InsertProjectHistory(?,?)", [
-              tmHistoryFieldsNames,
-              tmHistoryFieldsValues,
-            ]);
+            await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
 
             let get_portfolio_name = "";
-            const [check_portfolio_name] = await pool.execute(
-              "CALL getPortfolioName(?)",
-              [portfolio_id]
-            );
+            const [check_portfolio_name] = await pool.execute("CALL getPortfolioName(?)", [portfolio_id]);
             if (check_portfolio_name) {
               if (check_portfolio_name[0][0].portfolio_user == "individual") {
                 get_portfolio_name = `${check_portfolio_name[0][0].portfolio_name} ${check_portfolio_name[0][0].portfolio_lname}`;
@@ -3889,8 +2919,7 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
               subject: "Project Request | Decision 168",
               html: generateEmailTemplate(
                 `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name
-                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                 `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -3914,39 +2943,22 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
       } else {
         if (pro_owner != team_member2) {
           if (index === -1) {
-            const [check] = await pool.execute("CALL check_suggested(?,?)", [
-              stproject_assign,
-              team_member2,
-            ]);
-            const [check_pmem] = await pool.execute(
-              "CALL check_pro_member2(?,?)",
-              [stproject_assign, team_member2]
-            );
+            const [check] = await pool.execute("CALL check_suggested(?,?)", [stproject_assign, team_member2]);
+            const [check_pmem] = await pool.execute("CALL check_pro_member2(?,?)", [stproject_assign, team_member2]);
 
             if (!check[0][0] && !check_pmem[0][0]) {
-              const tmFieldsNames =
-                "pid, suggest_id, status, already_register, suggested_by, suggested_date";
+              const tmFieldsNames = "pid, suggest_id, status, already_register, suggested_by, suggested_date";
               const tmFieldsValues = `"${stproject_assign}", "${team_member2}", "suggested", "yes", "${user_id}", "${formattedDate}"`;
 
-              await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [
-                tmFieldsNames,
-                tmFieldsValues,
-              ]);
+              await pool.execute("CALL InsertProjectSuggestedMembers(?,?)", [tmFieldsNames, tmFieldsValues]);
 
-              const [inserted_tm] = await pool.execute(
-                "CALL LastInsertProjectSuggestedMembers(?)",
-                [user_id]
-              );
+              const [inserted_tm] = await pool.execute("CALL LastInsertProjectSuggestedMembers(?)", [user_id]);
               const inserted_tm_id = inserted_tm[0][0].s_id;
 
-              const tmHistoryFieldsNames =
-                "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
+              const tmHistoryFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, pmsuggested_id";
               const tmHistoryFieldsValues = `"${stproject_assign}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name} is suggested by ${student.first_name} ${student.last_name}", "${inserted_tm_id}"`;
 
-              await pool.execute("CALL InsertProjectHistory(?,?)", [
-                tmHistoryFieldsNames,
-                tmHistoryFieldsValues,
-              ]);
+              await pool.execute("CALL InsertProjectHistory(?,?)", [tmHistoryFieldsNames, tmHistoryFieldsValues]);
             }
           }
         }
@@ -3960,19 +2972,12 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
       const tFieldsValues = `stcode = "${get_tcode}", stname = "${stname}", stdes = "${stdes}", stlink = "${slinks_string}", stlink_comment = "${slink_comments_string}", stnote = "${stnote}", stfile = "${stfile_string}", stpriority = "${tpriority}", ststatus = 'to_do', ststatus_date = "${formattedDate}", stproject_assign = "${stproject_assign}", portfolio_id = "${portfolio_id}", stassignee = "${team_member2}", stfnotify = "${final_mem}", stfnotify_clear = "${final_mem}", stfnotify_date = "${formattedDate}", stnotify = ${stnotify}, stnotify_clear = ${stnotify_clear}, stnotify_date = "${formattedDate}", stdue_date = "${taskformattedDueDate}", stdue_date_clear = 'no', gid = "${gid}", sid = "${sid}", dept_id = "${dept}"`;
       const subtask_id = `stid = '${stid}'`;
 
-      await pool.execute("CALL UpdateSubtask(?,?)", [
-        tFieldsValues,
-        subtask_id,
-      ]);
+      await pool.execute("CALL UpdateSubtask(?,?)", [tFieldsValues, subtask_id]);
 
-      const historyFieldsNames =
-        "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, subtask_id";
+      const historyFieldsNames = "pid, gid, sid, h_date, h_resource_id, h_resource, h_description, subtask_id";
       const historyFieldsValues = `"${stproject_assign}", "${gid}", "${sid}", "${formattedDate}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "Task Code: ${get_tcode}, Subtask Name: ${stname}, Edited By ${student.first_name} ${student.last_name} and assigned to ${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}", "${stid}"`;
 
-      await pool.execute("CALL InsertProjectHistory(?,?)", [
-        historyFieldsNames,
-        historyFieldsValues,
-      ]);
+      await pool.execute("CALL InsertProjectHistory(?,?)", [historyFieldsNames, historyFieldsValues]);
     }
     return res.status(200).json({ message: "Subtask Edited Successfully." });
   } catch (error) {
@@ -3986,20 +2991,14 @@ router.post("/subtask/duplicate-subtask", async (req, res) => {
   const { stid, stname, copy_detail, user_id } = req.body;
   try {
     const formattedDate = dateConversion();
-    const [subtask_detail] = await pool.execute("CALL SubtaskDetail(?)", [
-      stid,
-    ]);
+    const [subtask_detail] = await pool.execute("CALL SubtaskDetail(?)", [stid]);
     const check_Task = subtask_detail[0][0];
     // console.log(check_Task);
     if (check_Task) {
-      const [student_detail] = await pool.execute("CALL getStudentById(?)", [
-        user_id,
-      ]);
+      const [student_detail] = await pool.execute("CALL getStudentById(?)", [user_id]);
       const P_Owner = student_detail[0][0];
       const project_id = check_Task.stproject_assign;
-      const [project_row] = await pool.execute("CALL getProjectById(?)", [
-        project_id,
-      ]);
+      const [project_row] = await pool.execute("CALL getProjectById(?)", [project_id]);
       let get_tcode = "";
       if (project_id) {
         const project_name = project_row[0][0].pname;
@@ -4012,10 +3011,7 @@ router.post("/subtask/duplicate-subtask", async (req, res) => {
       }
 
       if (copy_detail == "everything" || copy_detail == "custom") {
-        const formattedDueDate = check_Task.stdue_date
-          .toISOString()
-          .slice(0, 19)
-          .replace("T", " ");
+        const formattedDueDate = check_Task.stdue_date.toISOString().slice(0, 19).replace("T", " ");
         const task_data = {
           tid: check_Task.tid,
           gid: check_Task.gid,
@@ -4049,15 +3045,9 @@ router.post("/subtask/duplicate-subtask", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertSubtask(?, ?)`;
-        await pool.execute(callProcedureSQL1, [
-          paramNamesString1,
-          paramValuesString1,
-        ]);
+        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
 
-        const [inserted_task] = await pool.execute(
-          "CALL LastInsertSubtask(?)",
-          [user_id]
-        );
+        const [inserted_task] = await pool.execute("CALL LastInsertSubtask(?)", [user_id]);
         const inserted_task_id = inserted_task[0][0].tid;
 
         const task_history = {
@@ -4077,10 +3067,7 @@ router.post("/subtask/duplicate-subtask", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL2 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL2, [
-          paramNamesString2,
-          paramValuesString2,
-        ]);
+        await pool.execute(callProcedureSQL2, [paramNamesString2, paramValuesString2]);
         res.status(200).json({ message: "Task Copied Successfully." });
       } else {
         res.status(400).json({ message: "Cannot Duplicate this task." });
@@ -4094,15 +3081,11 @@ router.post("/subtask/duplicate-subtask", async (req, res) => {
   }
 });
 
-
 //  User subtasks
 router.get("/subtask/user-subtasks", async (req, res) => {
   const { reg_id } = req.body;
   try {
-    const [get_all_subtask] = await pool.execute(
-      "CALL get_all_subtask(?)",
-      [reg_id]
-    );
+    const [get_all_subtask] = await pool.execute("CALL get_all_subtask(?)", [reg_id]);
     res.status(200).json({
       getAllSubtasks: get_all_subtask[0],
     });
@@ -4116,10 +3099,7 @@ router.get("/subtask/user-subtasks", async (req, res) => {
 router.get("/subtask/project-subtasks", async (req, res) => {
   const { project_id } = req.body;
   try {
-    const [p_subtasks] = await pool.execute(
-      "CALL p_subtasks(?)",
-      [project_id]
-    );
+    const [p_subtasks] = await pool.execute("CALL p_subtasks(?)", [project_id]);
     res.status(200).json({
       projectSubtasks: p_subtasks[0],
     });
@@ -4133,10 +3113,7 @@ router.get("/subtask/project-subtasks", async (req, res) => {
 router.get("/subtask/kpi-subtasks", async (req, res) => {
   const { sid } = req.body;
   try {
-    const [Strategy_subtasks] = await pool.execute(
-      "CALL Strategy_subtasks(?)",
-      [sid]
-    );
+    const [Strategy_subtasks] = await pool.execute("CALL Strategy_subtasks(?)", [sid]);
     res.status(200).json({
       strategySubtasks: Strategy_subtasks[0],
     });
@@ -4150,10 +3127,7 @@ router.get("/subtask/kpi-subtasks", async (req, res) => {
 router.get("/subtask/goal-subtasks", async (req, res) => {
   const { gid } = req.body;
   try {
-    const [Goal_subtasks] = await pool.execute(
-      "CALL Goal_subtasks(?)",
-      [gid]
-    );
+    const [Goal_subtasks] = await pool.execute("CALL Goal_subtasks(?)", [gid]);
     res.status(200).json({
       goalSubtasks: Goal_subtasks[0],
     });
