@@ -4712,7 +4712,7 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
       const del1 = `gmid = '${gmid_id}'`;
       await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
 
-      res.status(200).json({ message: "removed successfully" });
+      res.status(200).json({ message: "Member Removed successfully" });
     } else {
       res.status(200).json({ message: "member not found" });
     }
