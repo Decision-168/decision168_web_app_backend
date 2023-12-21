@@ -39,7 +39,7 @@ router.get(
       let acceptedList_promises = [];
       let pendingList_promises = [];
       let readMoreList_promises = [];
-      let project_type = 0;
+      let project_type = "";
 
       if (regularListData) {
         regularList_promises = regularListData.map(async (row) => {
@@ -253,6 +253,569 @@ router.get(
   }
 );
 
+//get Project Member Data
+router.get("/project/get-project-member-data/:pid/:user_id", async (req, res) => {
+  const { pid, user_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL check_ProjectMToClear(?,?)", [user_id, pid]);
+    const memberDetail = rows[0][0];
+    res.status(200).json(memberDetail);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//project-request
+router.patch("/project-request/:pid/:pm_id/:flag", async (req, res) => {
+  const { pid, pm_id, flag } = req.params;
+  try {
+    const formattedDate = dateConversion();
+
+    if (flag == 1) {
+      const [result] = await pool.execute("CALL check_ProPMToClear(?)", [
+        pm_id,
+      ]);
+      if (result[0].length > 0) {
+        const status = result[0][0]?.status;
+
+        const [rows] = await pool.execute("CALL getStudentById(?)", [
+          result[0][0]?.pmember,
+        ]);
+
+        if (status == "send" || status == "read_more") {
+          const dynamicFieldsValues = `status = 'accepted',
+                         status_date = '${formattedDate}',
+                         status_notify = 'yes',
+                         status_notify_clear = 'no'`;
+          const id = `pm_id  = '${pm_id}'`;
+          await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+            dynamicFieldsValues,
+            id,
+          ]);
+
+          const dynamicFieldsValues2 = `status = 'accepted',
+                                  working_status = 'active',
+                         status_date = '${formattedDate}',
+                         status_notify = 'seen',
+                         status_notify_clear = 'yes'`;
+          const id2 = `sent_to  = '${rows[0][0]?.email_address}' AND portfolio_id  = '${result[0][0]?.portfolio_id}'`;
+          await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
+            dynamicFieldsValues2,
+            id2,
+          ]);
+
+          const hdata = {
+            pid: pid,
+            h_date: formattedDate,
+            h_resource_id: rows[0][0]?.reg_id,
+            h_resource: `${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
+            h_description: `Team Member Request Accepted By ${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
+            pmember_id: pm_id,
+          };
+
+          const paramNamesString1 = Object.keys(hdata).join(", ");
+          const paramValuesString1 = Object.values(hdata)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
+
+          res.status(200).json({ user_status: "accepted" });
+        } else {
+          res.status(400).json({ user_status: status });
+        }
+      } else {
+        res.status(400).json({ user_status: "pages-404" });
+      }
+    } else if (flag == 2) {
+      const [result] = await pool.execute("CALL check_ProPMToClear(?)", [
+        pm_id,
+      ]);
+      if (result[0].length > 0) {
+        const status = result[0][0]?.status;
+
+        const [rows] = await pool.execute("CALL getStudentById(?)", [
+          result[0][0]?.pmember,
+        ]);
+
+        if (status == "send") {
+          const dynamicFieldsValues = `status = 'read_more',
+                         status_date = '${formattedDate}'`;
+          const id = `pm_id  = '${pm_id}'`;
+          await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+            dynamicFieldsValues,
+            id,
+          ]);
+
+          const hdata = {
+            pid: pid,
+            h_date: formattedDate,
+            h_resource_id: rows[0][0]?.reg_id,
+            h_resource: `${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
+            h_description: `Goal More Request By ${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
+            pmember_id: pm_id,
+          };
+
+          const paramNamesString1 = Object.keys(hdata).join(", ");
+          const paramValuesString1 = Object.values(hdata)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
+
+          res.status(200).json({ user_status: "read_more" });
+        } else {
+          res.status(400).json({ user_status: status });
+        }
+      } else {
+        res.status(400).json({ user_status: "pages-404" });
+      }
+    } else {
+      res.status(400).json({ user_status: "pages-404" });
+    }
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+//getProjectById
+router.get("/project/get-project-by-id/:pid", async (req, res) => {
+  const { pid } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getProjectById(?)", [pid]);
+    const project_detail = rows[0][0];
+    const project_id = project_detail.pid;
+    const [project_wise_all_tasks] = await pool.execute(
+      "CALL progress_total(?)",
+      [project_id]
+    );
+    const [project_wise_done_tasks] = await pool.execute(
+      "CALL progress_done(?)",
+      [project_id]
+    );
+
+    const [project_wise_all_subtasks] = await pool.execute(
+      "CALL sub_progress_total(?)",
+      [project_id]
+    );
+    const [project_wise_done_subtasks] = await pool.execute(
+      "CALL sub_progress_done(?)",
+      [project_id]
+    );
+    let progress = 0;
+    let total_all = 0;
+    let total_done = 0;
+    let all_task = project_wise_all_tasks[0][0]?.count_rows;
+    let done_task = project_wise_done_tasks[0][0]?.count_rows;
+    let all_subtask = project_wise_all_subtasks[0][0]?.count_rows;
+    let done_subtask = project_wise_done_subtasks[0][0]?.count_rows;
+
+    total_all = parseInt(all_task) + parseInt(all_subtask);
+    total_done = parseInt(done_task) + parseInt(done_subtask);
+    const progressCal = parseInt((parseInt(total_done) / parseInt(total_all)) * 100);
+    progress = Math.round(progressCal);
+    progress = progress?progress:0
+
+    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      project_detail.portfolio_id,
+    ]);
+    const get_portfolio_createdby_id = get_portfolio[0][0]?.portfolio_createdby;
+
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      project_detail.dept_id,
+    ]);
+    const get_dept_name = getDeptName[0][0].department;
+
+    const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
+      project_detail.pcreated_by,
+    ]);
+    const get_created_by_name =
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
+
+    let get_pmanager_name = "";
+    if (project_detail.pmanager != 0) {
+      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [
+        project_detail.pmanager,
+      ]);
+      get_pmanager_name =
+        getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
+    }
+
+    const [ProjectTeamMember] = await pool.execute("CALL ProjectTeamMember(?)", [
+      project_id,
+    ]);
+    const [InvitedProjectMember] = await pool.execute(
+      "CALL InvitedProjectMember(?)",
+      [project_id]
+    );
+    const [SuggestedProjectMember] = await pool.execute(
+      "CALL SuggestedProjectMember(?)",
+      [project_id]
+    );
+
+    const [SuggestedInviteProjectMember] = await pool.execute(
+      "CALL SuggestedInviteProjectMember(?)",
+      [project_id]
+    );
+
+    const results = {
+      ...project_detail,
+      get_portfolio_createdby_id,
+      get_dept_name,
+      get_created_by_name,
+      get_pmanager_name,
+      get_portfolio_createdby_id,
+    };
+
+    res.status(200).json({
+      project: results,
+      allTaskCount: total_all,
+      doneTaskCount: total_done,
+      taskProgress: progress,
+      ProjectTeamMemberRes: ProjectTeamMember[0],
+      InvitedProjectMemberRes: InvitedProjectMember[0],
+      SuggestedProjectMemberRes: SuggestedProjectMember[0],
+      SuggestedInviteProjectMemberRes: SuggestedInviteProjectMember[0]
+    });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//getProjectTaskAssignee
+router.get("/project/get-project-task-assignee/:pid", async (req, res) => {
+  const { pid } = req.params;
+  try {
+    const [taskrows] = await pool.execute("CALL p_tasks(?)", [pid]);
+    const [subtaskrows] = await pool.execute("CALL p_subtasks(?)", [pid]);
+    const taskDetail = taskrows[0];
+    const subtaskDetail = subtaskrows[0];
+    let projectTaskAssignee_promises = [];
+    let projectSubtaskAssignee_promises = [];
+
+    if(taskDetail){
+      projectTaskAssignee_promises = taskDetail.map(async (item) => {
+        const [all_tasks] = await pool.execute(
+          "CALL progress_total3(?,?)",
+          [pid, item.tassignee]
+        );
+        const [done_tasks] = await pool.execute(
+          "CALL progress_done3(?,?)",
+          [pid, item.tassignee]
+        );
+        const [tAssigneeDetail] = await pool.execute(
+          "CALL getStudentById(?)", 
+          [item.tassignee]
+        );
+        const student = tAssigneeDetail[0][0];
+        let progress = 0;
+        let total_all = 0;
+        let total_done = 0;
+        let all_task = all_tasks[0][0]?.count_rows;
+        let done_task = done_tasks[0][0]?.count_rows;
+    
+        total_all = parseInt(all_task);
+        total_done = parseInt(done_task);
+        const progressCal = parseInt((parseInt(total_done) / parseInt(total_all)) * 100);
+        progress = Math.round(progressCal);
+        progress = progress?progress:0;
+        
+        return {
+          name: `${student.first_name} ${student.last_name}`,
+          profileImage: student.photo,
+          status: `Done: ${total_done} Total: ${total_all}`,
+          progress: progress,
+          assigneeId: item.tassignee,
+          tid: item.tid,
+        }
+  
+      }); 
+    }  
+
+    if(subtaskDetail){
+      projectSubtaskAssignee_promises = subtaskDetail.map(async (item) => {
+        const [all_subtasks] = await pool.execute(
+          "CALL sub_progress_total3(?,?)",
+          [pid, item.stassignee]
+        );
+        const [done_subtasks] = await pool.execute(
+          "CALL sub_progress_done3(?,?)",
+          [pid, item.stassignee]
+        );
+        const [stAssigneeDetail] = await pool.execute(
+          "CALL getStudentById(?)", 
+          [item.stassignee]
+        );
+        const student = stAssigneeDetail[0][0];
+        let progress = 0;
+        let total_all = 0;
+        let total_done = 0;
+        let all_subtask = all_subtasks[0][0]?.count_rows;
+        let done_subtask = done_subtasks[0][0]?.count_rows;
+    
+        total_all = parseInt(all_subtask);
+        total_done = parseInt(done_subtask);
+        const progressCal = parseInt((parseInt(total_done) / parseInt(total_all)) * 100);
+        progress = Math.round(progressCal);
+        progress = progress?progress:0;
+        
+        return {
+          name: `${student.first_name} ${student.last_name}`,
+          profileImage: student.photo,
+          status: `Done: ${total_done} Total: ${total_all}`,
+          progress: progress,
+          assigneeId: item.stassignee,
+          stid: item.tid,
+        }
+  
+      }); 
+    }
+    
+    const [projectTaskAssignee_parent, projectSubtaskAssignee_parent] = await Promise.all([
+      Promise.all(projectTaskAssignee_promises),
+      Promise.all(projectSubtaskAssignee_promises),
+    ]);
+
+    res.status(200).json({
+      projectTaskAssigneeDetail: projectTaskAssignee_parent.flat().filter(Boolean),
+      projectSubtaskAssigneeDetail: projectSubtaskAssignee_parent.flat().filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//ProjectFile
+router.get("/project/project-files/:pid", async (req, res) => {
+  const pid = req.params.pid;
+  try {
+    const [project_rows] = await pool.execute("CALL ProjectFile(?)", [pid]);
+    const [task_rows] = await pool.execute("CALL TaskFile(?)", [pid]);
+    const [subtask_rows] = await pool.execute("CALL SubtaskFile(?)", [pid]);
+    const projectFileData = project_rows[0];
+    const taskFileData = task_rows[0];
+    const subtaskFileData = subtask_rows[0];
+
+    let projectFile_promises = [];
+    let taskFile_promises = [];
+    let subtaskFile_promises = [];
+    if(projectFileData){
+      projectFile_promises = projectFileData.map(async (item) => {
+        return {
+          name: item.pfile,
+          type: "project-file",
+          file_id: item.pfile_id,
+          module_id: item.pid,
+        }
+      });
+    }
+
+    if(taskFileData){
+      taskFile_promises = taskFileData.map(async (item) => {
+        const files = item?.tfile;
+        const filesArray = files?.split(",");
+        const linkType = files ? "task-file" : "";
+        if(filesArray){
+          return taskFiles = filesArray?.map((file) => ({
+              name: file,
+              type: linkType,
+              fileId: item.tid,
+              module_id: item.tid,
+          }));
+        }
+      });
+    }
+
+    if(subtaskFileData){
+      subtaskFile_promises = subtaskFileData.map(async (item) => {
+        const files = item?.stfile;
+        const filesArray = files?.split(",");
+        const linkType = files ? "subtask-file" : "";
+        if(filesArray){
+          return taskFiles = filesArray?.map((file) => ({
+              name: file,
+              type: linkType,
+              fileId: item.stid,
+              module_id: item.stid,
+          }));
+        }
+      });
+    }
+
+    const [projectFile_parent, taskFile_parent, subtaskFile_parent] = await Promise.all([
+      Promise.all(projectFile_promises),
+      Promise.all(taskFile_promises),
+      Promise.all(subtaskFile_promises)
+    ]);
+
+    res.status(200).json({
+      projectFileDetail: projectFile_parent.flat().filter(Boolean),
+      taskFileDetail: taskFile_parent.flat().filter(Boolean),
+      subtaskFileDetail: subtaskFile_parent.flat().filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//view_history_date
+router.get("/project/view-history-date-project/:pid", async (req, res) => {
+  const pid = req.params.pid;
+  try {
+    const [rows] = await pool.execute("CALL view_history_date(?)", [pid]);
+    res.status(200).json({
+      history_dates: rows[0]
+    });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//view_history_date_wise_project
+router.get("/project/view-history-date-wise-project/:pid/:hdate", async (req, res) => {
+  const { pid, hdate } = req.params;
+  try {
+    const [rows, fields] = await pool.execute("CALL view_history(?,?)", [
+      pid,
+      hdate,
+    ]);
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//view_history_date_range_project
+router.get(
+  "/project/view-history-date-range-project/:pid",
+  async (req, res) => {
+    const pid = req.params.pid;
+    const start_date = req.body.start_date;
+    const end_date = req.body.end_date;
+    try {
+      const [rows, fields] = await pool.execute(
+        "CALL view_history_date_range(?,?,?)",
+        [pid, start_date, end_date]
+      );
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+//view_all_history_project
+router.get("/project/view-all-history-project/:pid", async (req, res) => {
+  const pid = req.params.pid;
+  try {
+    const [rows, fields] = await pool.execute("CALL view_all_history(?)", [
+      pid,
+    ]);
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//getProjectComments
+router.get("/project/get-project-comments/:pid/:user_id", async (req, res) => {
+  const {pid, user_id} = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getProjectComments(?)", [pid]);
+    const projectCommentData = rows[0];
+
+    let projectComment_promises = [];
+    if(projectCommentData){
+      projectComment_promises = projectCommentData.map(async (item) => {
+        const deleteStatus = (item.delete_msg == 'yes') ? (true) : (false);
+        const [creator] = await pool.execute(
+          "CALL getStudentById(?)", 
+          [item.c_created_by]
+        );
+        const student = creator[0][0];
+        const userName = (user_id == item.c_created_by) ? ("Me") : (`${student.first_name} ${student.last_name}`)
+        const meStatus = (user_id == item.c_created_by) ? (true) : (false)
+        const createdDate = item.c_created_date;
+        const formattedDate = new Date(createdDate).toLocaleDateString();
+        const formattedTime = new Date(createdDate).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+        return {
+          id: item.cid,
+          sender: userName,
+          content: item.message,
+          timestamp: formattedTime,
+          date: formattedDate,
+          isMe: meStatus,
+          isDeleted: deleteStatus,
+          cCode: item.c_code,
+          createdBy: item.c_created_by,
+          taskId: item.task_id,
+          subtaskId: item.subtask_id,
+        }
+      });
+    }
+
+    const [projectComment_parent] = await Promise.all([
+      Promise.all(projectComment_promises)
+    ]);
+
+    res.status(200).json({
+      projectCommentDetail: projectComment_parent.flat().filter(Boolean)
+    });
+
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//MentionList
+router.get("/project/mention-list/:pid", async (req, res) => {
+  const pid = req.params.pid;
+  try {
+    const [rows] = await pool.execute("CALL MentionList(?)", [pid]);
+    const mentionData = rows[0];
+    let mention_promises = [];
+    if(mentionData){
+      mention_promises = mentionData.map(async (row) => {
+        return {
+          id: Date.now(), 
+          display: row.name
+        }
+      });
+    }
+    const [mention_parent] = await Promise.all([
+      Promise.all(mention_promises)
+    ]);
+
+    res.status(200).json({
+      mentionDetail: mention_parent.flat().filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 //AcceptedProjectListByPortfolioRegular
 router.get(
   "/project/get-accepted-project-list/:user_id/:portfolio_id",
@@ -332,42 +895,6 @@ router.get("/project/project-detail/:user_id/:pid", async (req, res) => {
       user_id,
     ]);
     res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//getProjectComments
-router.get("/project/get-project-comments/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows] = await pool.execute("CALL getProjectComments(?)", [pid]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//view_history_date
-router.get("/project/view-history-date-project/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows] = await pool.execute("CALL view_history_date(?)", [pid]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//ProjectFile
-router.get("/project/project-file/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows] = await pool.execute("CALL ProjectFile(?)", [pid]);
-    res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -580,18 +1107,6 @@ router.get(
   }
 );
 
-//getProjectById
-router.get("/project/get-project-by-id/:pid", async (req, res) => {
-  const { pid } = req.params;
-  try {
-    const [rows, fields] = await pool.execute("CALL getProjectById(?)", [pid]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
 //progress_done3
 router.get(
   "/project/get-project-member-task-progress-done/:pid/:member_id",
@@ -782,18 +1297,6 @@ router.get("/project/request-as-project-member/:pid", async (req, res) => {
   }
 });
 
-//MentionList
-router.get("/project/mention-list/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows] = await pool.execute("CALL MentionList(?)", [pid]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
 //getTasksbyID
 router.get("/project/get-tasks-by-id/:tid", async (req, res) => {
   const { tid } = req.params;
@@ -822,7 +1325,7 @@ router.get("/project/get-subtasks-by-id/:stid", async (req, res) => {
 
 //check_pm
 router.get(
-  "/project/check-gm/:user_id/:pid/:portfolio_id",
+  "/project/check-pm/:user_id/:pid/:portfolio_id",
   async (req, res) => {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
@@ -1524,129 +2027,6 @@ router.post("/project/insert-project", async (req, res) => {
   }
 });
 
-//project-request
-router.get("/project-request/:pid/:pm_id/:flag", async (req, res) => {
-  const { pid, pm_id, flag } = req.params;
-  try {
-    const formattedDate = dateConversion();
-
-    if (flag == 1) {
-      const [result] = await pool.execute("CALL check_ProPMToClear(?)", [
-        pm_id,
-      ]);
-      if (result[0].length > 0) {
-        const status = result[0][0]?.status;
-
-        const [rows] = await pool.execute("CALL getStudentById(?)", [
-          result[0][0]?.pmember,
-        ]);
-
-        if (status == "send" || status == "read_more") {
-          const dynamicFieldsValues = `status = 'accepted',
-                         status_date = '${formattedDate}',
-                         status_notify = 'yes',
-                         status_notify_clear = 'no'`;
-          const id = `pm_id  = '${pm_id}'`;
-          await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-            dynamicFieldsValues,
-            id,
-          ]);
-
-          const dynamicFieldsValues2 = `status = 'accepted',
-                                  working_status = 'active',
-                         status_date = '${formattedDate}',
-                         status_notify = 'seen',
-                         status_notify_clear = 'yes'`;
-          const id2 = `sent_to  = '${rows[0][0]?.email_address}' AND portfolio_id  = '${result[0][0]?.portfolio_id}'`;
-          await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [
-            dynamicFieldsValues2,
-            id2,
-          ]);
-
-          const hdata = {
-            pid: pid,
-            h_date: formattedDate,
-            h_resource_id: rows[0][0]?.reg_id,
-            h_resource: `${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
-            h_description: `Team Member Request Accepted By ${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
-            pmember_id: pm_id,
-          };
-
-          const paramNamesString1 = Object.keys(hdata).join(", ");
-          const paramValuesString1 = Object.values(hdata)
-            .map((value) => `'${value}'`)
-            .join(", ");
-
-          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [
-            paramNamesString1,
-            paramValuesString1,
-          ]);
-
-          res.status(200).json({ user_status: "accepted" });
-        } else {
-          res.status(400).json({ user_status: status });
-        }
-      } else {
-        res.status(400).json({ user_status: "pages-404" });
-      }
-    } else if (flag == 2) {
-      const [result] = await pool.execute("CALL check_ProPMToClear(?)", [
-        pm_id,
-      ]);
-      if (result[0].length > 0) {
-        const status = result[0][0]?.status;
-
-        const [rows] = await pool.execute("CALL getStudentById(?)", [
-          result[0][0]?.pmember,
-        ]);
-
-        if (status == "send") {
-          const dynamicFieldsValues = `status = 'read_more',
-                         status_date = '${formattedDate}'`;
-          const id = `pm_id  = '${pm_id}'`;
-          await pool.execute("CALL UpdateProjectMembers(?, ?)", [
-            dynamicFieldsValues,
-            id,
-          ]);
-
-          const hdata = {
-            pid: pid,
-            h_date: formattedDate,
-            h_resource_id: rows[0][0]?.reg_id,
-            h_resource: `${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
-            h_description: `Goal More Request By ${rows[0][0]?.first_name} ${rows[0][0]?.last_name}`,
-            pmember_id: pm_id,
-          };
-
-          const paramNamesString1 = Object.keys(hdata).join(", ");
-          const paramValuesString1 = Object.values(hdata)
-            .map((value) => `'${value}'`)
-            .join(", ");
-
-          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [
-            paramNamesString1,
-            paramValuesString1,
-          ]);
-
-          res.status(200).json({ user_status: "read_more" });
-        } else {
-          res.status(400).json({ user_status: status });
-        }
-      } else {
-        res.status(400).json({ user_status: "pages-404" });
-      }
-    } else {
-      res.status(400).json({ user_status: "pages-404" });
-    }
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Internal Server Error", details: err.message });
-  }
-});
-
 //project-invite-reject-request
 router.get(
   "/project-invite-reject-request/:pid/:im_id/:flag",
@@ -2189,8 +2569,8 @@ router.patch("/project/update-project", async (req, res) => {
                 paramValuesString11,
               ]);
 
-              const acceptRequest = `http://localhost:3000/project-invite-request/${pid}/${im_id}/1`;
-              const rejectRequest = `http://localhost:3000/project-invite-request/${pid}/${im_id}/2`;
+              const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/1`;
+              const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/2`;
 
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
@@ -2752,61 +3132,12 @@ router.post("/project/duplicate-project", async (req, res) => {
 
     res.status(201).json({
       message: "Project Copied successfully.",
+      pid: getProject.pid
     });
   } catch (error) {
     res
       .status(500)
       .json({ error: "Internal Server Error", details: error.message });
-  }
-});
-
-//view_history_date_wise_project
-router.get("/project/view-history-date-wise-project/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  const hdate = req.body.hdate;
-  try {
-    const [rows, fields] = await pool.execute("CALL view_history(?,?)", [
-      pid,
-      hdate,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//view_history_date_range_project
-router.get(
-  "/project/view-history-date-range-project/:pid",
-  async (req, res) => {
-    const pid = req.params.pid;
-    const start_date = req.body.start_date;
-    const end_date = req.body.end_date;
-    try {
-      const [rows, fields] = await pool.execute(
-        "CALL view_history_date_range(?,?,?)",
-        [pid, start_date, end_date]
-      );
-      res.status(200).json(rows[0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
-
-//view_all_history_project
-router.get("/project/view-all-history-project/:pid", async (req, res) => {
-  const pid = req.params.pid;
-  try {
-    const [rows, fields] = await pool.execute("CALL view_all_history(?)", [
-      pid,
-    ]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -3769,8 +4100,8 @@ router.patch(
             paramValuesString11,
           ]);
 
-          const acceptRequest = `http://localhost:3000/project-invite-request/${pdetail.pid}/${im_id}/1`;
-          const rejectRequest = `http://localhost:3000/project-invite-request/${pdetail.pid}/${im_id}/2`;
+          const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/1`;
+          const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/2`;
 
           const mailOptions2 = {
             from: process.env.SMTP_USER,
@@ -4271,6 +4602,99 @@ router.patch(
       res
         .status(500)
         .json({ error: "Internal Server Error", details: error.message });
+    }
+  }
+);
+
+//getAccepted_PortTM_ProjectList
+router.get(
+  "/project/get-all-accepted-portfolio-team-member-project-list/:portfolio_id/:pid",
+  async (req, res) => {
+    const { portfolio_id, pid } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      const promises = rows[0].map(async (item) => {
+        const { sent_to } = item;
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        let data;
+        if (getName && getName[0] && getName[0][0]) {
+          let check_pmem = "";
+          const [check_pmRes] = await pool.execute("CALL check_pm(?,?,?)", [
+            getName[0][0].reg_id,
+            pid,
+            portfolio_id,
+          ]);
+          if (check_pmRes.length > 0 && check_pmRes[0] && check_pmRes[0][0]) {
+            check_pmem = check_pmRes[0][0].pmember;
+          }
+          if (getName[0][0].reg_id != check_pmem) {
+            const name =
+              getName[0][0].first_name + " " + getName[0][0].last_name;
+            const id = getName[0][0].reg_id;
+            data = {
+              sent_to,
+              name,
+              id,
+            };
+          }
+        }
+        return data;
+      });
+
+      const results = await Promise.all(promises);
+      return res.status(200).json(results.filter(Boolean));
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+//getAccepted_GoalTM_ProjectList
+router.get(
+  "/project/get-all-accepted-goal-team-member-project-list/:gid/:pid/:portfolio_id",
+  async (req, res) => {
+    const { gid, pid, portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [
+        gid,
+      ]);
+      const promises = rows[0].map(async (item) => {
+        const { gmember } = item;
+
+        const [getName] = await pool.execute("CALL getStudentById(?)", [gmember]);
+        let data;
+        if (getName && getName[0] && getName[0][0]) {
+          let check_pmem = "";
+          const [check_pmRes] = await pool.execute("CALL check_pm(?,?,?)", [
+            getName[0][0].reg_id,
+            pid,
+            portfolio_id,
+          ]);
+          if (check_pmRes.length > 0 && check_pmRes[0] && check_pmRes[0][0]) {
+            check_pmem = check_pmRes[0][0].pmember;
+          }
+          if (getName[0][0].reg_id != check_pmem) {
+            const name =
+              getName[0][0].first_name + " " + getName[0][0].last_name;
+            const id = getName[0][0].reg_id;
+            data = {
+              name,
+              id,
+            };
+          }
+        }
+        return data;
+      });
+
+      const results = await Promise.all(promises);
+      return res.status(200).json(results.filter(Boolean));
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
     }
   }
 );

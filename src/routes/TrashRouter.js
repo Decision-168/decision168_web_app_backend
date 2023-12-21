@@ -1651,13 +1651,6 @@ router.patch(
         const indexOfUnderscore = trimmedPfile.indexOf("_");
         const project_file = trimmedPfile.substr(indexOfUnderscore + 1);
 
-        const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
-        const file_id = `pfile_id = '${pfile_id}'`;
-        await pool.execute("CALL UpdateProjectFiles(?,?)", [
-          projectFieldsValues,
-          file_id,
-        ]);
-
         const [owner_row] = await pool.execute("CALL getStudentById(?)", [
           user_id,
         ]);
@@ -1666,18 +1659,18 @@ router.patch(
         const historyFieldsNames =
           "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
         const historyFieldsValues = `"${pfile_id}", "${project_id}", "${
-          project_row[0][0].sid
-        }", "${project_row[0][0].gid}", "${dateConversion()}", "${
-          student.reg_id
-        }", "${student.first_name} ${
-          student.last_name
-        }", "${project_file} Moved to Trash By Project Owner ${
-          student.first_name
-        } ${student.last_name}"`;
+          project_row[0][0].sid}", "${project_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${project_file} Moved to Trash By Project Owner ${student.first_name} ${student.last_name}"`;
 
         await pool.execute("CALL InsertProjectHistory(?,?)", [
           historyFieldsNames,
           historyFieldsValues,
+        ]);
+
+        const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+        const file_id = `pfile_id = '${pfile_id}'`;
+        await pool.execute("CALL UpdateProjectFiles(?,?)", [
+          projectFieldsValues,
+          file_id,
         ]);
         return res
           .status(200)
@@ -1785,7 +1778,7 @@ router.patch(
         ]);
 
         const subtaskTrashFieldsNames = "pid, stid, tid, stfile, stask_trash, stask_trash_date";
-        const subtaskTrashFieldsValues = `"${subtask_row[0][0].tproject_assign}", "${subtask_row[0][0].stid}", "${subtask_row[0][0].tid}", "${subtask_file_name}", "yes", "${formattedDate}"`;
+        const subtaskTrashFieldsValues = `"${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].stid}", "${subtask_row[0][0].tid}", "${subtask_file_name}", "yes", "${formattedDate}"`;
 
         await pool.execute("CALL InsertSubtaskTrash(?,?)", [
           subtaskTrashFieldsNames,

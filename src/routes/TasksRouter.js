@@ -3020,10 +3020,10 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
         get_tcode = `T-${random_num}`;
       }
 
-      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
         project_id,
       ]);
-
+      const pdetail_member = pdetail_mem[0];
       let pro_member = [];
       let pro_member1 = [];
       let pro_member2 = [];
@@ -3245,7 +3245,7 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
 });
 
 //  Insert Comment
-router.get("/task/insert-comment/:user_id", async (req, res) => {
+router.post("/task/insert-comment/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { project_id, tid, stid, message } = req.body;
   try {
@@ -3270,10 +3270,10 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
     }
 
     const pdetail = project_row[0][0];
-    const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
+    const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
       project_id,
     ]);
-
+    const pdetail_member = pdetail_mem[0];
     let pro_member = [];
     let pro_member1 = [];
     let pro_member2 = [];
@@ -3352,12 +3352,7 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
       hour12: true,
     });
 
-    res.status(200).json({
-      pid: project_id,
-      comment_sent: message,
-      comment_date: formattedCommentDate,
-      comment_id: inserted_cm_id,
-    });
+    res.status(200).json({ message: "Comment Successfully Added." });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -3365,9 +3360,8 @@ router.get("/task/insert-comment/:user_id", async (req, res) => {
 });
 
 //  Delete Comment
-router.get("/task/delete-comment/:user_id", async (req, res) => {
-  const { user_id } = req.params;
-  const { cid } = req.body;
+router.get("/task/delete-comment/:user_id/:cid", async (req, res) => {
+  const { user_id, cid } = req.params;
   try {
     const [comment_row] = await pool.execute("CALL get_comment(?)", [cid]);
     const comment = comment_row[0][0];
@@ -3435,10 +3429,10 @@ router.get("/task/insert-task-file/:user_id", async (req, res) => {
       task_row[0][0].pid,
     ]);
     const pdetail = project_row[0][0];
-    const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
+    const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
       task_row[0][0].pid,
     ]);
-
+    const pdetail_member = pdetail_mem[0];
     let pro_member = [];
     let pro_member1 = [];
     let pro_member2 = [];
@@ -3745,10 +3739,10 @@ router.post("/subtask/edit-subtask/:user_id", async (req, res) => {
         .map((linkObj) => Object.values(linkObj).join(","))
         .join(",");
 
-      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
         stproject_assign,
       ]);
-
+      const pdetail_member = pdetail_mem[0];
       let stnotify = "";
       let stnotify_clear = "";
       if (check_subtask) {
