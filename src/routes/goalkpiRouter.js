@@ -1330,6 +1330,8 @@ router.get("/goal/get-department-name/:dept_id", async (req, res) => {
 });
 
 // //GoalTeamMember
+
+// const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]);
 // router.get("/goal/goal-team-member/:gid", async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
@@ -1417,7 +1419,7 @@ router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
 router.get("/goal/goal-detail/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]);
+    const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]); //yeh wali
 
     const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
       rows[0][0].gdept,
