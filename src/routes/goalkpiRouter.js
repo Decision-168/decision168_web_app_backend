@@ -5436,6 +5436,7 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
     res.status(200).json({
       kpiRes: results,
       projectRes: projectResults,
+      goalId: rows[0][0].gid
     });
   } catch (error) {
     console.error("Error executing stored procedure:", error);

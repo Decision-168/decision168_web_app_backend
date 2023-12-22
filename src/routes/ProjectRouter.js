@@ -431,7 +431,7 @@ router.get("/project/get-project-by-id/:pid", async (req, res) => {
     const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
       project_detail.dept_id,
     ]);
-    const get_dept_name = getDeptName[0][0].department;
+    const get_dept_name = getDeptName[0][0]?.department;
 
     const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
       project_detail.pcreated_by,
@@ -2936,6 +2936,7 @@ router.patch("/project/direct-remove-project-manager/:pid/:pmember_id", async (r
 router.patch("/project/remove-project-member/:pm_id", async (req, res) => {
   try {
     const pm_id = req.params.pm_id;
+    console.log(pm_id)
 
     const [check_mem_idRes] = await pool.execute("CALL check_ProPMToClear(?)", [pm_id]);
 
@@ -3024,8 +3025,8 @@ router.patch("/project/project-open-work-new-assignee", async (req, res) => {
   const pm_id = req.body.pm_id;
   const portfolio_id = req.body.portfolio_id;
   try {
-    const [check_gm] = await pool.execute("CALL check_ProPMToClear(?)", [pm_id]);
-    const check = check_gm[0][0];
+    const [check_pm] = await pool.execute("CALL check_ProPMToClear(?)", [pm_id]);
+    const check = check_pm[0][0];
 
     const [check_powner] = await pool.execute("CALL getStudentById(?)", [reg_id]);
     const powner = check_powner[0][0];
@@ -3518,8 +3519,8 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
         const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
         await pool.execute(callProcedureSQL11, [paramNamesString11, paramValuesString11]);
 
-        const acceptRequest = `http://localhost:3000/project-invite-request/${pdetail.pid}/${im_id}/1`;
-        const rejectRequest = `http://localhost:3000/project-invite-request/${pdetail.pid}/${im_id}/2`;
+        const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/1`;
+        const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/2`;
 
         const mailOptions2 = {
           from: process.env.SMTP_USER,
@@ -4035,9 +4036,9 @@ router.patch("/project/add-requested-project-member/:user_id/:pid/:member", asyn
 
 //getAccepted_PortTM_ProjectList
 router.get(
-  "/project/get-all-accepted-portfolio-team-member-project-list/:portfolio_id/:pid",
+  "/project/get-all-accepted-portfolio-team-member-project-list/:portfolio_id/:pid/:user_id",
   async (req, res) => {
-    const { portfolio_id, pid } = req.params;
+    const { portfolio_id, pid, user_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
         portfolio_id,
@@ -4050,14 +4051,14 @@ router.get(
         if (getName && getName[0] && getName[0][0]) {
           let check_pmem = "";
           const [check_pmRes] = await pool.execute("CALL check_pm(?,?,?)", [
-            getName[0][0].reg_id,
             pid,
             portfolio_id,
+            getName[0][0].reg_id
           ]);
           if (check_pmRes.length > 0 && check_pmRes[0] && check_pmRes[0][0]) {
             check_pmem = check_pmRes[0][0].pmember;
           }
-          if (getName[0][0].reg_id != check_pmem) {
+          if ((getName[0][0].reg_id != check_pmem) && (getName[0][0].reg_id != user_id)) {
             const name =
               getName[0][0].first_name + " " + getName[0][0].last_name;
             const id = getName[0][0].reg_id;
@@ -4082,29 +4083,27 @@ router.get(
 
 //getAccepted_GoalTM_ProjectList
 router.get(
-  "/project/get-all-accepted-goal-team-member-project-list/:gid/:pid/:portfolio_id",
+  "/project/get-all-accepted-goal-team-member-project-list/:portfolio_id/:pid/:gid/:user_id",
   async (req, res) => {
-    const { gid, pid, portfolio_id } = req.params;
+    const { portfolio_id, pid, gid, user_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [
         gid,
       ]);
       const promises = rows[0].map(async (item) => {
-        const { gmember } = item;
-
-        const [getName] = await pool.execute("CALL getStudentById(?)", [gmember]);
+        const [getName] = await pool.execute("CALL getStudentById(?)", [item.gmember]);
         let data;
         if (getName && getName[0] && getName[0][0]) {
           let check_pmem = "";
           const [check_pmRes] = await pool.execute("CALL check_pm(?,?,?)", [
-            getName[0][0].reg_id,
             pid,
             portfolio_id,
+            getName[0][0].reg_id
           ]);
           if (check_pmRes.length > 0 && check_pmRes[0] && check_pmRes[0][0]) {
             check_pmem = check_pmRes[0][0].pmember;
           }
-          if (getName[0][0].reg_id != check_pmem) {
+          if ((getName[0][0].reg_id != check_pmem) && (getName[0][0].reg_id != user_id)) {
             const name =
               getName[0][0].first_name + " " + getName[0][0].last_name;
             const id = getName[0][0].reg_id;
@@ -4119,6 +4118,542 @@ router.get(
 
       const results = await Promise.all(promises);
       return res.status(200).json(results.filter(Boolean));
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
+router.post("/project/insert-project-member", async (req, res) => {
+  try {
+    const { pid, pcreated_by, team_member, imemail } = req.body;
+
+    const formattedDate = dateConversion();
+
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      pcreated_by,
+    ]);
+    const powner = check_powner[0][0];
+
+    const [getProjectRes] = await pool.execute("CALL getProjectById(?)", [pid]);
+    const getProject = getProjectRes[0][0];
+
+    if (team_member && team_member.length > 0) {
+      // Use forEach with async/await
+      await Promise.all(
+        team_member.map(async (t) => {
+          const [check_Project_members] = await pool.execute(
+            "CALL check_ProjectMToClear(?,?)",
+            [ t, pid]
+          );
+          if (check_Project_members[0].length == 0) {
+            const data5 = {
+              pid: pid,
+              portfolio_id: getProject.portfolio_id,
+              pmember: t,
+              status: `send`,
+              pcreated_by: pcreated_by,
+              sent_date: formattedDate,
+              sent_notify_clear: `no`,
+            };
+
+            const paramNamesString5 = Object.keys(data5).join(", ");
+            const paramValuesString5 = Object.values(data5)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL5 = `CALL InsertProjectMembers(?, ?)`;
+            await pool.execute(callProcedureSQL5, [
+              paramNamesString5,
+              paramValuesString5,
+            ]);
+
+            const [check_user] = await pool.execute("CALL getStudentById(?)", [
+              t,
+            ]);
+            const user = check_user[0][0];
+
+            const [getpm_id] = await pool.execute(
+              "CALL check_ProjectMToClear(?,?)",
+              [ t, pid]
+            );
+            const pm_id = getpm_id[0][0]?.pm_id;
+
+            const hdata6 = {
+              pid: pid,
+              h_date: formattedDate,
+              h_resource_id: powner.reg_id,
+              h_resource: `${powner.first_name} ${powner.last_name}`,
+              h_description: `${powner.first_name} ${powner.last_name} sent project team member request to ${user.first_name} ${user.last_name}`,
+              pmember_id: pm_id,
+            };
+
+            const paramNamesString6 = Object.keys(hdata6).join(", ");
+            const paramValuesString6 = Object.values(hdata6)
+              .map((value) => `'${value}'`)
+              .join(", ");
+
+            const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL6, [
+              paramNamesString6,
+              paramValuesString6,
+            ]);
+
+            const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+              getProject.portfolio_id,
+            ]);
+            const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+            const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
+            const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
+            const mailOptions = {
+              from: process.env.SMTP_USER,
+              to: user.email_address,
+              subject: "Project Request | Decision 168",
+              html: generateEmailTemplate(
+                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
+          Just click the appropriate button below to join the Project or request more information.
+          Portfolio : ${PortfolioName}`,
+                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+              ),
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                res.status(500).json({
+                  error: "Failed to send invitation.",
+                });
+              } else {
+                res.status(201).json({
+                  message: "Invitation sent successfully.",
+                });
+              }
+            });
+          }
+        })
+      );
+    }
+
+    if (imemail && imemail.length > 0) {
+      await Promise.all(
+        imemail.map(async (im) => {
+          if (!isEmail(im)) {
+            return res.status(400).json({ error: "Invalid email address." });
+          }
+          const [check_if_registered] = await pool.execute(
+            "CALL selectLogin(?)",
+            [im]
+          );
+          if (check_if_registered[0].length > 0) {
+            const rid = check_if_registered[0][0]?.reg_id;
+            const [check_Project_members] = await pool.execute(
+              "CALL check_ProjectMToClear(?,?)",
+              [ rid, pid]
+            );
+            if (check_Project_members[0].length == 0) {
+              if (pcreated_by != rid) {
+                const data7 = {
+                  pid: pid,
+                  portfolio_id: getProject.portfolio_id,
+                  pmember: rid,
+                  status: `send`,
+                  pcreated_by: pcreated_by,
+                  sent_date: formattedDate,
+                  sent_notify_clear: `no`,
+                };
+
+                const paramNamesString7 = Object.keys(data7).join(", ");
+                const paramValuesString7 = Object.values(data7)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL7 = `CALL InsertProjectMembers(?, ?)`;
+                await pool.execute(callProcedureSQL7, [
+                  paramNamesString7,
+                  paramValuesString7,
+                ]);
+
+                const [check_portfolio] = await pool.execute(
+                  "CALL check_PortfolioMember(?,?)",
+                  [im, getProject.portfolio_id]
+                );
+                if (check_portfolio[0].length == 0) {
+                  const dataPort = {
+                    portfolio_id: getProject.portfolio_id,
+                    sent_to: im,
+                    sent_from: pcreated_by,
+                    status: `pending`,
+                    working_status: `active`,
+                    status_date: formattedDate,
+                  };
+
+                  const paramNamesStringPort = Object.keys(dataPort).join(", ");
+                  const paramValuesStringPort = Object.values(dataPort)
+                    .map((value) => `'${value}'`)
+                    .join(", ");
+
+                  const callProcedureSQLPort = `CALL InsertProjectPortfolioMember(?, ?)`;
+                  await pool.execute(callProcedureSQLPort, [
+                    paramNamesStringPort,
+                    paramValuesStringPort,
+                  ]);
+                }
+
+                const [check_user] = await pool.execute(
+                  "CALL getStudentById(?)",
+                  [rid]
+                );
+                const user = check_user[0][0];
+
+                const [getpm_id] = await pool.execute(
+                  "CALL check_ProjectMToClear(?,?)",
+                  [ rid, pid]
+                );
+                const pm_id = getpm_id[0][0]?.pm_id;
+
+                const hdata8 = {
+                  pid: pid,
+                  h_date: formattedDate,
+                  h_resource_id: powner.reg_id,
+                  h_resource: `${powner.first_name} ${powner.last_name}`,
+                  h_description: `${powner.first_name} ${powner.last_name} sent project team member request to ${user.first_name} ${user.last_name}`,
+                  pmember_id: pm_id,
+                };
+
+                const paramNamesString8 = Object.keys(hdata8).join(", ");
+                const paramValuesString8 = Object.values(hdata8)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQL8 = `CALL InsertProjectHistory(?, ?)`;
+                await pool.execute(callProcedureSQL8, [
+                  paramNamesString8,
+                  paramValuesString8,
+                ]);
+
+                const [getPortfolio] = await pool.execute(
+                  "CALL getPortfolio2(?)",
+                  [getProject.portfolio_id]
+                );
+                const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+                const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
+                const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
+                const mailOptions = {
+                  from: process.env.SMTP_USER,
+                  to: user.email_address,
+                  subject: "Project Request | Decision 168",
+                  html: generateEmailTemplate(
+                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
+              Just click the appropriate button below to join the Project or request more information.
+              Portfolio : ${PortfolioName}`,
+                    `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                  ),
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    res.status(500).json({
+                      error: "Failed to send invitation.",
+                    });
+                  } else {
+                    res.status(201).json({
+                      message: "Invitation sent successfully.",
+                    });
+                  }
+                });
+              }
+            }
+          } else {
+            const [check_email] = await pool.execute(
+              "CALL check_invited_email(?,?,?)",
+              [pid, pcreated_by, im]
+            );
+            if (check_email[0].length == 0) {
+              const data9 = {
+                pid: pid,
+                sent_from: pcreated_by,
+                sent_to: im,
+                status: `pending`,
+                invite_date: formattedDate,
+              };
+
+              const paramNamesString9 = Object.keys(data9).join(", ");
+              const paramValuesString9 = Object.values(data9)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL9 = `CALL InsertProjectInvitedMembers(?, ?)`;
+              await pool.execute(callProcedureSQL9, [
+                paramNamesString9,
+                paramValuesString9,
+              ]);
+
+              const [check_portfolio] = await pool.execute(
+                "CALL check_PortfolioMember(?,?)",
+                [im, getProject.portfolio_id]
+              );
+              if (check_portfolio[0].length == 0) {
+                const dataPort = {
+                  portfolio_id: getProject.portfolio_id,
+                  sent_to: im,
+                  sent_from: pcreated_by,
+                  status: `pending`,
+                  working_status: `active`,
+                  status_date: formattedDate,
+                };
+
+                const paramNamesStringPort = Object.keys(dataPort).join(", ");
+                const paramValuesStringPort = Object.values(dataPort)
+                  .map((value) => `'${value}'`)
+                  .join(", ");
+
+                const callProcedureSQLPort = `CALL InsertProjectPortfolioMember(?, ?)`;
+                await pool.execute(callProcedureSQLPort, [
+                  paramNamesStringPort,
+                  paramValuesStringPort,
+                ]);
+              }
+
+              const [getim_id] = await pool.execute(
+                "CALL check_invited_email(?,?,?)",
+                [pid, pcreated_by, im]
+              );
+
+              const im_id = getim_id[0][0]?.im_id;
+
+              const hdata10 = {
+                pid: pid,
+                h_date: formattedDate,
+                h_resource_id: powner.reg_id,
+                h_resource: `${powner.first_name} ${powner.last_name}`,
+                h_description: `${powner.first_name} ${powner.last_name} sent invite to ${im}`,
+                ginvited_id: im_id,
+              };
+
+              const paramNamesString10 = Object.keys(hdata10).join(", ");
+              const paramValuesString10 = Object.values(hdata10)
+                .map((value) => `'${value}'`)
+                .join(", ");
+
+              const callProcedureSQL10 = `CALL InsertProjectHistory(?, ?)`;
+              await pool.execute(callProcedureSQL10, [
+                paramNamesString10,
+                paramValuesString10,
+              ]);
+
+              const [getPortfolio] = await pool.execute(
+                "CALL getPortfolio2(?)",
+                [getProject.portfolio_id]
+              );
+              const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+              const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/1`;
+              const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/2`;
+              const mailOptions = {
+                from: process.env.SMTP_USER,
+                to: im,
+                subject: "Project Request | Decision 168",
+                html: generateEmailTemplate(
+                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
+              Just click the appropriate button below to join the Project or request more information.
+              Portfolio : ${PortfolioName}`,
+                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                ),
+              };
+
+              transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  res.status(500).json({
+                    error: "Failed to send invitation.",
+                  });
+                } else {
+                  res.status(201).json({
+                    message: "Invitation sent successfully.",
+                  });
+                }
+              });
+            }
+          }
+        })
+      );
+    }
+
+    res.status(201).json({
+      message: "Project Member Added successfully.",
+    });
+  } catch (error) {
+    //console.log(error)
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
+//getGoalCreateDD
+router.get(
+  "/project/get-project-create-dd/:portfolio_id/:gid/:user_id",
+  async (req, res) => {
+    const { portfolio_id, gid, user_id } = req.params;
+    try {
+      let PortfolioResults = [];
+      let PortfolioDepartmentResults = [];
+      let AssignManagerListRes = [];
+      let AssignMemberListRes = [];
+
+      const [Portfolio] = await pool.execute(
+        "CALL getPortfolioName(?)",
+        [portfolio_id]
+      );
+      const { portfolio } = Portfolio[0][0];
+      const label = portfolio;
+      const data = [
+        {
+          ...Portfolio[0][0],
+          label,
+        }
+      ];
+      PortfolioResults = data;
+
+      if(gid != 0){
+        const [goalData] = await pool.execute(
+          "CALL GoalDetail(?)",
+          [gid]
+        );
+        const gdept = goalData[0][0].gdept;
+        const [PortfolioDepartment] = await pool.execute(
+          "CALL get_PDepartment(?)",
+          [gdept]
+        );
+          const { department } = PortfolioDepartment[0][0];
+          const label = department;
+          const data = [
+            {
+              ...PortfolioDepartment[0][0],
+              label,
+            }
+          ];
+        PortfolioDepartmentResults = data;
+
+        const [AssignList] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [
+          gid,
+        ]);
+        const promises = AssignList[0].map(async (item) => {  
+          const [getName] = await pool.execute("CALL getStudentById(?)", [item.gmember]);
+          let data;
+          let label = "";
+          if (getName && getName[0] && getName[0][0]) {
+            if (user_id == getName[0][0].reg_id) {
+              label = "Assign To Me";
+            } else {
+              label = getName[0][0].first_name + " " + getName[0][0].last_name;
+            }  
+            const member_reg_id = getName[0][0].reg_id;
+            data = {
+              label,
+              member_reg_id,
+            };
+          }
+          return data;
+        });
+  
+        const mempromises = AssignList[0].map(async (item) => {  
+          const [getName] = await pool.execute("CALL getStudentById(?)", [item.gmember]);
+          let data2;
+          let name = "";
+          if (getName && getName[0] && getName[0][0]) {
+            if (user_id != getName[0][0].reg_id) {
+              name = getName[0][0].first_name + " " + getName[0][0].last_name;
+              const id = getName[0][0].reg_id;
+              data2 = {
+                name,
+                id,
+              };
+            }
+          }
+          return data2;
+        });
+
+        const AssignManagerListResults = await Promise.all(promises);
+        AssignManagerListRes = AssignManagerListResults.filter(Boolean);
+
+        const AssignMemberListResults = await Promise.all(mempromises);
+        AssignMemberListRes = AssignMemberListResults.filter(Boolean);
+      }else{
+        const [PortfolioDepartment] = await pool.execute(
+          "CALL get_PortfolioDepartment(?)",
+          [portfolio_id]
+        );
+        const Deptpromises = PortfolioDepartment[0].map(async (item) => {
+          const { department } = item;
+          const label = department;
+          const data = {
+            ...item,
+            label,
+          };
+  
+          return data;
+        });
+  
+        PortfolioDepartmentResults = await Promise.all(Deptpromises);
+
+        const [AssignList] = await pool.execute("CALL getAccepted_PortTM(?)", [
+          portfolio_id,
+        ]);
+        const promises = AssignList[0].map(async (item) => {
+          const { sent_to } = item;
+  
+          const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+          let data;
+          let label = "";
+          if (getName && getName[0] && getName[0][0]) {
+            if (user_id == getName[0][0].reg_id) {
+              label = "Assign To Me";
+            } else {
+              label = getName[0][0].first_name + " " + getName[0][0].last_name;
+            }
+  
+            const member_reg_id = getName[0][0].reg_id;
+            data = {
+              sent_to,
+              label,
+              member_reg_id,
+            };
+          }
+          return data;
+        });
+  
+        const mempromises = AssignList[0].map(async (item) => {
+          const { sent_to } = item;
+  
+          const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+          let data2;
+          let name = "";
+          if (getName && getName[0] && getName[0][0]) {
+            if (user_id != getName[0][0].reg_id) {
+              name = getName[0][0].first_name + " " + getName[0][0].last_name;
+              const id = getName[0][0].reg_id;
+              data2 = {
+                sent_to,
+                name,
+                id,
+              };
+            }
+          }
+          return data2;
+        });
+
+        const AssignManagerListResults = await Promise.all(promises);
+        AssignManagerListRes = AssignManagerListResults.filter(Boolean);
+
+        const AssignMemberListResults = await Promise.all(mempromises);
+        AssignMemberListRes = AssignMemberListResults.filter(Boolean);
+      }
+
+      return res.status(200).json({
+        PortfolioRes: PortfolioResults,
+        PortfolioDepartmentRes: PortfolioDepartmentResults,
+        AssignManagerListRes: AssignManagerListRes,
+        AssignMemberListRes: AssignMemberListRes,
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Internal server error." });
