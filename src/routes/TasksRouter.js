@@ -3122,58 +3122,58 @@ router.post("/task/insert-task-file/:user_id", async (req, res) => {
     const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const [task_row] = await pool.execute("CALL getTasksDetail(?)", [tid]);
-    const [project_row] = await pool.execute("CALL getProjectById(?)", [task_row[0][0].pid]);
-    const pdetail = project_row[0][0];
-    const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
-      task_row[0][0].pid,
-    ]);
-    const pdetail_member = pdetail_mem[0];
-    let pro_member = [];
-    let pro_member1 = [];
-    let pro_member2 = [];
-    if (pdetail || pdetail_member) {
-      if (pdetail) {
-        pro_member1.push(pdetail.pcreated_by);
-      }
-      if (pdetail_member) {
-        pdetail_member.forEach(async (pm) => {
-          pro_member2.push(pm.pmember);
-        });
-      }
-    }
-    pro_member = pro_member2.concat(pro_member1);
-    const user_index = pro_member.indexOf(user_id);
-    if (user_index !== -1) {
-      pro_member.splice(parseInt(user_index), 1);
-    }
-    const final_mem = pro_member.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+    
+    const oldFiles = task_row[0][0].tfile;
+    const newFiles = task_file;
 
+    let allFiles = newFiles;
+    if(oldFiles){
+      allFiles = `${oldFiles},${newFiles}`
+    }
+    
+    let final_mem = task_row[0][0].tfnotify;
+    if(task_row[0][0].tproject_assign){
+      const [project_row] = await pool.execute("CALL getProjectById(?)", [task_row[0][0].tproject_assign]);
+      const pdetail = project_row[0][0];
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
+        task_row[0][0].tproject_assign,
+      ]);
+      const pdetail_member = pdetail_mem[0];
+      let pro_member = [];
+      let pro_member1 = [];
+      let pro_member2 = [];
+      if (pdetail || pdetail_member) {
+        if (pdetail) {
+          pro_member1.push(pdetail.pcreated_by);
+        }
+        if (pdetail_member) {
+          pdetail_member.forEach(async (pm) => {
+            pro_member2.push(pm.pmember);
+          });
+        }
+      }
+      pro_member = pro_member2.concat(pro_member1);
+      const user_index = pro_member.indexOf(user_id);
+      if (user_index !== -1) {
+        pro_member.splice(parseInt(user_index), 1);
+      }
+      final_mem = pro_member.map((linkObj) => Object.values(linkObj).join(",")).join(",");
+    }
+    
     const formattedDate = dateConversion();
+    const tFieldsValues = `tfile = '${allFiles}', new_file = '${task_file}', tfnotify = '${final_mem}', tfnotify_clear = '${final_mem}', tfnotify_date = '${formattedDate}'`;
+    const task_id = `tid = '${tid}'`;
+    await pool.execute("CALL UpdateTask(?,?)", [tFieldsValues, task_id]);
 
-    const file_data = {
-      tfile: task_file,
-      c_notify: final_mem,
-      c_notify_clear: final_mem,
-      tfnotify_date: formattedDate,
-    };
-
-    const paramNamesString = Object.keys(file_data).join(", ");
-    const paramValuesString = Object.values(file_data)
-      .map((value) => `'${value}'`)
-      .join(", ");
-
-    const callProcedureSQL = `CALL UpdateTask(?, ?)`;
-    await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
-
-    if (task_row[0][0].pid) {
+    if (task_row[0][0].tproject_assign) {
       const history = {
-        pid: task_row[0][0].pid,
+        pid: task_row[0][0].tproject_assign,
         gid: pdetail.gid,
         sid: pdetail.sid,
         h_date: formattedDate,
         h_resource_id: student.reg_id,
         h_resource: `${student.first_name} ${student.last_name}`,
-        h_description: `TAsk Code: ${tcode}, New File Uploaded by ${student.first_name} ${student.last_name}`,
+        h_description: `Task Code: ${tcode}, New File Uploaded by ${student.first_name} ${student.last_name}`,
         task_id: tid,
       };
 
