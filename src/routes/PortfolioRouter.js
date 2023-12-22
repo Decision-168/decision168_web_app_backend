@@ -49,7 +49,7 @@ router.get(
   }
 );
 
-//get all accepted portfolio team members by portfolio_id
+//get all accepted portfolio team members (Active and Inactive) by portfolio_id
 router.get(
   "/portfolio/get-all-accepted-portfolio-team-members/:portfolio_id",
   async (req, res) => {
@@ -88,6 +88,7 @@ router.get(
     }
   }
 );
+
 
 //change portfolio member status by pim_id and portfolio_id
 router.patch(
@@ -1099,5 +1100,51 @@ router.get("/portfolio/get-portfolio-count/:id", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+
+//(only for asignee dropdown )get all accepted portfolio team members (Active and Inactive) by portfolio_id
+router.get(
+  "/portfolio/get-all-accepted-active-portfolio-team-members/:portfolio_id",
+  async (req, res) => {
+    const { portfolio_id } = req.params;
+    try {
+      const [rows] = await pool.execute("CALL getAll_Accepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      const promises = rows[0].map(async (item) => {
+        const { sent_to, working_status } = item;
+
+        // Filter out items where working_status is not "active"
+        if (working_status !== "active") {
+          return null;
+        }
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+
+        if (getName[0] && getName[0][0]) {
+          const member_name = getName[0][0].first_name + " " + getName[0][0].last_name;
+          const reg_id = getName[0][0].reg_id;
+
+          const data = {
+            reg_id,
+            name: member_name,
+          };
+          return data;
+        } else {
+          return null;
+        }
+      });
+
+      // Filter out null values before sending the response
+      const results = (await Promise.all(promises)).filter(Boolean);
+      
+      return res.status(200).json(results);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  }
+);
+
 
 module.exports = router;
