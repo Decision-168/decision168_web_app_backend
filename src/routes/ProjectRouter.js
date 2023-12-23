@@ -835,7 +835,7 @@ router.get("/project/get-project-by-id/:pid", async (req, res) => {
   try {
     const [rows] = await pool.execute("CALL getProjectById(?)", [pid]);
     const project_detail = rows[0][0];
-    const project_id = project_detail.pid;
+    const project_id = project_detail?.pid;
     const [project_wise_all_tasks] = await pool.execute(
       "CALL progress_total(?)",
       [project_id]
@@ -5668,7 +5668,7 @@ router.get(
 
       if (gid != 0) {
         const [goalData] = await pool.execute("CALL GoalDetail(?)", [gid]);
-        const gdept = goalData[0][0].gdept;
+        const gdept = goalData[0][0]?.gdept;
         const [PortfolioDepartment] = await pool.execute(
           "CALL get_PDepartment(?)",
           [gdept]
