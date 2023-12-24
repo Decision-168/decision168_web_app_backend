@@ -13,16 +13,13 @@ const Tasks = require("./routes/TasksRouter");
 const Project = require("./routes/ProjectRouter");
 const UpgradePlan = require("./routes/UpgradePlanRouter");
 const PORT = process.env.PORT || 3000;
-const bodyParser = require("body-parser");
+console.log(process.env.PORT);
 
 require("./database/connection");
 
-// app.use(express.json());
-app.use('/d168-app-webhooks', express.raw({ type: '*/*' }));
-app.use(express.json({ limit: '10mb' }));
+app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
+app.use(express.json({ limit: "10mb" }));
 app.use(cors());
-// app.use(bodyParser.json({ limit: "500mb" }));
-// app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(User);
 app.use(Dashboard);
 app.use(Portfolio);
@@ -33,4 +30,4 @@ app.use(GoalKpi);
 app.use(Tasks);
 app.use(Project);
 app.use(UpgradePlan);
-app.listen(PORT);
+app.listen(PORT, () => console.log(`Server Started at PORT:${PORT}`));
