@@ -5,13 +5,115 @@ const { dateConversion, transporter } = require("../utils/common-functions");
 const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const front_url = process.env.FRONTEND_URL;
 
 //getAllPack
 router.get("/upgrade-plan/get-all-pack/:user_id", async (req, res) => {
   const { user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL getAllPack(?)", [user_id]);
-    res.status(200).json(rows[0]);
+
+    let result = rows[0];
+
+    const [getMyDetailRes] = await pool.execute("CALL getStudentById(?)", [
+      user_id,
+    ]);
+    const getMyDetail = getMyDetailRes[0][0];
+
+    if (getMyDetail && getMyDetail?.package_coupon_id != 0) {
+      const [rows2] = await pool.execute("CALL getPackDetail(?)", [
+        getMyDetail?.package_id,
+      ]);
+      const rows2Res = rows2[0][0];
+      const [rows3] = await pool.execute("CALL pricing_labels(?)", [
+        rows2Res?.pack_id,
+      ]);
+      const rows3Res = rows3[0][0];
+
+      const rows4 = { ...rows2Res, ...rows3Res };
+
+      const filteredRows = rows[0].filter((pack) => pack.pack_id != "1");
+
+      const mergedResult = [rows4, ...filteredRows];
+
+      result = mergedResult;
+    }
+    const promises = result.map(async (item) => {
+      const {
+        pack_portfolio,
+        portfolio,
+        pack_goals,
+        goals,
+        pack_goals_strategies,
+        goals_strategies,
+        pack_projects,
+        projects,
+        pack_team_members,
+        team_members,
+        pack_tasks,
+        task,
+        pack_storage,
+        storage,
+        accountability_tracking,
+        document_collaboration,
+        kanban_boards,
+        motivator,
+        internal_chat,
+        pack_content_planner,
+        content_planner,
+        data_recovery,
+        email_support,
+        pack_validity,
+        ...rest
+      } = item;
+
+      let validity;
+      if (!isNaN(pack_validity)) {
+        if (pack_validity == "30") {
+          validity = "billed monthly";
+        } else if (pack_validity == "90") {
+          validity = "3 Months";
+        } else if (pack_validity == "180") {
+          validity = "6 Months";
+        } else if (pack_validity == "270") {
+          validity = "9 Months";
+        } else if (pack_validity == "365") {
+          validity = "billed annually";
+        } else {
+          validity = `${pack_validity} Days`;
+        }
+      } else {
+        validity = pack_validity;
+      }
+
+      const features = [
+        `${pack_portfolio} ${portfolio}`,
+        `${pack_goals} ${goals}`,
+        `${pack_goals_strategies} ${goals_strategies}`,
+        `${pack_projects} ${projects}`,
+        `${pack_team_members} ${team_members}`,
+        `${pack_tasks} ${task}`,
+        `${pack_storage} ${storage}`,
+        `${accountability_tracking}`,
+        `${document_collaboration}`,
+        `${kanban_boards}`,
+        `${motivator}`,
+        `${internal_chat}`,
+        `${pack_content_planner} ${content_planner}`,
+        `${data_recovery}`,
+        `${email_support}`,
+      ];
+
+      const data = {
+        ...rest,
+        validity,
+        features,
+      };
+      return data;
+    });
+    const finalResults = await Promise.all(promises);
+
+    res.status(200).json(finalResults);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -256,12 +358,11 @@ router.post("/upgrade-plan/create-checkout-session", async (req, res) => {
         mode: "subscription",
         customer: stripe_cusID,
         allow_promotion_codes: true,
-        success_url:
-          "http://localhost:3000/decision168/payment-success?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "http://localhost:3000/decision168/pricing-packages",
+        success_url: `${front_url}payment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${user_id}`,
+        cancel_url: `${front_url}pricing-packages`,
       });
       res
-        .status(303)
+        .status(200)
         .json({ session_id: session.id, session_url: session.url });
     } else {
       const session = await stripe.checkout.sessions.create({
@@ -273,12 +374,11 @@ router.post("/upgrade-plan/create-checkout-session", async (req, res) => {
         ],
         mode: "subscription",
         allow_promotion_codes: true,
-        success_url:
-          "http://localhost:3000/decision168/payment-success?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "http://localhost:3000/decision168/pricing-packages",
+        success_url: `${front_url}payment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${user_id}`,
+        cancel_url: `${front_url}pricing-packages`,
       });
       res
-        .status(303)
+        .status(200)
         .json({ session_id: session.id, session_url: session.url });
     }
   } catch (error) {
@@ -804,7 +904,7 @@ router.post(
                 res.status(400).json({ error: subscriptionErr });
                 return;
               }
-              
+
               if (subscription) {
                 if (
                   subscription.status == "active" ||
