@@ -1,8 +1,8 @@
 const express = require("express");
-const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
-const { convertObjectToProcedureParams } = require("../utils/common-functions");
 const moment = require("moment");
+const { convertObjectToProcedureParams } = require("../utils/common-functions");
+const router = express.Router();
 
 //get user details by user id
 router.get("/user/get-user/:reg_id", async (req, res) => {
@@ -127,7 +127,6 @@ router.patch("/user/update-profile/:id", async (req, res) => {
     } else {
       res.status(404).json({ error: "User not found or no changes applied" });
     }
-
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
