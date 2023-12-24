@@ -9,7 +9,7 @@ const {
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
 
-//Project List
+//Sidebar Project List
 router.get(
   "/project/get-project-list/:user_id/:portfolio_id",
   async (req, res) => {
@@ -298,27 +298,27 @@ router.get(
     }
   }
 );
+
 //Dashboard Project List
 router.get(
   "/project/get-dashboard-project-list/:user_id/:portfolio_id",
   async (req, res) => {
     const { user_id, portfolio_id } = req.params;
     try {
-      const [regularList] = await pool.execute(
-        "CALL ProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
-      );
+      const [regularList] = await pool.execute("CALL ProjectListRegular(?)", [
+        user_id,
+      ]);
       const [acceptedList] = await pool.execute(
-        "CALL AcceptedProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
+        "CALL AcceptedProjectListRegular(?)",
+        [user_id]
       );
       const [pendingList] = await pool.execute(
-        "CALL PendingProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
+        "CALL PendingProjectListRegular(?)",
+        [user_id]
       );
       const [readMoreList] = await pool.execute(
-        "CALL ReadMoreProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
+        "CALL ReadMoreProjectListRegular(?)",
+        [user_id]
       );
 
       const regularListData = regularList[0];
@@ -586,6 +586,7 @@ router.get(
     }
   }
 );
+
 //Portfolio Project List
 router.get(
   "/project/get-portfolio-projects-list/:user_id/:portfolio_id",
@@ -687,6 +688,7 @@ router.get(
     }
   }
 );
+
 //get Project Member Data
 router.get(
   "/project/get-project-member-data/:pid/:user_id",
