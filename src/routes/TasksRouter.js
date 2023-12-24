@@ -2982,9 +2982,7 @@ router.post("/task/insert-comment/:user_id", async (req, res) => {
     }
 
     const pdetail = project_row[0][0];
-    const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
-      project_id,
-    ]);
+    const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [project_id]);
     const pdetail_member = pdetail_mem[0];
     let pro_member = [];
     let pro_member1 = [];
@@ -3200,22 +3198,20 @@ router.patch("/task/insert-task-file/:user_id", async (req, res) => {
     const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const [task_row] = await pool.execute("CALL getTasksDetail(?)", [tid]);
-    
+
     const oldFiles = task_row[0][0].tfile;
     const newFiles = task_file;
 
     let allFiles = newFiles;
-    if(oldFiles){
-      allFiles = `${oldFiles},${newFiles}`
+    if (oldFiles) {
+      allFiles = `${oldFiles},${newFiles}`;
     }
-    
+
     let final_mem = task_row[0][0].tfnotify;
-    if(task_row[0][0].tproject_assign){
+    if (task_row[0][0].tproject_assign) {
       const [project_row] = await pool.execute("CALL getProjectById(?)", [task_row[0][0].tproject_assign]);
       const pdetail = project_row[0][0];
-      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
-        task_row[0][0].tproject_assign,
-      ]);
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [task_row[0][0].tproject_assign]);
       const pdetail_member = pdetail_mem[0];
       let pro_member = [];
       let pro_member1 = [];
@@ -3237,7 +3233,7 @@ router.patch("/task/insert-task-file/:user_id", async (req, res) => {
       }
       final_mem = pro_member.map((linkObj) => Object.values(linkObj).join(",")).join(",");
     }
-    
+
     const formattedDate = dateConversion();
     const tFieldsValues = `tfile = '${allFiles}', new_file = '${task_file}', tfnotify = '${final_mem}', tfnotify_clear = '${final_mem}', tfnotify_date = '${formattedDate}'`;
     const task_id = `tid = '${tid}'`;
@@ -3264,7 +3260,7 @@ router.patch("/task/insert-task-file/:user_id", async (req, res) => {
       await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
     }
 
-    res.status(200).json({message: "File(s) Attached Successfully"});
+    res.status(200).json({ message: "File(s) Attached Successfully" });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -3279,22 +3275,20 @@ router.patch("/subtask/insert-subtask-file/:user_id", async (req, res) => {
     const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
     const student = getMydetail[0][0];
     const [subtask_row] = await pool.execute("CALL getSubtasksDetail(?)", [stid]);
-    
+
     const oldFiles = subtask_row[0][0].stfile;
     const newFiles = stask_file;
 
     let allFiles = newFiles;
-    if(oldFiles){
-      allFiles = `${oldFiles},${newFiles}`
+    if (oldFiles) {
+      allFiles = `${oldFiles},${newFiles}`;
     }
-    
+
     let final_mem = subtask_row[0][0].stfnotify;
-    if(subtask_row[0][0].stproject_assign){
+    if (subtask_row[0][0].stproject_assign) {
       const [project_row] = await pool.execute("CALL getProjectById(?)", [subtask_row[0][0].stproject_assign]);
       const pdetail = project_row[0][0];
-      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
-        subtask_row[0][0].stproject_assign,
-      ]);
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [subtask_row[0][0].stproject_assign]);
       const pdetail_member = pdetail_mem[0];
       let pro_member = [];
       let pro_member1 = [];
@@ -3316,7 +3310,7 @@ router.patch("/subtask/insert-subtask-file/:user_id", async (req, res) => {
       }
       final_mem = pro_member.map((linkObj) => Object.values(linkObj).join(",")).join(",");
     }
-    
+
     const formattedDate = dateConversion();
     const tFieldsValues = `stfile = '${allFiles}', snew_file = '${stask_file}', stfnotify = '${final_mem}', stfnotify_clear = '${final_mem}', stfnotify_date = '${formattedDate}'`;
     const subtask_id = `stid = '${stid}'`;
@@ -3343,7 +3337,7 @@ router.patch("/subtask/insert-subtask-file/:user_id", async (req, res) => {
       await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
     }
 
-    res.status(200).json({message: "File(s) Attached Successfully"});
+    res.status(200).json({ message: "File(s) Attached Successfully" });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -3469,7 +3463,6 @@ router.get("/task/user-tasks", async (req, res) => {
   }
 });
 
-
 //get Task Comments
 router.get("/task/get-task-comments/:tid/:user_id", async (req, res) => {
   const { tid, user_id } = req.params;
@@ -3483,23 +3476,19 @@ router.get("/task/get-task-comments/:tid/:user_id", async (req, res) => {
     if (taskCommentData) {
       // Map task comment data to a new structure
       taskComment_promises = taskCommentData.map(async (item) => {
-        const deleteStatus = item.delete_msg === 'yes' ? true : false;
-        
+        const deleteStatus = item.delete_msg === "yes" ? true : false;
+
         // Call stored procedure to get student by ID
-        const [creator] = await pool.execute(
-          "CALL getStudentById(?)",
-          [item.c_created_by]
-        );
+        const [creator] = await pool.execute("CALL getStudentById(?)", [item.c_created_by]);
         const student = creator[0][0];
-        const userName =
-          user_id == item.c_created_by ? "Me" : `${student.first_name} ${student.last_name}`;
+        const userName = user_id == item.c_created_by ? "Me" : `${student.first_name} ${student.last_name}`;
         const meStatus = user_id == item.c_created_by ? true : false;
         const createdDate = item.c_created_date;
         const formattedDate = new Date(createdDate).toLocaleDateString();
         const formattedTime = new Date(createdDate).toLocaleTimeString([], {
-          hour: 'numeric',
-          minute: '2-digit',
-          second: '2-digit',
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
           hour12: true,
         });
 
@@ -3520,15 +3509,57 @@ router.get("/task/get-task-comments/:tid/:user_id", async (req, res) => {
     }
 
     // Wait for all promises to resolve
-    const [taskComment_parent] = await Promise.all([
-      Promise.all(taskComment_promises),
-    ]);
+    const [taskComment_parent] = await Promise.all([Promise.all(taskComment_promises)]);
 
     // Send the response with the formatted task comment data
     res.status(200).json({
       taskCommentDetail: taskComment_parent.flat().filter(Boolean),
     });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
+//getSubtaskComments
+router.get("/subtask/get-subtask-comments/:subtask_id/:user_id", async (req, res) => {
+  const { subtask_id, user_id } = req.params;
+  try {
+    const [rows] = await pool.execute("CALL getSubtaskComments(?)", [subtask_id]);
+    const subtaskCommentData = rows[0];
+
+    let subtaskComment_promises = [];
+    if (subtaskCommentData) {
+      subtaskComment_promises = subtaskCommentData.map(async (item) => {
+        const deleteStatus = item.delete_msg == "yes" ? true : false;
+        const [creator] = await pool.execute("CALL getStudentById(?)", [item.c_created_by]);
+        const student = creator[0][0];
+        const userName = user_id == item.c_created_by ? "Me" : `${student?.first_name} ${student?.last_name}`;
+        const meStatus = user_id == item.c_created_by ? true : false;
+        const createdDate = item.c_created_date;
+        const formattedDate = new Date(createdDate).toLocaleDateString();
+        const formattedTime = new Date(createdDate).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true });
+        return {
+          id: item.cid,
+          sender: userName,
+          content: item.message,
+          timestamp: formattedTime,
+          date: formattedDate,
+          isMe: meStatus,
+          isDeleted: deleteStatus,
+          cCode: item.c_code,
+          createdBy: item.c_created_by,
+          taskId: item.task_id,
+          subtaskId: item.subtask_id,
+        };
+      });
+    }
+
+    const [subtaskComment_parent] = await Promise.all([Promise.all(subtaskComment_promises)]);
+
+    res.status(200).json({
+      subtaskCommentDetail: subtaskComment_parent.flat().filter(Boolean),
+    });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
