@@ -737,8 +737,10 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
         get_tcode = `T-${random_num}`;
       }
 
-      const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [project_id]);
-
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
+        project_id,
+      ]);
+      const pdetail_member = pdetail_mem[0];
       let pro_member = [];
       let pro_member1 = [];
       let pro_member2 = [];
@@ -3111,86 +3113,6 @@ router.get("/task/delete-comment/:user_id/:cid", async (req, res) => {
 });
 
 //  Insert Task File
-// router.post("/task/insert-task-file/:user_id", async (req, res) => {
-//   const { user_id } = req.params;
-//   const { tid, task_file, tcode } = req.body;
-//   console.log("tid", tid);
-//   console.log("task_file", task_file);
-//   console.log("tcode", tcode);
-//   try {
-//     const [getMydetail] = await pool.execute("CALL getStudentById(?)", [user_id]);
-//     const student = getMydetail[0][0];
-//     const [task_row] = await pool.execute("CALL getTasksDetail(?)", [tid]);
-//     const [project_row] = await pool.execute("CALL getProjectById(?)", [task_row[0][0]?.pid]);
-//     const pdetail = project_row[0][0];
-//     const [pdetail_member] = await pool.execute("CALL getMemberProject(?)", [task_row[0][0].pid]);
-
-//     let pro_member = [];
-//     let pro_member1 = [];
-//     let pro_member2 = [];
-//     if (pdetail || pdetail_member) {
-//       if (pdetail) {
-//         pro_member1.push(pdetail.pcreated_by);
-//       }
-//       if (pdetail_member) {
-//         pdetail_member.forEach(async (pm) => {
-//           pro_member2.push(pm.pmember);
-//         });
-//       }
-//     }
-//     pro_member = pro_member2.concat(pro_member1);
-//     const user_index = pro_member.indexOf(user_id);
-//     if (user_index !== -1) {
-//       pro_member.splice(parseInt(user_index), 1);
-//     }
-//     const final_mem = pro_member.map((linkObj) => Object.values(linkObj).join(",")).join(",");
-
-//     const formattedDate = dateConversion();
-
-//     const file_data = {
-//       tfile: task_file,
-//       c_notify: final_mem,
-//       c_notify_clear: final_mem,
-//       tfnotify_date: formattedDate,
-//     };
-
-//     const paramNamesString = Object.keys(file_data).join(", ");
-//     const paramValuesString = Object.values(file_data)
-//       .map((value) => `'${value}'`)
-//       .join(", ");
-
-//     const callProcedureSQL = `CALL UpdateTask(?, ?)`;
-//     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
-
-//     if (task_row[0][0].pid) {
-//       const history = {
-//         pid: task_row[0][0].pid,
-//         gid: pdetail.gid,
-//         sid: pdetail.sid,
-//         h_date: formattedDate,
-//         h_resource_id: student.reg_id,
-//         h_resource: `${student.first_name} ${student.last_name}`,
-//         h_description: `TAsk Code: ${tcode}, New File Uploaded by ${student.first_name} ${student.last_name}`,
-//         task_id: tid,
-//       };
-
-//       const paramNamesString1 = Object.keys(history).join(", ");
-//       const paramValuesString1 = Object.values(history)
-//         .map((value) => `'${value}'`)
-//         .join(", ");
-
-//       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-//       await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
-//     }
-
-//     res.status(200).json({ message: "File Attached Successfully." });
-//   } catch (error) {
-//     console.error("Error executing stored procedure:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
-
-//  Insert Task File
 router.patch("/task/insert-task-file/:user_id", async (req, res) => {
   const { user_id } = req.params;
   const { tid, task_file, tcode } = req.body;
@@ -3233,7 +3155,6 @@ router.patch("/task/insert-task-file/:user_id", async (req, res) => {
       }
       final_mem = pro_member.map((linkObj) => Object.values(linkObj).join(",")).join(",");
     }
-
     const formattedDate = dateConversion();
     const tFieldsValues = `tfile = '${allFiles}', new_file = '${task_file}', tfnotify = '${final_mem}', tfnotify_clear = '${final_mem}', tfnotify_date = '${formattedDate}'`;
     const task_id = `tid = '${tid}'`;

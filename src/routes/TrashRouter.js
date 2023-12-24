@@ -1209,26 +1209,39 @@ router.patch("/trash/delete/project-file/:project_id/:pfile_id/:user_id", async 
       const indexOfUnderscore = trimmedPfile.indexOf("_");
       const project_file = trimmedPfile.substr(indexOfUnderscore + 1);
 
-      const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
-      const file_id = `pfile_id = '${pfile_id}'`;
-      await pool.execute("CALL UpdateProjectFiles(?,?)", [projectFieldsValues, file_id]);
+        const [owner_row] = await pool.execute("CALL getStudentById(?)", [
+          user_id,
+        ]);
+        const student = owner_row[0][0];
 
-      const [owner_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
-      const student = owner_row[0][0];
+        const historyFieldsNames =
+          "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
+        const historyFieldsValues = `"${pfile_id}", "${project_id}", "${
+          project_row[0][0].sid}", "${project_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${project_file} Moved to Trash By Project Owner ${student.first_name} ${student.last_name}"`;
 
-      const historyFieldsNames = "pfile_id, pid, sid, gid, h_date, h_resource_id, h_resource, h_description";
-      const historyFieldsValues = `"${pfile_id}", "${project_id}", "${project_row[0][0].sid}", "${project_row[0][0].gid}", "${dateConversion()}", "${student.reg_id}", "${student.first_name} ${student.last_name}", "${project_file} Moved to Trash By Project Owner ${student.first_name} ${student.last_name}"`;
+        await pool.execute("CALL InsertProjectHistory(?,?)", [
+          historyFieldsNames,
+          historyFieldsValues,
+        ]);
 
-      await pool.execute("CALL InsertProjectHistory(?,?)", [historyFieldsNames, historyFieldsValues]);
-      return res.status(200).json({ message: "Project File Moved to Trash Successfully." });
-    } else {
-      res.status(400).json({ error: "Failed to get Project details." });
+        const projectFieldsValues = `ptrash = 'yes', ptrash_date = '${formattedDate}'`;
+        const file_id = `pfile_id = '${pfile_id}'`;
+        await pool.execute("CALL UpdateProjectFiles(?,?)", [
+          projectFieldsValues,
+          file_id,
+        ]);
+        return res
+          .status(200)
+          .json({ message: "Project File Moved to Trash Successfully." });
+      } else {
+        res.status(400).json({ error: "Failed to get Project details." });
+      }
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
   }
-});
+);
 
 // Delete Task File
 router.patch("/trash/delete/task-file/:task_id/:task_file_name/:user_id", async (req, res) => {
@@ -1298,8 +1311,8 @@ router.patch("/trash/delete/subtask-file/:subtask_id/:subtask_file_name/:user_id
 
       await pool.execute("CALL InsertProjectHistory(?,?)", [historyFieldsNames, historyFieldsValues]);
 
-      const subtaskTrashFieldsNames = "pid, stid, tid, stfile, stask_trash, stask_trash_date";
-      const subtaskTrashFieldsValues = `"${subtask_row[0][0].tproject_assign}", "${subtask_row[0][0].stid}", "${subtask_row[0][0].tid}", "${subtask_file_name}", "yes", "${formattedDate}"`;
+        const subtaskTrashFieldsNames = "pid, stid, tid, stfile, stask_trash, stask_trash_date";
+        const subtaskTrashFieldsValues = `"${subtask_row[0][0].stproject_assign}", "${subtask_row[0][0].stid}", "${subtask_row[0][0].tid}", "${subtask_file_name}", "yes", "${formattedDate}"`;
 
       await pool.execute("CALL InsertSubtaskTrash(?,?)", [subtaskTrashFieldsNames, subtaskTrashFieldsValues]);
 
