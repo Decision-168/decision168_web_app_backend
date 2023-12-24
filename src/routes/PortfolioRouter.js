@@ -8,6 +8,87 @@ const { compareSync } = require("bcrypt");
 const router = express.Router();
 
 
+//get all portfolio by user_id
+router.get("/portfolio/all-portfolios/:email_address/:user_id", async (req, res) => {
+  const { email_address, user_id } = req.params;
+  try {
+    const [portfolioRowList] = await pool.execute("CALL get_SideBar_ALLPortfolio(?)", [
+      email_address,
+    ]);
+    const [portfolioRowGrid] = await pool.execute("CALL get_SideBar_Portfolio(?)", [
+      email_address,
+    ]);
+    const portfolioDataList = portfolioRowList[0];
+    const portfolioDataGrid = portfolioRowGrid[0];
+
+    let portfolioList_promises = [];
+    let portfolioGrid_promises = [];
+
+    if(portfolioDataList){
+      portfolioList_promises = portfolioDataList?.map(async (row) => {
+        const companyName = row.portfolio_user === "company" ? row.portfolio_name : `${row.portfolio_name} ${row.portfolio_lname}`;
+        const permission = row.portfolio_createdby == user_id ? "yes" : "no";
+        const archiveSt = row.portfolio_archive == "yes" ? "yes" : "no";
+        const trashSt = row.portfolio_trash == "yes" ? "yes" : "no";
+        const data = {
+          name: companyName,
+          type: row.portfolio_user,
+          createdby: row.portfolio_createdby,
+          portfolioId: row.portfolio_id,
+          editOption: permission,
+          archiveOption: permission,
+          deleteOption: permission,
+          archiveAct: archiveSt,
+          deleteAct: trashSt,
+        }
+        return data
+      });
+    }
+
+    if(portfolioDataGrid){
+      portfolioGrid_promises = portfolioDataGrid?.map(async (row) => {
+        const companyName = row.portfolio_user === "company" ? row.portfolio_name : `${row.portfolio_name} ${row.portfolio_lname}`;
+        const [creator] = await pool.execute("CALL getStudentById(?)", [
+          row.portfolio_createdby
+        ]);
+        const user = creator[0][0];
+
+        const [projectRow] = await pool.execute("CALL count_portfolio_project(?)", [
+          row.portfolio_id
+        ]);
+        const projectCount = projectRow[0][0].count_rows;
+
+        const [taskRow] = await pool.execute("CALL count_Portfolio_task(?)", [
+          row.portfolio_id
+        ]);
+        const taskCount = taskRow[0][0].count_rows;
+        const data = {
+          name: `${user.first_name} ${user.last_name}`,
+          company: companyName,
+          type: row.portfolio_user,
+          createdby: row.portfolio_createdby,
+          portfolioId: row.portfolio_id,
+          projectTotal: projectCount,
+          taskTotal: taskCount,
+        }
+        return data
+      });
+    }
+
+    const [
+      portfolioList_parent, portfolioGrid_parent
+    ] = await Promise.all([Promise.all(portfolioList_promises), Promise.all(portfolioGrid_promises)]);
+
+    return res.status(200).json({
+      portfolioList: portfolioList_parent.flat().filter(Boolean),
+      portfolioGrid: portfolioGrid_parent.flat().filter(Boolean)
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
 //get all portfolio by email_address
 router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
   const { email_address } = req.params;

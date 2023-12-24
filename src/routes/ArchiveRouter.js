@@ -1188,9 +1188,9 @@ router.patch("/archive/subtask/:subtask_id/:user_id", async (req, res) => {
 
 // Reopen Portfolio
 router.patch(
-  "/archive/reopen/portfolio/:portfolio_id/:user_id",
+  "/archive/reopen/portfolio/:portf_id/:user_id",
   async (req, res) => {
-    const { portfolio_id, user_id } = req.params;
+    const { portf_id, user_id } = req.params;
     try {
       var limitation = "";
       const [owner_row] = await pool.execute("CALL getStudentById(?)", [
@@ -1218,14 +1218,14 @@ router.patch(
             const check_type = !isNaN(total_portfolios);
             if (check_type) {
               if (used_portfolios < total_portfolios) {
-                if (portfolio_id) {
+                if (portf_id) {
                   var limitation = "in_limit";
                 }
               } else {
                 res.status(400).json({ error: "Limit Exceeds." });
               }
             } else {
-              if (portfolio_id) {
+              if (portf_id) {
                 var limitation = "in_limit";
               }
             }
@@ -1247,14 +1247,14 @@ router.patch(
           const check_type = !isNaN(total_portfolios);
           if (check_type) {
             if (used_portfolios < total_portfolios) {
-              if (portfolio_id) {
+              if (portf_id) {
                 var limitation = "in_limit";
               }
             } else {
               res.status(400).json({ error: "Limit Exceeds." });
             }
           } else {
-            if (portfolio_id) {
+            if (portf_id) {
               var limitation = "in_limit";
             }
           }
@@ -1265,24 +1265,24 @@ router.patch(
       if (limitation == "in_limit") {
         const [portfolio_row] = await pool.execute(
           "CALL getPortfolioNotArc(?,?)",
-          [portfolio_id, user_id]
+          [portf_id, user_id]
         );
         const [goal_row] = await pool.execute(
           "CALL portfolio_goalsTrash(?)",
-          [portfolio_id]
+          [portf_id]
         );
         const [kpi_row] = await pool.execute(
           "CALL portfolio_strategiesTrash(?)",
-          [portfolio_id]
+          [portf_id]
         );
         const [project_row] = await pool.execute(
           "CALL portfolio_projectsNotArc(?)",
-          [portfolio_id]
+          [portf_id]
         );
 
         if (portfolio_row[0][0]) {
           const portfolioFieldsValues = `portfolio_archive = '', portfolio_archive_date = '', portfolio_file_it = '', portfolio_file_it_date = ''`;
-          const portfolio_id = `portfolio_id = '${portfolio_id}'`;
+          const portfolio_id = `portfolio_id = '${portf_id}'`;
           await pool.execute("CALL UpdatePortfolio(?,?)", [
             portfolioFieldsValues,
             portfolio_id,
