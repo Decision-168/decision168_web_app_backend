@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
@@ -84,188 +85,252 @@ const { default: isEmail } = require("validator/lib/isEmail");
 // );
 
 //AllGoalList
-router.get("/goal/get-all-goals-list/:user_id/:portfolio_id", async (req, res) => {
-  const user_id = req.params.user_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [createrows] = await pool.execute("CALL GoalsList(?,?)", [user_id, portfolio_id]);
+router.get(
+  "/goal/get-all-goals-list/:user_id/:portfolio_id",
+  async (req, res) => {
+    const user_id = req.params.user_id;
+    const portfolio_id = req.params.portfolio_id;
+    try {
+      const [createrows] = await pool.execute("CALL GoalsList(?,?)", [
+        user_id,
+        portfolio_id,
+      ]);
 
-    const createpromises = createrows[0].map(async (item) => {
-      const { gid } = item;
-      const [t_progress_done_rows] = await pool.execute("CALL Goalprogress_done(?)", [gid]);
+      const createpromises = createrows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
 
-      const [t_progress_total_rows] = await pool.execute("CALL Goalprogress_total(?)", [gid]);
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
 
-      const [st_progress_done_rows] = await pool.execute("CALL Goalsub_progress_done(?)", [gid]);
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
 
-      const [st_progress_total_rows] = await pool.execute("CALL Goalsub_progress_total(?)", [gid]);
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
 
-      let progress = 0;
-      let progress_done = t_progress_done_rows[0][0]?.count_rows;
-      let progress_total = t_progress_total_rows[0][0]?.count_rows;
-      let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
-      let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
 
-      if (progress_total || sub_progress_total) {
-        let total_pro_progress_done = progress_done + sub_progress_done;
-        let total_pro_progress = progress_total + sub_progress_total;
-        const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
-        progress = Math.round(progressCal);
-      }
-      const type = "created-goals";
-      const data = {
-        ...item,
-        progress,
-        type,
-      };
-      return data;
-    });
-    const createresults = await Promise.all(createpromises);
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "created-goals";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const createresults = await Promise.all(createpromises);
 
-    const [acceptedrows] = await pool.execute("CALL AcceptedGoalsAllList(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
+      const [acceptedrows] = await pool.execute(
+        "CALL AcceptedGoalsAllList(?,?)",
+        [user_id, portfolio_id]
+      );
 
-    const acceptedpromises = acceptedrows[0].map(async (item) => {
-      const { gid } = item;
-      const [t_progress_done_rows] = await pool.execute("CALL Goalprogress_done(?)", [gid]);
+      const acceptedpromises = acceptedrows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
 
-      const [t_progress_total_rows] = await pool.execute("CALL Goalprogress_total(?)", [gid]);
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
 
-      const [st_progress_done_rows] = await pool.execute("CALL Goalsub_progress_done(?)", [gid]);
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
 
-      const [st_progress_total_rows] = await pool.execute("CALL Goalsub_progress_total(?)", [gid]);
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
 
-      let progress = 0;
-      let progress_done = t_progress_done_rows[0][0]?.count_rows;
-      let progress_total = t_progress_total_rows[0][0]?.count_rows;
-      let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
-      let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
 
-      if (progress_total || sub_progress_total) {
-        let total_pro_progress_done = progress_done + sub_progress_done;
-        let total_pro_progress = progress_total + sub_progress_total;
-        const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
-        progress = Math.round(progressCal);
-      }
-      const type = "accepted-goals";
-      const data = {
-        ...item,
-        progress,
-        type,
-      };
-      return data;
-    });
-    const acceptedresults = await Promise.all(acceptedpromises);
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "accepted-goals";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const acceptedresults = await Promise.all(acceptedpromises);
 
-    const [pendingrows] = await pool.execute("CALL PendingGoalsAllList(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
-    const pendingpromises = pendingrows[0].map(async (item) => {
-      const { gid } = item;
-      const [t_progress_done_rows] = await pool.execute("CALL Goalprogress_done(?)", [gid]);
+      const [pendingrows] = await pool.execute(
+        "CALL PendingGoalsAllList(?,?)",
+        [user_id, portfolio_id]
+      );
+      const pendingpromises = pendingrows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
 
-      const [t_progress_total_rows] = await pool.execute("CALL Goalprogress_total(?)", [gid]);
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
 
-      const [st_progress_done_rows] = await pool.execute("CALL Goalsub_progress_done(?)", [gid]);
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
 
-      const [st_progress_total_rows] = await pool.execute("CALL Goalsub_progress_total(?)", [gid]);
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
 
-      let progress = 0;
-      let progress_done = t_progress_done_rows[0][0]?.count_rows;
-      let progress_total = t_progress_total_rows[0][0]?.count_rows;
-      let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
-      let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
 
-      if (progress_total || sub_progress_total) {
-        let total_pro_progress_done = progress_done + sub_progress_done;
-        let total_pro_progress = progress_total + sub_progress_total;
-        const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
-        progress = Math.round(progressCal);
-      }
-      const type = "pending-requests";
-      const data = {
-        ...item,
-        progress,
-        type,
-      };
-      return data;
-    });
-    const pendingresults = await Promise.all(pendingpromises);
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "pending-requests";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const pendingresults = await Promise.all(pendingpromises);
 
-    const [moreInforows] = await pool.execute("CALL ReadMoreGoalsAllList(?,?)", [
-      user_id,
-      portfolio_id,
-    ]);
+      const [moreInforows] = await pool.execute(
+        "CALL ReadMoreGoalsAllList(?,?)",
+        [user_id, portfolio_id]
+      );
 
-    const moreInfopromises = moreInforows[0].map(async (item) => {
-      const { gid } = item;
-      const [t_progress_done_rows] = await pool.execute("CALL Goalprogress_done(?)", [gid]);
+      const moreInfopromises = moreInforows[0].map(async (item) => {
+        const { gid } = item;
+        const [t_progress_done_rows] = await pool.execute(
+          "CALL Goalprogress_done(?)",
+          [gid]
+        );
 
-      const [t_progress_total_rows] = await pool.execute("CALL Goalprogress_total(?)", [gid]);
+        const [t_progress_total_rows] = await pool.execute(
+          "CALL Goalprogress_total(?)",
+          [gid]
+        );
 
-      const [st_progress_done_rows] = await pool.execute("CALL Goalsub_progress_done(?)", [gid]);
+        const [st_progress_done_rows] = await pool.execute(
+          "CALL Goalsub_progress_done(?)",
+          [gid]
+        );
 
-      const [st_progress_total_rows] = await pool.execute("CALL Goalsub_progress_total(?)", [gid]);
+        const [st_progress_total_rows] = await pool.execute(
+          "CALL Goalsub_progress_total(?)",
+          [gid]
+        );
 
-      let progress = 0;
-      let progress_done = t_progress_done_rows[0][0]?.count_rows;
-      let progress_total = t_progress_total_rows[0][0]?.count_rows;
-      let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
-      let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
+        let progress = 0;
+        let progress_done = t_progress_done_rows[0][0]?.count_rows;
+        let progress_total = t_progress_total_rows[0][0]?.count_rows;
+        let sub_progress_done = st_progress_done_rows[0][0]?.count_rows;
+        let sub_progress_total = st_progress_total_rows[0][0]?.count_rows;
 
-      if (progress_total || sub_progress_total) {
-        let total_pro_progress_done = progress_done + sub_progress_done;
-        let total_pro_progress = progress_total + sub_progress_total;
-        const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
-        progress = Math.round(progressCal);
-      }
-      const type = "more-info-requests";
-      const data = {
-        ...item,
-        progress,
-        type,
-      };
-      return data;
-    });
-    const moreInforesults = await Promise.all(moreInfopromises);
+        if (progress_total || sub_progress_total) {
+          let total_pro_progress_done = progress_done + sub_progress_done;
+          let total_pro_progress = progress_total + sub_progress_total;
+          const progressCal =
+            (total_pro_progress_done / total_pro_progress) * 100;
+          progress = Math.round(progressCal);
+        }
+        const type = "more-info-requests";
+        const data = {
+          ...item,
+          progress,
+          type,
+        };
+        return data;
+      });
+      const moreInforesults = await Promise.all(moreInfopromises);
 
-    res.status(200).json({
-      createData: createresults,
-      acceptedData: acceptedresults,
-      pendingRequest: pendingresults,
-      moreInfoRequest: moreInforesults,
-    });
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+      res.status(200).json({
+        createData: createresults,
+        acceptedData: acceptedresults,
+        pendingRequest: pendingresults,
+        moreInfoRequest: moreInforesults,
+      });
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //check_PortfolioMemberActive
-router.get("/goal/check-portfolio-member-active/:email_id/:portfolio_id", async (req, res) => {
-  const email_id = req.params.email_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows, fields] = await pool.execute("CALL check_PortfolioMemberActive(?,?)", [
-      email_id,
-      portfolio_id,
-    ]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/check-portfolio-member-active/:email_id/:portfolio_id",
+  async (req, res) => {
+    const email_id = req.params.email_id;
+    const portfolio_id = req.params.portfolio_id;
+    try {
+      const [rows, fields] = await pool.execute(
+        "CALL check_PortfolioMemberActive(?,?)",
+        [email_id, portfolio_id]
+      );
+      res.status(200).json(rows[0][0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //getGoalCount
 router.get("/goal/get-goal-count/:user_id/:portfolio_id", async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
-    const [rows, fields] = await pool.execute("CALL getGoalCount(?,?)", [user_id, portfolio_id]);
+    const [rows, fields] = await pool.execute("CALL getGoalCount(?,?)", [
+      user_id,
+      portfolio_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -399,22 +464,24 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 // });
 
 //getStrategiesCount
-router.get("/goal/get-strategies-count/:user_id/:gid/:portfolio_id", async (req, res) => {
-  const user_id = req.params.user_id;
-  const gid = req.params.gid;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows, fields] = await pool.execute("CALL getStrategiesCount(?,?,?)", [
-      user_id,
-      gid,
-      portfolio_id,
-    ]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/get-strategies-count/:user_id/:gid/:portfolio_id",
+  async (req, res) => {
+    const user_id = req.params.user_id;
+    const gid = req.params.gid;
+    const portfolio_id = req.params.portfolio_id;
+    try {
+      const [rows, fields] = await pool.execute(
+        "CALL getStrategiesCount(?,?,?)",
+        [user_id, gid, portfolio_id]
+      );
+      res.status(200).json(rows[0][0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //InsertGoals
 router.post("/goal/insert-goal", async (req, res) => {
@@ -435,19 +502,26 @@ router.post("/goal/insert-goal", async (req, res) => {
       ...otherFields,
       ...additionalFields,
     };
-    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(", ");
+    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(
+      ", "
+    );
     const paramValuesString = Object.values(requestBodyWithAdditionalFields)
       .map((value) => `'${value}'`)
       .join(", ");
 
     const callProcedureSQL = `CALL InsertGoals(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
-    const [getGoal] = await pool.execute("CALL GetInsertedGoal(?,?)", [gcreated_by, portfolio_id]);
+    const [getGoal] = await pool.execute("CALL GetInsertedGoal(?,?)", [
+      gcreated_by,
+      portfolio_id,
+    ]);
     const gid = getGoal[0][0]?.gid;
     const gmanager = getGoal[0][0]?.gmanager;
     const gdept = getGoal[0][0]?.gdept;
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [gcreated_by]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      gcreated_by,
+    ]);
     const powner = check_powner[0][0];
 
     const data2 = {
@@ -466,7 +540,10 @@ router.post("/goal/insert-goal", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL2 = `CALL InsertGoalsMembers(?, ?)`;
-    await pool.execute(callProcedureSQL2, [paramNamesString2, paramValuesString2]);
+    await pool.execute(callProcedureSQL2, [
+      paramNamesString2,
+      paramValuesString2,
+    ]);
 
     const hdata = {
       gid: gid,
@@ -482,7 +559,10 @@ router.post("/goal/insert-goal", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     if (gmanager != 0) {
       if (gmanager != gcreated_by) {
@@ -502,12 +582,20 @@ router.post("/goal/insert-goal", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL3 = `CALL InsertGoalsMembers(?, ?)`;
-        await pool.execute(callProcedureSQL3, [paramNamesString3, paramValuesString3]);
+        await pool.execute(callProcedureSQL3, [
+          paramNamesString3,
+          paramValuesString3,
+        ]);
 
-        const [check_user] = await pool.execute("CALL getStudentById(?)", [gmanager]);
+        const [check_user] = await pool.execute("CALL getStudentById(?)", [
+          gmanager,
+        ]);
         const user = check_user[0][0];
 
-        const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, gmanager]);
+        const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [
+          gid,
+          gmanager,
+        ]);
         const gmid = getgmid[0][0]?.gmid;
 
         const hdata4 = {
@@ -525,9 +613,14 @@ router.post("/goal/insert-goal", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL4 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL4, [paramNamesString4, paramValuesString4]);
+        await pool.execute(callProcedureSQL4, [
+          paramNamesString4,
+          paramValuesString4,
+        ]);
 
-        const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+        const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+          portfolio_id,
+        ]);
         const PortfolioName = getPortfolio[0][0]?.portfolio_name;
         const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
         const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
@@ -575,12 +668,20 @@ router.post("/goal/insert-goal", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-          await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+          await pool.execute(callProcedureSQL5, [
+            paramNamesString5,
+            paramValuesString5,
+          ]);
 
-          const [check_user] = await pool.execute("CALL getStudentById(?)", [t]);
+          const [check_user] = await pool.execute("CALL getStudentById(?)", [
+            t,
+          ]);
           const user = check_user[0][0];
 
-          const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, t]);
+          const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [
+            gid,
+            t,
+          ]);
           const gmid = getgmid[0][0]?.gmid;
 
           const hdata6 = {
@@ -598,9 +699,14 @@ router.post("/goal/insert-goal", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+          await pool.execute(callProcedureSQL6, [
+            paramNamesString6,
+            paramValuesString6,
+          ]);
 
-          const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+          const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+            portfolio_id,
+          ]);
           const PortfolioName = getPortfolio[0][0]?.portfolio_name;
           const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
           const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
@@ -635,13 +741,16 @@ router.post("/goal/insert-goal", async (req, res) => {
           if (!isEmail(im)) {
             return res.status(400).json({ error: "Invalid email address." });
           }
-          const [check_if_registered] = await pool.execute("CALL selectLogin(?)", [im]);
+          const [check_if_registered] = await pool.execute(
+            "CALL selectLogin(?)",
+            [im]
+          );
           if (check_if_registered[0].length > 0) {
             const rid = check_if_registered[0][0]?.reg_id;
-            const [check_Goal_members] = await pool.execute("CALL check_GoalMToClear(?,?)", [
-              gid,
-              rid,
-            ]);
+            const [check_Goal_members] = await pool.execute(
+              "CALL check_GoalMToClear(?,?)",
+              [gid, rid]
+            );
             if (check_Goal_members[0].length == 0) {
               if (gcreated_by != rid) {
                 const data7 = {
@@ -660,12 +769,15 @@ router.post("/goal/insert-goal", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL7 = `CALL InsertGoalsMembers(?, ?)`;
-                await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
-
-                const [getportfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-                  im,
-                  portfolio_id,
+                await pool.execute(callProcedureSQL7, [
+                  paramNamesString7,
+                  paramValuesString7,
                 ]);
+
+                const [getportfolio] = await pool.execute(
+                  "CALL check_PortfolioMember(?,?)",
+                  [im, portfolio_id]
+                );
                 if (getportfolio[0].length == 0) {
                   const dataPort = {
                     portfolio_id: portfolio_id,
@@ -688,10 +800,16 @@ router.post("/goal/insert-goal", async (req, res) => {
                   ]);
                 }
 
-                const [check_user] = await pool.execute("CALL getStudentById(?)", [rid]);
+                const [check_user] = await pool.execute(
+                  "CALL getStudentById(?)",
+                  [rid]
+                );
                 const user = check_user[0][0];
 
-                const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, rid]);
+                const [getgmid] = await pool.execute(
+                  "CALL check_GoalMToClear(?,?)",
+                  [gid, rid]
+                );
                 const gmid = getgmid[0][0]?.gmid;
 
                 const hdata8 = {
@@ -709,9 +827,15 @@ router.post("/goal/insert-goal", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL8 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
+                await pool.execute(callProcedureSQL8, [
+                  paramNamesString8,
+                  paramValuesString8,
+                ]);
 
-                const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+                const [getPortfolio] = await pool.execute(
+                  "CALL getPortfolio2(?)",
+                  [portfolio_id]
+                );
                 const PortfolioName = getPortfolio[0][0]?.portfolio_name;
                 const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
                 const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
@@ -741,11 +865,10 @@ router.post("/goal/insert-goal", async (req, res) => {
               }
             }
           } else {
-            const [check_email] = await pool.execute("CALL check_goal_invited_email(?,?,?)", [
-              im,
-              gcreated_by,
-              gid,
-            ]);
+            const [check_email] = await pool.execute(
+              "CALL check_goal_invited_email(?,?,?)",
+              [im, gcreated_by, gid]
+            );
             if (check_email[0].length == 0) {
               const data9 = {
                 gid: gid,
@@ -761,12 +884,15 @@ router.post("/goal/insert-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL9 = `CALL InsertGoalsInvitedMembers(?, ?)`;
-              await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
-              const [getportfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-                im,
-                portfolio_id,
+              await pool.execute(callProcedureSQL9, [
+                paramNamesString9,
+                paramValuesString9,
               ]);
+
+              const [getportfolio] = await pool.execute(
+                "CALL check_PortfolioMember(?,?)",
+                [im, portfolio_id]
+              );
               if (getportfolio[0].length == 0) {
                 const dataPort = {
                   portfolio_id: portfolio_id,
@@ -789,11 +915,10 @@ router.post("/goal/insert-goal", async (req, res) => {
                 ]);
               }
 
-              const [getigm_id] = await pool.execute("CALL check_goal_invited_email(?,?,?)", [
-                im,
-                gcreated_by,
-                gid,
-              ]);
+              const [getigm_id] = await pool.execute(
+                "CALL check_goal_invited_email(?,?,?)",
+                [im, gcreated_by, gid]
+              );
 
               const igm_id = getigm_id[0][0]?.igm_id;
 
@@ -812,9 +937,15 @@ router.post("/goal/insert-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL10 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL10, [paramNamesString10, paramValuesString10]);
+              await pool.execute(callProcedureSQL10, [
+                paramNamesString10,
+                paramValuesString10,
+              ]);
 
-              const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [portfolio_id]);
+              const [getPortfolio] = await pool.execute(
+                "CALL getPortfolio2(?)",
+                [portfolio_id]
+              );
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
               const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
               const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
@@ -855,7 +986,9 @@ router.post("/goal/insert-goal", async (req, res) => {
   } catch (error) {
     console.log(error);
     //console.error('Error in /goal/insert-goal:', error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
@@ -866,11 +999,15 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
     const formattedDate = dateConversion();
 
     if (flag == 1) {
-      const [result] = await pool.execute("CALL check_GoalPMToClear(?)", [gmid]);
+      const [result] = await pool.execute("CALL check_GoalPMToClear(?)", [
+        gmid,
+      ]);
       if (result[0].length > 0) {
         const status = result[0][0]?.status;
 
-        const [rows] = await pool.execute("CALL getStudentById(?)", [result[0][0]?.gmember]);
+        const [rows] = await pool.execute("CALL getStudentById(?)", [
+          result[0][0]?.gmember,
+        ]);
 
         if (status == "send" || status == "read_more") {
           const dynamicFieldsValues = `status = 'accepted',
@@ -878,7 +1015,10 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
                          status_notify = 'yes',
                          status_notify_clear = 'no'`;
           const id = `gmid  = '${gmid}'`;
-          await pool.execute("CALL UpdateGoalsMembers(?, ?)", [dynamicFieldsValues, id]);
+          await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
+            dynamicFieldsValues,
+            id,
+          ]);
 
           const dynamicFieldsValues2 = `status = 'accepted',
                                   working_status = 'active',
@@ -906,7 +1046,10 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
 
           res.status(200).json({ user_status: "accepted" });
         } else {
@@ -916,17 +1059,24 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
         res.status(400).json({ user_status: "pages-404" });
       }
     } else if (flag == 2) {
-      const [result] = await pool.execute("CALL check_GoalPMToClear(?)", [gmid]);
+      const [result] = await pool.execute("CALL check_GoalPMToClear(?)", [
+        gmid,
+      ]);
       if (result[0].length > 0) {
         const status = result[0][0]?.status;
 
-        const [rows] = await pool.execute("CALL getStudentById(?)", [result[0][0]?.gmember]);
+        const [rows] = await pool.execute("CALL getStudentById(?)", [
+          result[0][0]?.gmember,
+        ]);
 
         if (status == "send") {
           const dynamicFieldsValues = `status = 'read_more',
                          status_date = '${formattedDate}'`;
           const id = `gmid  = '${gmid}'`;
-          await pool.execute("CALL UpdateGoalsMembers(?, ?)", [dynamicFieldsValues, id]);
+          await pool.execute("CALL UpdateGoalsMembers(?, ?)", [
+            dynamicFieldsValues,
+            id,
+          ]);
 
           const hdata = {
             gid: gid,
@@ -943,7 +1093,10 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
 
           res.status(200).json({ user_status: "read_more" });
         } else {
@@ -956,57 +1109,73 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
       res.status(400).json({ user_status: "pages-404" });
     }
   } catch (err) {
-    res.status(500).json({ error: "Internal Server Error", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: err.message });
   }
 });
 
 //goal-invite-reject-request
-router.get("/goal-invite-reject-request/:gid/:igm_id/:flag", async (req, res) => {
-  const { gid, igm_id, flag } = req.params;
-  try {
-    const formattedDate = dateConversion();
+router.get(
+  "/goal-invite-reject-request/:gid/:igm_id/:flag",
+  async (req, res) => {
+    const { gid, igm_id, flag } = req.params;
+    try {
+      const formattedDate = dateConversion();
 
-    if (flag == 2) {
-      const [result] = await pool.execute("CALL check_goal_invite_request(?)", [igm_id]);
-      if (result[0].length > 0) {
-        const status = result[0][0]?.status;
+      if (flag == 2) {
+        const [result] = await pool.execute(
+          "CALL check_goal_invite_request(?)",
+          [igm_id]
+        );
+        if (result[0].length > 0) {
+          const status = result[0][0]?.status;
 
-        if (status == "pending") {
-          const dynamicFieldsValues = `status = 'rejected',
+          if (status == "pending") {
+            const dynamicFieldsValues = `status = 'rejected',
                          accept_date = '${formattedDate}'`;
-          const id = `igm_id  = '${igm_id}'`;
-          await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [dynamicFieldsValues, id]);
+            const id = `igm_id  = '${igm_id}'`;
+            await pool.execute("CALL UpdateGoalsInvitedMembers(?, ?)", [
+              dynamicFieldsValues,
+              id,
+            ]);
 
-          const hdata = {
-            gid: gid,
-            h_date: formattedDate,
-            h_resource: `${result[0][0]?.sent_to}`,
-            h_description: `Invite Rejected By ${result[0][0]?.sent_to}`,
-            ginvited_id: igm_id,
-          };
+            const hdata = {
+              gid: gid,
+              h_date: formattedDate,
+              h_resource: `${result[0][0]?.sent_to}`,
+              h_description: `Invite Rejected By ${result[0][0]?.sent_to}`,
+              ginvited_id: igm_id,
+            };
 
-          const paramNamesString1 = Object.keys(hdata).join(", ");
-          const paramValuesString1 = Object.values(hdata)
-            .map((value) => `'${value}'`)
-            .join(", ");
+            const paramNamesString1 = Object.keys(hdata).join(", ");
+            const paramValuesString1 = Object.values(hdata)
+              .map((value) => `'${value}'`)
+              .join(", ");
 
-          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
 
-          res.status(200).json({ user_status: "rejected" });
+            res.status(200).json({ user_status: "rejected" });
+          } else {
+            res.status(400).json({ user_status: status });
+          }
         } else {
-          res.status(400).json({ user_status: status });
+          res.status(400).json({ user_status: "pages-404" });
         }
       } else {
         res.status(400).json({ user_status: "pages-404" });
       }
-    } else {
-      res.status(400).json({ user_status: "pages-404" });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ error: "Internal Server Error", details: err.message });
     }
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
-});
+);
 
 //InsertStrategies
 router.post("/goal/insert-strategies", async (req, res) => {
@@ -1037,18 +1206,28 @@ router.post("/goal/insert-strategies", async (req, res) => {
         ...additionalFields,
       };
 
-      const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(", ");
+      const paramNamesString = Object.keys(
+        requestBodyWithAdditionalFields
+      ).join(", ");
       const paramValuesString = Object.values(requestBodyWithAdditionalFields)
         .map((value) => `'${value}'`)
         .join(", ");
 
       const callProcedureSQL = `CALL InsertStrategies(?, ?)`;
-      await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+      await pool.execute(callProcedureSQL, [
+        paramNamesString,
+        paramValuesString,
+      ]);
 
-      const [getKPI] = await pool.execute("CALL GetInsertedKPI(?,?)", [gid, screated_by]);
+      const [getKPI] = await pool.execute("CALL GetInsertedKPI(?,?)", [
+        gid,
+        screated_by,
+      ]);
       const sid = getKPI[0][0]?.sid;
 
-      const [check_powner] = await pool.execute("CALL getStudentById(?)", [screated_by]);
+      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+        screated_by,
+      ]);
       const powner = check_powner[0][0];
       const hdata = {
         sid: sid,
@@ -1065,14 +1244,19 @@ router.post("/goal/insert-strategies", async (req, res) => {
         .join(", ");
 
       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+      await pool.execute(callProcedureSQL1, [
+        paramNamesString1,
+        paramValuesString1,
+      ]);
     }
 
     res.status(201).json({
       message: "KPI created successfully.",
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
@@ -1081,20 +1265,30 @@ router.get("/goal/goal-overview-request/:user_id/:gid", async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL GoalDetailRequest(?,?)", [user_id, gid]);
-    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [rows[0][0].gdept]);
+    const [rows, fields] = await pool.execute("CALL GoalDetailRequest(?,?)", [
+      user_id,
+      gid,
+    ]);
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      rows[0][0].gdept,
+    ]);
     const get_dept_name = getDeptName[0][0].department;
 
     const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
       rows[0][0].gcreated_by,
     ]);
     const get_created_by_name =
-      getCreatedByName[0][0].first_name + " " + getCreatedByName[0][0].last_name;
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
 
     let get_gmanager_name = "";
     if (rows[0][0].gmanager != 0) {
-      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [rows[0][0].gmanager]);
-      get_gmanager_name = getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
+      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [
+        rows[0][0].gmanager,
+      ]);
+      get_gmanager_name =
+        getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
     }
 
     const results = {
@@ -1116,7 +1310,10 @@ router.get("/goal/goal-member-detail/:user_id/:gid", async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL getGoalMemberDetailbyGID(?,?)", [user_id, gid]);
+    const [rows, fields] = await pool.execute(
+      "CALL getGoalMemberDetailbyGID(?,?)",
+      [user_id, gid]
+    );
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1128,7 +1325,9 @@ router.get("/goal/goal-member-detail/:user_id/:gid", async (req, res) => {
 router.get("/goal/get-department-name/:dept_id", async (req, res) => {
   const dept_id = req.params.dept_id;
   try {
-    const [rows, fields] = await pool.execute("CALL get_PDepartment(?)", [dept_id]);
+    const [rows, fields] = await pool.execute("CALL get_PDepartment(?)", [
+      dept_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1171,15 +1370,20 @@ router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
     const promises = rows[0].map(async (item) => {
       const { sid } = item;
 
-      const [kpi_t_progress_done_rows] = await pool.execute("CALL Strategyprogress_done(?)", [sid]);
+      const [kpi_t_progress_done_rows] = await pool.execute(
+        "CALL Strategyprogress_done(?)",
+        [sid]
+      );
 
-      const [kpi_t_progress_total_rows] = await pool.execute("CALL Strategyprogress_total(?)", [
-        sid,
-      ]);
+      const [kpi_t_progress_total_rows] = await pool.execute(
+        "CALL Strategyprogress_total(?)",
+        [sid]
+      );
 
-      const [kpi_st_progress_done_rows] = await pool.execute("CALL Strategysub_progress_done(?)", [
-        sid,
-      ]);
+      const [kpi_st_progress_done_rows] = await pool.execute(
+        "CALL Strategysub_progress_done(?)",
+        [sid]
+      );
 
       const [kpi_st_progress_total_rows] = await pool.execute(
         "CALL Strategysub_progress_total(?)",
@@ -1193,9 +1397,12 @@ router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
       let kpi_sub_progress_total = kpi_st_progress_total_rows[0][0]?.count_rows;
 
       if (kpi_progress_total || kpi_sub_progress_total) {
-        let kpi_total_pro_progress_done = kpi_progress_done + kpi_sub_progress_done;
-        let kpi_total_pro_progress = kpi_progress_total + kpi_sub_progress_total;
-        const kpi_progressCal = (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
+        let kpi_total_pro_progress_done =
+          kpi_progress_done + kpi_sub_progress_done;
+        let kpi_total_pro_progress =
+          kpi_progress_total + kpi_sub_progress_total;
+        const kpi_progressCal =
+          (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
         kpi_progress = Math.round(kpi_progressCal);
       }
 
@@ -1219,28 +1426,47 @@ router.get("/goal/goal-detail/:gid", async (req, res) => {
   try {
     const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]); //yeh wali
 
-    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [rows[0][0].gdept]);
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      rows[0][0].gdept,
+    ]);
     const get_dept_name = getDeptName[0][0].department;
 
     const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
       rows[0][0].gcreated_by,
     ]);
     const get_created_by_name =
-      getCreatedByName[0][0].first_name + " " + getCreatedByName[0][0].last_name;
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
 
     let get_gmanager_name = "";
     if (rows[0][0].gmanager != 0) {
-      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [rows[0][0].gmanager]);
-      get_gmanager_name = getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
+      const [getManagerName] = await pool.execute("CALL getStudentById(?)", [
+        rows[0][0].gmanager,
+      ]);
+      get_gmanager_name =
+        getManagerName[0][0].first_name + " " + getManagerName[0][0].last_name;
     }
 
-    const [t_progress_done_rows] = await pool.execute("CALL Goalprogress_done(?)", [gid]);
+    const [t_progress_done_rows] = await pool.execute(
+      "CALL Goalprogress_done(?)",
+      [gid]
+    );
 
-    const [t_progress_total_rows] = await pool.execute("CALL Goalprogress_total(?)", [gid]);
+    const [t_progress_total_rows] = await pool.execute(
+      "CALL Goalprogress_total(?)",
+      [gid]
+    );
 
-    const [st_progress_done_rows] = await pool.execute("CALL Goalsub_progress_done(?)", [gid]);
+    const [st_progress_done_rows] = await pool.execute(
+      "CALL Goalsub_progress_done(?)",
+      [gid]
+    );
 
-    const [st_progress_total_rows] = await pool.execute("CALL Goalsub_progress_total(?)", [gid]);
+    const [st_progress_total_rows] = await pool.execute(
+      "CALL Goalsub_progress_total(?)",
+      [gid]
+    );
 
     let progress = 0;
     let progress_done = t_progress_done_rows[0][0]?.count_rows;
@@ -1255,7 +1481,9 @@ router.get("/goal/goal-detail/:gid", async (req, res) => {
       progress = Math.round(progressCal);
     }
 
-    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [rows[0][0].portfolio_id]);
+    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      rows[0][0].portfolio_id,
+    ]);
     const get_portfolio_createdby_id = get_portfolio[0][0]?.portfolio_createdby;
 
     const results = {
@@ -1267,28 +1495,45 @@ router.get("/goal/goal-detail/:gid", async (req, res) => {
       progress,
     };
 
-    const [GoalTeamMember] = await pool.execute("CALL GoalTeamMember(?)", [gid]);
-    const [InvitedGoalMember] = await pool.execute("CALL InvitedGoalMember(?)", [gid]);
-    const [SuggestedGoalMember] = await pool.execute("CALL SuggestedGoalMember(?)", [gid]);
-
-    const [SuggestedInviteGoalMember] = await pool.execute("CALL SuggestedInviteGoalMember(?)", [
+    const [GoalTeamMember] = await pool.execute("CALL GoalTeamMember(?)", [
       gid,
     ]);
+    const [InvitedGoalMember] = await pool.execute(
+      "CALL InvitedGoalMember(?)",
+      [gid]
+    );
+    const [SuggestedGoalMember] = await pool.execute(
+      "CALL SuggestedGoalMember(?)",
+      [gid]
+    );
 
-    const [GoalsAllStrategiesList] = await pool.execute("CALL GoalsAllStrategiesList(?)", [gid]);
+    const [SuggestedInviteGoalMember] = await pool.execute(
+      "CALL SuggestedInviteGoalMember(?)",
+      [gid]
+    );
+
+    const [GoalsAllStrategiesList] = await pool.execute(
+      "CALL GoalsAllStrategiesList(?)",
+      [gid]
+    );
 
     const promises = GoalsAllStrategiesList[0].map(async (item) => {
       const { sid } = item;
 
-      const [kpi_t_progress_done_rows] = await pool.execute("CALL Strategyprogress_done(?)", [sid]);
+      const [kpi_t_progress_done_rows] = await pool.execute(
+        "CALL Strategyprogress_done(?)",
+        [sid]
+      );
 
-      const [kpi_t_progress_total_rows] = await pool.execute("CALL Strategyprogress_total(?)", [
-        sid,
-      ]);
+      const [kpi_t_progress_total_rows] = await pool.execute(
+        "CALL Strategyprogress_total(?)",
+        [sid]
+      );
 
-      const [kpi_st_progress_done_rows] = await pool.execute("CALL Strategysub_progress_done(?)", [
-        sid,
-      ]);
+      const [kpi_st_progress_done_rows] = await pool.execute(
+        "CALL Strategysub_progress_done(?)",
+        [sid]
+      );
 
       const [kpi_st_progress_total_rows] = await pool.execute(
         "CALL Strategysub_progress_total(?)",
@@ -1302,9 +1547,12 @@ router.get("/goal/goal-detail/:gid", async (req, res) => {
       let kpi_sub_progress_total = kpi_st_progress_total_rows[0][0]?.count_rows;
 
       if (kpi_progress_total || kpi_sub_progress_total) {
-        let kpi_total_pro_progress_done = kpi_progress_done + kpi_sub_progress_done;
-        let kpi_total_pro_progress = kpi_progress_total + kpi_sub_progress_total;
-        const kpi_progressCal = (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
+        let kpi_total_pro_progress_done =
+          kpi_progress_done + kpi_sub_progress_done;
+        let kpi_total_pro_progress =
+          kpi_progress_total + kpi_sub_progress_total;
+        const kpi_progressCal =
+          (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
         kpi_progress = Math.round(kpi_progressCal);
       }
 
@@ -1334,7 +1582,10 @@ router.get("/goal/goal-detail/:gid", async (req, res) => {
 router.get("/goal/view-history-date-goal/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL view_history_date_goal(?)", [gid]);
+    const [rows, fields] = await pool.execute(
+      "CALL view_history_date_goal(?)",
+      [gid]
+    );
     const [GoalDetail] = await pool.execute("CALL GoalDetail(?)", [gid]);
     const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
       GoalDetail[0][0].portfolio_id,
@@ -1359,7 +1610,10 @@ router.get("/goal/goal-detail-accepted/:user_id/:gid", async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL GoalDetailAccepted(?,?)", [user_id, gid]);
+    const [rows, fields] = await pool.execute("CALL GoalDetailAccepted(?,?)", [
+      user_id,
+      gid,
+    ]);
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1391,7 +1645,9 @@ router.get("/goal/goal-detail-accepted/:user_id/:gid", async (req, res) => {
 router.get("/goal/file-it-strategy-tasks/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute("CALL file_itStrategy_tasks(?)", [sid]);
+    const [rows, fields] = await pool.execute("CALL file_itStrategy_tasks(?)", [
+      sid,
+    ]);
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1403,7 +1659,10 @@ router.get("/goal/file-it-strategy-tasks/:sid", async (req, res) => {
 router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute("CALL file_itStrategy_subtasks(?)", [sid]);
+    const [rows, fields] = await pool.execute(
+      "CALL file_itStrategy_subtasks(?)",
+      [sid]
+    );
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1529,13 +1788,25 @@ router.get("/goal/get-strategy-all-projects-list/:sid", async (req, res) => {
     const promises = rows[0].map(async (item) => {
       const { pid } = item;
 
-      const [t_progress_done_rows] = await pool.execute("CALL progress_done(?)", [pid]);
+      const [t_progress_done_rows] = await pool.execute(
+        "CALL progress_done(?)",
+        [pid]
+      );
 
-      const [t_progress_total_rows] = await pool.execute("CALL progress_total(?)", [pid]);
+      const [t_progress_total_rows] = await pool.execute(
+        "CALL progress_total(?)",
+        [pid]
+      );
 
-      const [st_progress_done_rows] = await pool.execute("CALL sub_progress_done(?)", [pid]);
+      const [st_progress_done_rows] = await pool.execute(
+        "CALL sub_progress_done(?)",
+        [pid]
+      );
 
-      const [st_progress_total_rows] = await pool.execute("CALL sub_progress_total(?)", [pid]);
+      const [st_progress_total_rows] = await pool.execute(
+        "CALL sub_progress_total(?)",
+        [pid]
+      );
 
       let progressRes = 0;
       let progress_done = t_progress_done_rows[0][0]?.count_rows;
@@ -1546,7 +1817,8 @@ router.get("/goal/get-strategy-all-projects-list/:sid", async (req, res) => {
       if (progress_total || sub_progress_total) {
         let total_pro_progress_done = progress_done + sub_progress_done;
         let total_pro_progress = progress_total + sub_progress_total;
-        const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+        const progressCal =
+          (total_pro_progress_done / total_pro_progress) * 100;
         progressRes = Math.round(progressCal);
       }
 
@@ -1687,36 +1959,51 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 // });
 
 //CheckProjectTeamMember
-router.get("/goal/check-project-team-member/:user_id/:pid", async (req, res) => {
-  const user_id = req.params.user_id;
-  const pid = req.params.pid;
-  try {
-    const [rows, fields] = await pool.execute("CALL CheckProjectTeamMember(?,?)", [user_id, pid]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/check-project-team-member/:user_id/:pid",
+  async (req, res) => {
+    const user_id = req.params.user_id;
+    const pid = req.params.pid;
+    try {
+      const [rows, fields] = await pool.execute(
+        "CALL CheckProjectTeamMember(?,?)",
+        [user_id, pid]
+      );
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //getProjectCount
-router.get("/goal/get-project-count/:user_id/:portfolio_id", async (req, res) => {
-  const user_id = req.params.user_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows, fields] = await pool.execute("CALL getProjectCount(?,?)", [user_id, portfolio_id]);
-    res.status(200).json(rows[0][0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/get-project-count/:user_id/:portfolio_id",
+  async (req, res) => {
+    const user_id = req.params.user_id;
+    const portfolio_id = req.params.portfolio_id;
+    try {
+      const [rows, fields] = await pool.execute("CALL getProjectCount(?,?)", [
+        user_id,
+        portfolio_id,
+      ]);
+      res.status(200).json(rows[0][0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //check_notify_goal_suggested
 router.get("/goal/check-notify-goal-suggested/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL check_notify_goal_suggested(?)", [gid]);
+    const [rows, fields] = await pool.execute(
+      "CALL check_notify_goal_suggested(?)",
+      [gid]
+    );
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1759,7 +2046,9 @@ router.get(
   async (req, res) => {
     const { portfolio_id, gid } = req.params;
     try {
-      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [portfolio_id]);
+      const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
+        portfolio_id,
+      ]);
       const promises = rows[0].map(async (item) => {
         const { sent_to } = item;
 
@@ -1776,7 +2065,8 @@ router.get(
             check_gmem = check_gmRes[0][0].gmember;
           }
           if (getName[0][0].reg_id != check_gmem) {
-            const name = getName[0][0].first_name + " " + getName[0][0].last_name;
+            const name =
+              getName[0][0].first_name + " " + getName[0][0].last_name;
             const id = getName[0][0].reg_id;
             data = {
               sent_to,
@@ -1803,7 +2093,11 @@ router.get("/goal/check-gm/:user_id/:gid/:portfolio_id", async (req, res) => {
   const gid = req.params.gid;
   const portfolio_id = req.params.portfolio_id;
   try {
-    const [rows, fields] = await pool.execute("CALL check_gm(?,?,?)", [user_id, gid, portfolio_id]);
+    const [rows, fields] = await pool.execute("CALL check_gm(?,?,?)", [
+      user_id,
+      gid,
+      portfolio_id,
+    ]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -1840,7 +2134,9 @@ router.patch("/goal/update-goal", async (req, res) => {
 
     await pool.execute(storedProcedure);
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [gcreated_by]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      gcreated_by,
+    ]);
     const powner = check_powner[0][0];
 
     const hdata = {
@@ -1857,22 +2153,32 @@ router.patch("/goal/update-goal", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     //all strategies to update
-    const [g_strategiesRes] = await pool.execute("CALL GoalsAllStrategiesList_to_delete(?)", [gid]);
+    const [g_strategiesRes] = await pool.execute(
+      "CALL GoalsAllStrategiesList_to_delete(?)",
+      [gid]
+    );
     const g_strategies = g_strategiesRes[0];
 
     if (g_strategies && g_strategies.length > 0) {
       for (const gs of g_strategies) {
         const updateFieldsValues1 = `gdept_id = '${gdept}'`;
         const upid = `sid  = '${gs.sid}'`;
-        await pool.execute("CALL UpdateStrategies(?, ?)", [updateFieldsValues1, upid]);
+        await pool.execute("CALL UpdateStrategies(?, ?)", [
+          updateFieldsValues1,
+          upid,
+        ]);
 
         //all projects to update
-        const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsList_to_delete(?)", [
-          gs.sid,
-        ]);
+        const [s_projectsRes] = await pool.execute(
+          "CALL StrategyAllProjectsList_to_delete(?)",
+          [gs.sid]
+        );
         const s_projects = s_projectsRes[0];
 
         if (s_projects && s_projects.length > 0) {
@@ -1880,17 +2186,26 @@ router.patch("/goal/update-goal", async (req, res) => {
             //project
             const updateFieldsValues2 = `dept_id = '${gdept}'`;
             const upid2 = `pid  = '${sp.pid}'`;
-            await pool.execute("CALL UpdateProject(?, ?)", [updateFieldsValues2, upid2]);
+            await pool.execute("CALL UpdateProject(?, ?)", [
+              updateFieldsValues2,
+              upid2,
+            ]);
 
             //project tasks
             const updateFieldsValues3 = `dept_id = '${gdept}'`;
             const upid3 = `tproject_assign  = '${sp.pid}'`;
-            await pool.execute("CALL UpdateTask(?, ?)", [updateFieldsValues3, upid3]);
+            await pool.execute("CALL UpdateTask(?, ?)", [
+              updateFieldsValues3,
+              upid3,
+            ]);
 
             //project subtasks
             const updateFieldsValues4 = `dept_id = '${gdept}'`;
             const upid4 = `stproject_assign  = '${sp.pid}'`;
-            await pool.execute("CALL UpdateSubtask(?, ?)", [updateFieldsValues4, upid4]);
+            await pool.execute("CALL UpdateSubtask(?, ?)", [
+              updateFieldsValues4,
+              upid4,
+            ]);
           }
         }
       }
@@ -1902,9 +2217,10 @@ router.patch("/goal/update-goal", async (req, res) => {
     const [ptmRes] = await pool.execute("CALL GoalTeamMember(?)", [gid]);
     const ptm = ptmRes[0];
 
-    const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolio2(?)", [
-      gdetail.portfolio_id,
-    ]);
+    const [check_Portfolio_owner_id] = await pool.execute(
+      "CALL getPortfolio2(?)",
+      [gdetail.portfolio_id]
+    );
     const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
 
     let portfolio_owner_id = "";
@@ -1923,14 +2239,22 @@ router.patch("/goal/update-goal", async (req, res) => {
         });
       }
 
-      const no_more_mem = all_ptm.filter((member) => !team_member.includes(member));
+      const no_more_mem = all_ptm.filter(
+        (member) => !team_member.includes(member)
+      );
       //console.log(no_more_mem);
       for (const no_mem of no_more_mem) {
-        if (gdetail.gcreated_by == gcreated_by || portfolio_owner_id == gcreated_by) {
+        if (
+          gdetail.gcreated_by == gcreated_by ||
+          portfolio_owner_id == gcreated_by
+        ) {
           if (gdetail.gmanager == no_mem) {
             const updateFieldsValues2 = `gmanager = ''`;
             const upid = `gid  = '${gid}'`;
-            await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
+            await pool.execute("CALL UpdateGoals(?, ?)", [
+              updateFieldsValues2,
+              upid,
+            ]);
             //console.log("if", no_mem);
             const del1 = `gmember = '${no_mem}' AND gid = '${gid}'`;
             await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
@@ -1950,7 +2274,10 @@ router.patch("/goal/update-goal", async (req, res) => {
 
       await Promise.all(
         team_member.map(async (t) => {
-          const [check_Goal_members] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, t]);
+          const [check_Goal_members] = await pool.execute(
+            "CALL check_GoalMToClear(?,?)",
+            [gid, t]
+          );
           if (check_Goal_members[0].length == 0) {
             const data5 = {
               gid: gid,
@@ -1968,12 +2295,20 @@ router.patch("/goal/update-goal", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-            await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+            await pool.execute(callProcedureSQL5, [
+              paramNamesString5,
+              paramValuesString5,
+            ]);
 
-            const [check_user] = await pool.execute("CALL getStudentById(?)", [t]);
+            const [check_user] = await pool.execute("CALL getStudentById(?)", [
+              t,
+            ]);
             const user = check_user[0][0];
 
-            const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, t]);
+            const [getgmid] = await pool.execute(
+              "CALL check_GoalMToClear(?,?)",
+              [gid, t]
+            );
             const gmid = getgmid[0][0]?.gmid;
 
             const hdata6 = {
@@ -1991,7 +2326,10 @@ router.patch("/goal/update-goal", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+            await pool.execute(callProcedureSQL6, [
+              paramNamesString6,
+              paramValuesString6,
+            ]);
 
             const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
             const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
@@ -2032,14 +2370,22 @@ router.patch("/goal/update-goal", async (req, res) => {
         });
       }
 
-      const no_more_mem = all_ptm.filter((member) => !team_member.includes(member));
+      const no_more_mem = all_ptm.filter(
+        (member) => !team_member.includes(member)
+      );
       //console.log(no_more_mem);
       for (const no_mem of no_more_mem) {
-        if (gdetail.gcreated_by == gcreated_by || portfolio_owner_id == gcreated_by) {
+        if (
+          gdetail.gcreated_by == gcreated_by ||
+          portfolio_owner_id == gcreated_by
+        ) {
           if (gdetail.gmanager == no_mem) {
             const updateFieldsValues2 = `gmanager = ''`;
             const upid = `gid  = '${gid}'`;
-            await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
+            await pool.execute("CALL UpdateGoals(?, ?)", [
+              updateFieldsValues2,
+              upid,
+            ]);
             //console.log("if", no_mem);
             const del1 = `gmember = '${no_mem}' AND gid = '${gid}'`;
             await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
@@ -2064,13 +2410,16 @@ router.patch("/goal/update-goal", async (req, res) => {
           if (!isEmail(im)) {
             return res.status(400).json({ error: "Invalid email address." });
           }
-          const [check_if_registered] = await pool.execute("CALL selectLogin(?)", [im]);
+          const [check_if_registered] = await pool.execute(
+            "CALL selectLogin(?)",
+            [im]
+          );
           if (check_if_registered[0].length > 0) {
             const rid = check_if_registered[0][0]?.reg_id;
-            const [check_Goal_members] = await pool.execute("CALL check_GoalMToClear(?,?)", [
-              gid,
-              rid,
-            ]);
+            const [check_Goal_members] = await pool.execute(
+              "CALL check_GoalMToClear(?,?)",
+              [gid, rid]
+            );
             if (check_Goal_members[0].length == 0) {
               if (gcreated_by != rid) {
                 const data7 = {
@@ -2089,12 +2438,15 @@ router.patch("/goal/update-goal", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL7 = `CALL InsertGoalsMembers(?, ?)`;
-                await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
-
-                const [getportfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-                  im,
-                  gdetail.portfolio_id,
+                await pool.execute(callProcedureSQL7, [
+                  paramNamesString7,
+                  paramValuesString7,
                 ]);
+
+                const [getportfolio] = await pool.execute(
+                  "CALL check_PortfolioMember(?,?)",
+                  [im, gdetail.portfolio_id]
+                );
                 if (getportfolio[0].length == 0) {
                   const dataPort = {
                     portfolio_id: gdetail.portfolio_id,
@@ -2117,10 +2469,16 @@ router.patch("/goal/update-goal", async (req, res) => {
                   ]);
                 }
 
-                const [check_user] = await pool.execute("CALL getStudentById(?)", [rid]);
+                const [check_user] = await pool.execute(
+                  "CALL getStudentById(?)",
+                  [rid]
+                );
                 const user = check_user[0][0];
 
-                const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, rid]);
+                const [getgmid] = await pool.execute(
+                  "CALL check_GoalMToClear(?,?)",
+                  [gid, rid]
+                );
                 const gmid = getgmid[0][0]?.gmid;
 
                 const hdata8 = {
@@ -2138,7 +2496,10 @@ router.patch("/goal/update-goal", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL8 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
+                await pool.execute(callProcedureSQL8, [
+                  paramNamesString8,
+                  paramValuesString8,
+                ]);
 
                 const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
                 const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
@@ -2168,11 +2529,10 @@ router.patch("/goal/update-goal", async (req, res) => {
               }
             }
           } else {
-            const [check_email] = await pool.execute("CALL check_goal_invited_email(?,?,?)", [
-              im,
-              gcreated_by,
-              gid,
-            ]);
+            const [check_email] = await pool.execute(
+              "CALL check_goal_invited_email(?,?,?)",
+              [im, gcreated_by, gid]
+            );
             if (check_email[0].length == 0) {
               const data9 = {
                 gid: gid,
@@ -2188,12 +2548,15 @@ router.patch("/goal/update-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL9 = `CALL InsertGoalsInvitedMembers(?, ?)`;
-              await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
-              const [getportfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-                im,
-                gdetail.portfolio_id,
+              await pool.execute(callProcedureSQL9, [
+                paramNamesString9,
+                paramValuesString9,
               ]);
+
+              const [getportfolio] = await pool.execute(
+                "CALL check_PortfolioMember(?,?)",
+                [im, gdetail.portfolio_id]
+              );
               if (getportfolio[0].length == 0) {
                 const dataPort = {
                   portfolio_id: gdetail.portfolio_id,
@@ -2216,11 +2579,10 @@ router.patch("/goal/update-goal", async (req, res) => {
                 ]);
               }
 
-              const [getigm_id] = await pool.execute("CALL check_goal_invited_email(?,?,?)", [
-                im,
-                gcreated_by,
-                gid,
-              ]);
+              const [getigm_id] = await pool.execute(
+                "CALL check_goal_invited_email(?,?,?)",
+                [im, gcreated_by, gid]
+              );
 
               const igm_id = getigm_id[0][0]?.igm_id;
 
@@ -2239,7 +2601,10 @@ router.patch("/goal/update-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL10 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL10, [paramNamesString10, paramValuesString10]);
+              await pool.execute(callProcedureSQL10, [
+                paramNamesString10,
+                paramValuesString10,
+              ]);
 
               const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
               const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
@@ -2276,7 +2641,9 @@ router.patch("/goal/update-goal", async (req, res) => {
       message: "Goal updated successfully.",
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
@@ -2287,7 +2654,9 @@ router.post("/goal/duplicate-goal", async (req, res) => {
     let { gname } = req.body;
     const { gid, copy_detail, cust_goal, ...otherFields } = req.body;
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [gcreated_by]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      gcreated_by,
+    ]);
     const powner = check_powner[0][0];
 
     const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
@@ -2311,7 +2680,9 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       ...otherFields,
       ...additionalFields,
     };
-    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(", ");
+    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(
+      ", "
+    );
     const paramValuesString = Object.values(requestBodyWithAdditionalFields)
       .map((value) => `'${value}'`)
       .join(", ");
@@ -2326,7 +2697,9 @@ router.post("/goal/duplicate-goal", async (req, res) => {
 
     const getGoal = getdupGoal[0][0];
 
-    const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [getGoal.portfolio_id]);
+    const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      getGoal.portfolio_id,
+    ]);
     const PortfolioName = getPortfolio[0][0]?.portfolio_name;
 
     const hdata = {
@@ -2343,7 +2716,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     const data5 = {
       gid: getGoal.gid,
@@ -2361,11 +2737,16 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-    await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+    await pool.execute(callProcedureSQL5, [
+      paramNamesString5,
+      paramValuesString5,
+    ]);
 
     if (copy_detail == "everything") {
       //Check Project Members
-      const [getMemberGoalRes] = await pool.execute("CALL getMemberGoal(?)", [gid]);
+      const [getMemberGoalRes] = await pool.execute("CALL getMemberGoal(?)", [
+        gid,
+      ]);
       const getMemberGoal = getMemberGoalRes[0];
 
       if (getMemberGoal && getMemberGoal.length > 0) {
@@ -2389,15 +2770,21 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-              await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+              await pool.execute(callProcedureSQL5, [
+                paramNamesString5,
+                paramValuesString5,
+              ]);
 
-              const [check_user] = await pool.execute("CALL getStudentById(?)", [t.gmember]);
+              const [check_user] = await pool.execute(
+                "CALL getStudentById(?)",
+                [t.gmember]
+              );
               const user = check_user[0][0];
 
-              const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [
-                getGoal.gid,
-                t.gmember,
-              ]);
+              const [getgmid] = await pool.execute(
+                "CALL check_GoalMToClear(?,?)",
+                [getGoal.gid, t.gmember]
+              );
               const gmid = getgmid[0][0]?.gmid;
 
               const hdata6 = {
@@ -2415,7 +2802,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+              await pool.execute(callProcedureSQL6, [
+                paramNamesString6,
+                paramValuesString6,
+              ]);
 
               const acceptRequest = `http://localhost:3000/goal-request/${getGoal.gid}/${gmid}/1`;
               const rejectRequest = `http://localhost:3000/goal-request/${getGoal.gid}/${gmid}/2`;
@@ -2448,7 +2838,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       }
 
       //strategies
-      const [g_strategiesRes] = await pool.execute("CALL GoalsAllStrategiesListASC(?)", [gid]);
+      const [g_strategiesRes] = await pool.execute(
+        "CALL GoalsAllStrategiesListASC(?)",
+        [gid]
+      );
       const g_strategies = g_strategiesRes[0];
       if (g_strategies && g_strategies.length > 0) {
         for (const gs of g_strategies) {
@@ -2463,13 +2856,18 @@ router.post("/goal/duplicate-goal", async (req, res) => {
             gdept_id: getGoal.gdept,
           };
 
-          const paramNamesString = Object.keys(insertStrategiesFields).join(", ");
+          const paramNamesString = Object.keys(insertStrategiesFields).join(
+            ", "
+          );
           const paramValuesString = Object.values(insertStrategiesFields)
             .map((value) => `'${value}'`)
             .join(", ");
 
           const callProcedureSQL = `CALL InsertStrategies(?, ?)`;
-          await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+          await pool.execute(callProcedureSQL, [
+            paramNamesString,
+            paramValuesString,
+          ]);
 
           const [getKPIRes] = await pool.execute("CALL GetInsertedKPI(?,?)", [
             getGoal.gid,
@@ -2492,12 +2890,16 @@ router.post("/goal/duplicate-goal", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
 
           //projects
-          const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsListASC(?)", [
-            gs.sid,
-          ]);
+          const [s_projectsRes] = await pool.execute(
+            "CALL StrategyAllProjectsListASC(?)",
+            [gs.sid]
+          );
           const s_projects = s_projectsRes[0];
 
           if (s_projects && s_projects.length > 0) {
@@ -2518,17 +2920,22 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                 dept_id: getGoal.gdept,
               };
 
-              const paramNamesString = Object.keys(insertProjectFields).join(", ");
+              const paramNamesString =
+                Object.keys(insertProjectFields).join(", ");
               const paramValuesString = Object.values(insertProjectFields)
                 .map((value) => `'${value}'`)
                 .join(", ");
 
               const callProcedureSQL = `CALL InsertProject(?, ?)`;
-              await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
-
-              const [getProjectRes] = await pool.execute("CALL GetInsertedProject(?)", [
-                gcreated_by,
+              await pool.execute(callProcedureSQL, [
+                paramNamesString,
+                paramValuesString,
               ]);
+
+              const [getProjectRes] = await pool.execute(
+                "CALL GetInsertedProject(?)",
+                [gcreated_by]
+              );
               const getProject = getProjectRes[0][0];
 
               const hdata = {
@@ -2547,12 +2954,16 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+              await pool.execute(callProcedureSQL1, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
 
               //Check Project Members
-              const [getMemberProjectRes] = await pool.execute("CALL getMemberProject(?)", [
-                sp.pid,
-              ]);
+              const [getMemberProjectRes] = await pool.execute(
+                "CALL getMemberProject(?)",
+                [sp.pid]
+              );
               const getMemberProject = getMemberProjectRes[0];
               if (getMemberProject && getMemberProject.length > 0) {
                 for (const pm of getMemberProject) {
@@ -2572,15 +2983,21 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     .join(", ");
 
                   const callProcedureSQL7 = `CALL InsertProjectMembers(?, ?)`;
-                  await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
+                  await pool.execute(callProcedureSQL7, [
+                    paramNamesString7,
+                    paramValuesString7,
+                  ]);
 
-                  const [check_user] = await pool.execute("CALL getStudentById(?)", [pm.pmember]);
+                  const [check_user] = await pool.execute(
+                    "CALL getStudentById(?)",
+                    [pm.pmember]
+                  );
                   const user = check_user[0][0];
 
-                  const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [
-                    pm.pmember,
-                    getProject.pid,
-                  ]);
+                  const [getpm_id] = await pool.execute(
+                    "CALL check_ProjectMToClear(?,?)",
+                    [pm.pmember, getProject.pid]
+                  );
                   const pm_id = getpm_id[0][0]?.pm_id;
                   //console.log(pm_id);
 
@@ -2601,7 +3018,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     .join(", ");
 
                   const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-                  await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+                  await pool.execute(callProcedureSQL6, [
+                    paramNamesString6,
+                    paramValuesString6,
+                  ]);
 
                   const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
                   const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
@@ -2660,12 +3080,17 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               }
 
               //Check Project Tasks
-              const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [sp.pid]);
+              const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [
+                sp.pid,
+              ]);
               const p_tasks = p_tasksRes[0];
               if (p_tasks && p_tasks.length > 0) {
                 for (const pt of p_tasks) {
                   const project_name = sp.pname;
-                  const letter = project_name.trim().substring(0, 2).toUpperCase();
+                  const letter = project_name
+                    .trim()
+                    .substring(0, 2)
+                    .toUpperCase();
                   const random_num = Math.floor(Math.random() * 10000) + 1;
                   const get_tcode = `${letter}-${random_num}`;
                   const data8 = {
@@ -2700,8 +3125,14 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     .join(", ");
 
                   const callProcedureSQL8 = `CALL InsertTask(?, ?)`;
-                  await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
-                  const [getTaskRes] = await pool.execute("CALL GetInsertedTask(?)", [gcreated_by]);
+                  await pool.execute(callProcedureSQL8, [
+                    paramNamesString8,
+                    paramValuesString8,
+                  ]);
+                  const [getTaskRes] = await pool.execute(
+                    "CALL GetInsertedTask(?)",
+                    [gcreated_by]
+                  );
                   const getTask = getTaskRes[0][0];
 
                   const hdata9 = {
@@ -2721,7 +3152,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     .join(", ");
 
                   const callProcedureSQL9 = `CALL InsertProjectHistory(?, ?)`;
-                  await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
+                  await pool.execute(callProcedureSQL9, [
+                    paramNamesString9,
+                    paramValuesString9,
+                  ]);
 
                   //Check Subtasks
                   const [Check_Task_SubtasksRes] = await pool.execute(
@@ -2732,7 +3166,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                   if (Check_Task_Subtasks && Check_Task_Subtasks.length > 0) {
                     for (const ts of Check_Task_Subtasks) {
                       const project_name = sp.pname;
-                      const letter = project_name.trim().substring(0, 2).toUpperCase();
+                      const letter = project_name
+                        .trim()
+                        .substring(0, 2)
+                        .toUpperCase();
                       const random_num = Math.floor(Math.random() * 10000) + 1;
                       const get_stcode = `${letter}-${random_num}`;
 
@@ -2774,9 +3211,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                         paramValuesString9,
                       ]);
 
-                      const [getSubtaskRes] = await pool.execute("CALL GetInsertedSubtask(?)", [
-                        gcreated_by,
-                      ]);
+                      const [getSubtaskRes] = await pool.execute(
+                        "CALL GetInsertedSubtask(?)",
+                        [gcreated_by]
+                      );
                       const getSubtask = getSubtaskRes[0][0];
 
                       const hdata10 = {
@@ -2790,7 +3228,8 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                         subtask_id: getSubtask.stid,
                       };
 
-                      const paramNamesString10 = Object.keys(hdata10).join(", ");
+                      const paramNamesString10 =
+                        Object.keys(hdata10).join(", ");
                       const paramValuesString10 = Object.values(hdata10)
                         .map((value) => `'${value}'`)
                         .join(", ");
@@ -2814,7 +3253,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       if (cust_goal == "1") {
         //Import Only Strategies
         //strategies
-        const [g_strategiesRes] = await pool.execute("CALL GoalsAllStrategiesListASC(?)", [gid]);
+        const [g_strategiesRes] = await pool.execute(
+          "CALL GoalsAllStrategiesListASC(?)",
+          [gid]
+        );
         const g_strategies = g_strategiesRes[0];
         if (g_strategies && g_strategies.length > 0) {
           for (const gs of g_strategies) {
@@ -2829,13 +3271,18 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               gdept_id: getGoal.gdept,
             };
 
-            const paramNamesString = Object.keys(insertStrategiesFields).join(", ");
+            const paramNamesString = Object.keys(insertStrategiesFields).join(
+              ", "
+            );
             const paramValuesString = Object.values(insertStrategiesFields)
               .map((value) => `'${value}'`)
               .join(", ");
 
             const callProcedureSQL = `CALL InsertStrategies(?, ?)`;
-            await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+            await pool.execute(callProcedureSQL, [
+              paramNamesString,
+              paramValuesString,
+            ]);
 
             const [getKPIRes] = await pool.execute("CALL GetInsertedKPI(?,?)", [
               getGoal.gid,
@@ -2858,7 +3305,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
           }
         }
       }
@@ -2866,7 +3316,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       if (cust_goal == "2") {
         //Import Strategies with Projects Only
         //strategies
-        const [g_strategiesRes] = await pool.execute("CALL GoalsAllStrategiesListASC(?)", [gid]);
+        const [g_strategiesRes] = await pool.execute(
+          "CALL GoalsAllStrategiesListASC(?)",
+          [gid]
+        );
         const g_strategies = g_strategiesRes[0];
         if (g_strategies && g_strategies.length > 0) {
           for (const gs of g_strategies) {
@@ -2881,13 +3334,18 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               gdept_id: getGoal.gdept,
             };
 
-            const paramNamesString = Object.keys(insertStrategiesFields).join(", ");
+            const paramNamesString = Object.keys(insertStrategiesFields).join(
+              ", "
+            );
             const paramValuesString = Object.values(insertStrategiesFields)
               .map((value) => `'${value}'`)
               .join(", ");
 
             const callProcedureSQL = `CALL InsertStrategies(?, ?)`;
-            await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+            await pool.execute(callProcedureSQL, [
+              paramNamesString,
+              paramValuesString,
+            ]);
 
             const [getKPIRes] = await pool.execute("CALL GetInsertedKPI(?,?)", [
               getGoal.gid,
@@ -2910,12 +3368,16 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
 
             //projects
-            const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsListASC(?)", [
-              gs.sid,
-            ]);
+            const [s_projectsRes] = await pool.execute(
+              "CALL StrategyAllProjectsListASC(?)",
+              [gs.sid]
+            );
             const s_projects = s_projectsRes[0];
 
             if (s_projects && s_projects.length > 0) {
@@ -2936,17 +3398,22 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                   dept_id: getGoal.gdept,
                 };
 
-                const paramNamesString = Object.keys(insertProjectFields).join(", ");
+                const paramNamesString =
+                  Object.keys(insertProjectFields).join(", ");
                 const paramValuesString = Object.values(insertProjectFields)
                   .map((value) => `'${value}'`)
                   .join(", ");
 
                 const callProcedureSQL = `CALL InsertProject(?, ?)`;
-                await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
-
-                const [getProjectRes] = await pool.execute("CALL GetInsertedProject(?)", [
-                  gcreated_by,
+                await pool.execute(callProcedureSQL, [
+                  paramNamesString,
+                  paramValuesString,
                 ]);
+
+                const [getProjectRes] = await pool.execute(
+                  "CALL GetInsertedProject(?)",
+                  [gcreated_by]
+                );
                 const getProject = getProjectRes[0][0];
 
                 const hdata = {
@@ -2965,7 +3432,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+                await pool.execute(callProcedureSQL1, [
+                  paramNamesString1,
+                  paramValuesString1,
+                ]);
               }
             }
           }
@@ -2976,7 +3446,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
         //Import Strategies with Projects, Task & Its Subtask without assignee
 
         //strategies
-        const [g_strategiesRes] = await pool.execute("CALL GoalsAllStrategiesListASC(?)", [gid]);
+        const [g_strategiesRes] = await pool.execute(
+          "CALL GoalsAllStrategiesListASC(?)",
+          [gid]
+        );
         const g_strategies = g_strategiesRes[0];
         if (g_strategies && g_strategies.length > 0) {
           for (const gs of g_strategies) {
@@ -2991,13 +3464,18 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               gdept_id: getGoal.gdept,
             };
 
-            const paramNamesString = Object.keys(insertStrategiesFields).join(", ");
+            const paramNamesString = Object.keys(insertStrategiesFields).join(
+              ", "
+            );
             const paramValuesString = Object.values(insertStrategiesFields)
               .map((value) => `'${value}'`)
               .join(", ");
 
             const callProcedureSQL = `CALL InsertStrategies(?, ?)`;
-            await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+            await pool.execute(callProcedureSQL, [
+              paramNamesString,
+              paramValuesString,
+            ]);
 
             const [getKPIRes] = await pool.execute("CALL GetInsertedKPI(?,?)", [
               getGoal.gid,
@@ -3020,12 +3498,16 @@ router.post("/goal/duplicate-goal", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
 
             //projects
-            const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsListASC(?)", [
-              gs.sid,
-            ]);
+            const [s_projectsRes] = await pool.execute(
+              "CALL StrategyAllProjectsListASC(?)",
+              [gs.sid]
+            );
             const s_projects = s_projectsRes[0];
 
             if (s_projects && s_projects.length > 0) {
@@ -3046,17 +3528,22 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                   dept_id: getGoal.gdept,
                 };
 
-                const paramNamesString = Object.keys(insertProjectFields).join(", ");
+                const paramNamesString =
+                  Object.keys(insertProjectFields).join(", ");
                 const paramValuesString = Object.values(insertProjectFields)
                   .map((value) => `'${value}'`)
                   .join(", ");
 
                 const callProcedureSQL = `CALL InsertProject(?, ?)`;
-                await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
-
-                const [getProjectRes] = await pool.execute("CALL GetInsertedProject(?)", [
-                  gcreated_by,
+                await pool.execute(callProcedureSQL, [
+                  paramNamesString,
+                  paramValuesString,
                 ]);
+
+                const [getProjectRes] = await pool.execute(
+                  "CALL GetInsertedProject(?)",
+                  [gcreated_by]
+                );
                 const getProject = getProjectRes[0][0];
 
                 const hdata = {
@@ -3075,15 +3562,24 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+                await pool.execute(callProcedureSQL1, [
+                  paramNamesString1,
+                  paramValuesString1,
+                ]);
 
                 //Check Project Tasks
-                const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [sp.pid]);
+                const [p_tasksRes] = await pool.execute(
+                  "CALL pro_all_tasks(?)",
+                  [sp.pid]
+                );
                 const p_tasks = p_tasksRes[0];
                 if (p_tasks && p_tasks.length > 0) {
                   for (const pt of p_tasks) {
                     const project_name = sp.pname;
-                    const letter = project_name.trim().substring(0, 2).toUpperCase();
+                    const letter = project_name
+                      .trim()
+                      .substring(0, 2)
+                      .toUpperCase();
                     const random_num = Math.floor(Math.random() * 10000) + 1;
                     const get_tcode = `${letter}-${random_num}`;
                     const data8 = {
@@ -3118,10 +3614,14 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                       .join(", ");
 
                     const callProcedureSQL8 = `CALL InsertTask(?, ?)`;
-                    await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
-                    const [getTaskRes] = await pool.execute("CALL GetInsertedTask(?)", [
-                      gcreated_by,
+                    await pool.execute(callProcedureSQL8, [
+                      paramNamesString8,
+                      paramValuesString8,
                     ]);
+                    const [getTaskRes] = await pool.execute(
+                      "CALL GetInsertedTask(?)",
+                      [gcreated_by]
+                    );
                     const getTask = getTaskRes[0][0];
 
                     const hdata9 = {
@@ -3141,7 +3641,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                       .join(", ");
 
                     const callProcedureSQL9 = `CALL InsertProjectHistory(?, ?)`;
-                    await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
+                    await pool.execute(callProcedureSQL9, [
+                      paramNamesString9,
+                      paramValuesString9,
+                    ]);
 
                     //Check Subtasks
                     const [Check_Task_SubtasksRes] = await pool.execute(
@@ -3152,8 +3655,12 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                     if (Check_Task_Subtasks && Check_Task_Subtasks.length > 0) {
                       for (const ts of Check_Task_Subtasks) {
                         const project_name = sp.pname;
-                        const letter = project_name.trim().substring(0, 2).toUpperCase();
-                        const random_num = Math.floor(Math.random() * 10000) + 1;
+                        const letter = project_name
+                          .trim()
+                          .substring(0, 2)
+                          .toUpperCase();
+                        const random_num =
+                          Math.floor(Math.random() * 10000) + 1;
                         const get_stcode = `${letter}-${random_num}`;
 
                         const data9 = {
@@ -3194,9 +3701,10 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                           paramValuesString9,
                         ]);
 
-                        const [getSubtaskRes] = await pool.execute("CALL GetInsertedSubtask(?)", [
-                          gcreated_by,
-                        ]);
+                        const [getSubtaskRes] = await pool.execute(
+                          "CALL GetInsertedSubtask(?)",
+                          [gcreated_by]
+                        );
                         const getSubtask = getSubtaskRes[0][0];
 
                         const hdata10 = {
@@ -3210,7 +3718,8 @@ router.post("/goal/duplicate-goal", async (req, res) => {
                           subtask_id: getSubtask.stid,
                         };
 
-                        const paramNamesString10 = Object.keys(hdata10).join(", ");
+                        const paramNamesString10 =
+                          Object.keys(hdata10).join(", ");
                         const paramValuesString10 = Object.values(hdata10)
                           .map((value) => `'${value}'`)
                           .join(", ");
@@ -3236,21 +3745,29 @@ router.post("/goal/duplicate-goal", async (req, res) => {
       gid: getGoal.gid,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //view_history_date_wise_goal
-router.get("/goal/view-history-date-wise-goal/:gid/:hdate", async (req, res) => {
-  const { gid, hdate } = req.params;
-  try {
-    const [rows, fields] = await pool.execute("CALL view_history_goal(?,?)", [gid, hdate]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/view-history-date-wise-goal/:gid/:hdate",
+  async (req, res) => {
+    const { gid, hdate } = req.params;
+    try {
+      const [rows, fields] = await pool.execute("CALL view_history_goal(?,?)", [
+        gid,
+        hdate,
+      ]);
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //view_history_date_range_goal
 router.get("/goal/view-history-date-range-goal/:gid", async (req, res) => {
@@ -3258,11 +3775,10 @@ router.get("/goal/view-history-date-range-goal/:gid", async (req, res) => {
   const start_date = req.body.start_date;
   const end_date = req.body.end_date;
   try {
-    const [rows, fields] = await pool.execute("CALL view_history_date_range_goal(?,?,?)", [
-      gid,
-      start_date,
-      end_date,
-    ]);
+    const [rows, fields] = await pool.execute(
+      "CALL view_history_date_range_goal(?,?,?)",
+      [gid, start_date, end_date]
+    );
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -3274,7 +3790,9 @@ router.get("/goal/view-history-date-range-goal/:gid", async (req, res) => {
 router.get("/goal/view-all-history-goal/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL view_all_history_goal(?)", [gid]);
+    const [rows, fields] = await pool.execute("CALL view_all_history_goal(?)", [
+      gid,
+    ]);
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -3289,7 +3807,9 @@ router.post("/goal/insert-goal-member", async (req, res) => {
 
     const formattedDate = dateConversion();
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [gcreated_by]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      gcreated_by,
+    ]);
     const powner = check_powner[0][0];
 
     const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
@@ -3299,7 +3819,10 @@ router.post("/goal/insert-goal-member", async (req, res) => {
       // Use forEach with async/await
       await Promise.all(
         team_member.map(async (t) => {
-          const [check_Goal_members] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, t]);
+          const [check_Goal_members] = await pool.execute(
+            "CALL check_GoalMToClear(?,?)",
+            [gid, t]
+          );
           if (check_Goal_members[0].length == 0) {
             const data5 = {
               gid: gid,
@@ -3317,12 +3840,20 @@ router.post("/goal/insert-goal-member", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-            await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+            await pool.execute(callProcedureSQL5, [
+              paramNamesString5,
+              paramValuesString5,
+            ]);
 
-            const [check_user] = await pool.execute("CALL getStudentById(?)", [t]);
+            const [check_user] = await pool.execute("CALL getStudentById(?)", [
+              t,
+            ]);
             const user = check_user[0][0];
 
-            const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, t]);
+            const [getgmid] = await pool.execute(
+              "CALL check_GoalMToClear(?,?)",
+              [gid, t]
+            );
             const gmid = getgmid[0][0]?.gmid;
 
             const hdata6 = {
@@ -3340,7 +3871,10 @@ router.post("/goal/insert-goal-member", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+            await pool.execute(callProcedureSQL6, [
+              paramNamesString6,
+              paramValuesString6,
+            ]);
 
             const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
               gdetail.portfolio_id,
@@ -3382,13 +3916,16 @@ router.post("/goal/insert-goal-member", async (req, res) => {
           if (!isEmail(im)) {
             return res.status(400).json({ error: "Invalid email address." });
           }
-          const [check_if_registered] = await pool.execute("CALL selectLogin(?)", [im]);
+          const [check_if_registered] = await pool.execute(
+            "CALL selectLogin(?)",
+            [im]
+          );
           if (check_if_registered[0].length > 0) {
             const rid = check_if_registered[0][0]?.reg_id;
-            const [check_Goal_members] = await pool.execute("CALL check_GoalMToClear(?,?)", [
-              gid,
-              rid,
-            ]);
+            const [check_Goal_members] = await pool.execute(
+              "CALL check_GoalMToClear(?,?)",
+              [gid, rid]
+            );
             if (check_Goal_members[0].length == 0) {
               if (gcreated_by != rid) {
                 const data7 = {
@@ -3407,12 +3944,15 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL7 = `CALL InsertGoalsMembers(?, ?)`;
-                await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
-
-                const [check_portfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-                  im,
-                  gdetail.portfolio_id,
+                await pool.execute(callProcedureSQL7, [
+                  paramNamesString7,
+                  paramValuesString7,
                 ]);
+
+                const [check_portfolio] = await pool.execute(
+                  "CALL check_PortfolioMember(?,?)",
+                  [im, gdetail.portfolio_id]
+                );
                 if (check_portfolio[0].length == 0) {
                   const dataPort = {
                     portfolio_id: gdetail.portfolio_id,
@@ -3435,10 +3975,16 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                   ]);
                 }
 
-                const [check_user] = await pool.execute("CALL getStudentById(?)", [rid]);
+                const [check_user] = await pool.execute(
+                  "CALL getStudentById(?)",
+                  [rid]
+                );
                 const user = check_user[0][0];
 
-                const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, rid]);
+                const [getgmid] = await pool.execute(
+                  "CALL check_GoalMToClear(?,?)",
+                  [gid, rid]
+                );
                 const gmid = getgmid[0][0]?.gmid;
 
                 const hdata8 = {
@@ -3456,11 +4002,15 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL8 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
-
-                const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
-                  gdetail.portfolio_id,
+                await pool.execute(callProcedureSQL8, [
+                  paramNamesString8,
+                  paramValuesString8,
                 ]);
+
+                const [getPortfolio] = await pool.execute(
+                  "CALL getPortfolio2(?)",
+                  [gdetail.portfolio_id]
+                );
                 const PortfolioName = getPortfolio[0][0]?.portfolio_name;
                 const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
                 const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
@@ -3490,11 +4040,10 @@ router.post("/goal/insert-goal-member", async (req, res) => {
               }
             }
           } else {
-            const [check_email] = await pool.execute("CALL check_goal_invited_email(?,?,?)", [
-              im,
-              gcreated_by,
-              gid,
-            ]);
+            const [check_email] = await pool.execute(
+              "CALL check_goal_invited_email(?,?,?)",
+              [im, gcreated_by, gid]
+            );
             if (check_email[0].length == 0) {
               const data9 = {
                 gid: gid,
@@ -3510,12 +4059,15 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL9 = `CALL InsertGoalsInvitedMembers(?, ?)`;
-              await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
-              const [check_portfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-                im,
-                gdetail.portfolio_id,
+              await pool.execute(callProcedureSQL9, [
+                paramNamesString9,
+                paramValuesString9,
               ]);
+
+              const [check_portfolio] = await pool.execute(
+                "CALL check_PortfolioMember(?,?)",
+                [im, gdetail.portfolio_id]
+              );
               if (check_portfolio[0].length == 0) {
                 const dataPort = {
                   portfolio_id: gdetail.portfolio_id,
@@ -3538,11 +4090,10 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                 ]);
               }
 
-              const [getigm_id] = await pool.execute("CALL check_goal_invited_email(?,?,?)", [
-                im,
-                gcreated_by,
-                gid,
-              ]);
+              const [getigm_id] = await pool.execute(
+                "CALL check_goal_invited_email(?,?,?)",
+                [im, gcreated_by, gid]
+              );
 
               const igm_id = getigm_id[0][0]?.igm_id;
 
@@ -3561,11 +4112,15 @@ router.post("/goal/insert-goal-member", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL10 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL10, [paramNamesString10, paramValuesString10]);
-
-              const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
-                gdetail.portfolio_id,
+              await pool.execute(callProcedureSQL10, [
+                paramNamesString10,
+                paramValuesString10,
               ]);
+
+              const [getPortfolio] = await pool.execute(
+                "CALL getPortfolio2(?)",
+                [gdetail.portfolio_id]
+              );
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
               const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
               const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
@@ -3603,53 +4158,68 @@ router.post("/goal/insert-goal-member", async (req, res) => {
     });
   } catch (error) {
     //console.log(error)
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //direct_remove_goalmanager
-router.patch("/goal/direct-remove-goal-manager/:gid/:gmember_id", async (req, res) => {
-  try {
-    const gid = req.params.gid;
-    const gmember_id = req.params.gmember_id;
-    const formattedDate = dateConversion();
+router.patch(
+  "/goal/direct-remove-goal-manager/:gid/:gmember_id",
+  async (req, res) => {
+    try {
+      const gid = req.params.gid;
+      const gmember_id = req.params.gmember_id;
+      const formattedDate = dateConversion();
 
-    const updateFieldsValues2 = `gmanager = ''`;
-    const upid = `gid  = '${gid}'`;
-    await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
+      const updateFieldsValues2 = `gmanager = ''`;
+      const upid = `gid  = '${gid}'`;
+      await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [gmember_id]);
-    const powner = check_powner[0][0];
-    const hdata = {
-      gid: gid,
-      h_date: formattedDate,
-      h_resource_id: powner.gmember_id,
-      h_resource: `${powner.first_name} ${powner.last_name}`,
-      h_description: `${powner.first_name} ${powner.last_name} Removed as a Goal Manager`,
-    };
+      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+        gmember_id,
+      ]);
+      const powner = check_powner[0][0];
+      const hdata = {
+        gid: gid,
+        h_date: formattedDate,
+        h_resource_id: powner.gmember_id,
+        h_resource: `${powner.first_name} ${powner.last_name}`,
+        h_description: `${powner.first_name} ${powner.last_name} Removed as a Goal Manager`,
+      };
 
-    const paramNamesString1 = Object.keys(hdata).join(", ");
-    const paramValuesString1 = Object.values(hdata)
-      .map((value) => `'${value}'`)
-      .join(", ");
+      const paramNamesString1 = Object.keys(hdata).join(", ");
+      const paramValuesString1 = Object.values(hdata)
+        .map((value) => `'${value}'`)
+        .join(", ");
 
-    const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+      const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+      await pool.execute(callProcedureSQL1, [
+        paramNamesString1,
+        paramValuesString1,
+      ]);
 
-    res.status(201).json({
-      message: "Manager Removed successfully.",
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+      res.status(201).json({
+        message: "Manager Removed successfully.",
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Internal Server Error", details: error.message });
+    }
   }
-});
+);
 
 //delete_gMember
 router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
   try {
     const gmid = req.params.gmid;
 
-    const [check_mem_idRes] = await pool.execute("CALL check_GoalPMToClear(?)", [gmid]);
+    const [check_mem_idRes] = await pool.execute(
+      "CALL check_GoalPMToClear(?)",
+      [gmid]
+    );
 
     const check_mem_id = check_mem_idRes[0];
     //console.log(check_mem_id);
@@ -3667,24 +4237,24 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
       const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
       const gmanager = gdetailRes[0][0]?.gmanager;
 
-      const [check_powner] = await pool.execute("CALL getStudentById(?)", [reg_id]);
+      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+        reg_id,
+      ]);
       const powner = check_powner[0][0];
 
-      const [getStrategies] = await pool.execute("CALL GoalTMOpenStrategies(?,?,?)", [
-        reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getStrategies] = await pool.execute(
+        "CALL GoalTMOpenStrategies(?,?,?)",
+        [reg_id, gid, portfolio_id]
+      );
       let strategies_count = 0;
       if (getStrategies[0]) {
         strategies_count = getStrategies[0].length;
       }
 
-      const [getProjects] = await pool.execute("CALL GoalTMOpenProjects(?,?,?)", [
-        reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getProjects] = await pool.execute(
+        "CALL GoalTMOpenProjects(?,?,?)",
+        [reg_id, gid, portfolio_id]
+      );
       let pro_count = 0;
       let only_pro_count = 0;
       if (getProjects[0]) {
@@ -3708,21 +4278,19 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
         task_count = getTasks[0].length;
       }
 
-      const [getSubtasks] = await pool.execute("CALL GoalTMOpenSubtasks(?,?,?)", [
-        reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getSubtasks] = await pool.execute(
+        "CALL GoalTMOpenSubtasks(?,?,?)",
+        [reg_id, gid, portfolio_id]
+      );
       let subtask_count = 0;
       if (getSubtasks[0]) {
         subtask_count = getSubtasks[0].length;
       }
 
-      const [getProjectTM] = await pool.execute("CALL GoalgetProjectOpenTM(?,?,?)", [
-        reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getProjectTM] = await pool.execute(
+        "CALL GoalgetProjectOpenTM(?,?,?)",
+        [reg_id, gid, portfolio_id]
+      );
       let pro_tm_count = 0;
       if (getProjectTM[0]) {
         pro_tm_count = getProjectTM[0].length;
@@ -3738,7 +4306,10 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
         if (gmanager == reg_id) {
           const updateFieldsValues2 = `gmanager = ''`;
           const upid = `gid  = '${gid}'`;
-          await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
+          await pool.execute("CALL UpdateGoals(?, ?)", [
+            updateFieldsValues2,
+            upid,
+          ]);
         }
 
         const hdata = {
@@ -3755,7 +4326,10 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+        await pool.execute(callProcedureSQL1, [
+          paramNamesString1,
+          paramValuesString1,
+        ]);
 
         const del1 = `gmid = '${gmid}'`;
         await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
@@ -3772,7 +4346,9 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
       }
     }
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
@@ -3780,7 +4356,10 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
 router.get("/goal/get-goal-team-member-accepted/:gid", async (req, res) => {
   const gid = req.params.gid;
   try {
-    const [rows, fields] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [gid]);
+    const [rows, fields] = await pool.execute(
+      "CALL GoalTeamMemberAccepted(?)",
+      [gid]
+    );
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -3796,13 +4375,19 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
   const gmid_id = req.body.gmid_id;
   const portfolio_id = req.body.portfolio_id;
   try {
-    const [check_gm] = await pool.execute("CALL check_GoalPMToClear(?)", [gmid_id]);
+    const [check_gm] = await pool.execute("CALL check_GoalPMToClear(?)", [
+      gmid_id,
+    ]);
     const check = check_gm[0][0];
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [reg_id]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      reg_id,
+    ]);
     const powner = check_powner[0][0];
 
-    const [check_new_mem] = await pool.execute("CALL getStudentById(?)", [new_reg_id]);
+    const [check_new_mem] = await pool.execute("CALL getStudentById(?)", [
+      new_reg_id,
+    ]);
     const new_mem = check_new_mem[0][0];
 
     if (check) {
@@ -3811,18 +4396,20 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
 
       const gid = check.gid;
 
-      const [getStrategiesRes] = await pool.execute("CALL GoalTMOpenStrategies(?,?,?)", [
-        old_reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getStrategiesRes] = await pool.execute(
+        "CALL GoalTMOpenStrategies(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
 
       const getStrategies = getStrategiesRes[0];
       if (getStrategies) {
         for (const ggs of getStrategies) {
           const updateFieldsValues = `screated_by = '${new_reg_id}'`;
           const upid = `sid  = '${ggs.sid}'`;
-          await pool.execute("CALL UpdateStrategies(?, ?)", [updateFieldsValues, upid]);
+          await pool.execute("CALL UpdateStrategies(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
           const hdata = {
             gid: ggs.gid,
             sid: ggs.sid,
@@ -3838,20 +4425,25 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
         }
       }
 
-      const [getProjectsRes] = await pool.execute("CALL GoalTMOpenProjects(?,?,?)", [
-        old_reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getProjectsRes] = await pool.execute(
+        "CALL GoalTMOpenProjects(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
       const getProjects = getProjectsRes[0];
       if (getProjects) {
         for (const gp of getProjects) {
           if (gp.pcreated_by == old_reg_id) {
-            const [check_if_tm] = await pool.execute("CALL TMOpenGoals(?,?)", [new_reg_id, gp.pid]);
+            const [check_if_tm] = await pool.execute("CALL TMOpenGoals(?,?)", [
+              new_reg_id,
+              gp.pid,
+            ]);
             if (check_if_tm[0]) {
               const del1 = `pmember = '${new_reg_id}' AND pid = '${gp.pid}'`;
               await pool.execute("CALL DeleteProjectMembers(?)", [del1]);
@@ -3859,7 +4451,10 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
 
             const updateFieldsValues = `pcreated_by = '${new_reg_id}'`;
             const upid = `pid  = '${gp.pid}'`;
-            await pool.execute("CALL UpdateProject(?, ?)", [updateFieldsValues, upid]);
+            await pool.execute("CALL UpdateProject(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
 
             const hdata = {
               gid: gp.gid,
@@ -3877,12 +4472,18 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
           }
           if (gp.pmanager == old_reg_id) {
             const updateFieldsValues = `pmanager = '${new_reg_id}'`;
             const upid = `pid  = '${gp.pid}'`;
-            await pool.execute("CALL UpdateProject(?, ?)", [updateFieldsValues, upid]);
+            await pool.execute("CALL UpdateProject(?, ?)", [
+              updateFieldsValues,
+              upid,
+            ]);
             const hdata = {
               gid: gp.gid,
               sid: gp.sid,
@@ -3899,11 +4500,17 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
           }
 
           // Check if team member in any project
-          const [checkTM] = await pool.execute("CALL CheckOpenTM(?,?)", [old_reg_id, gp.pid]);
+          const [checkTM] = await pool.execute("CALL CheckOpenTM(?,?)", [
+            old_reg_id,
+            gp.pid,
+          ]);
 
           if (checkTM[0][0]) {
             const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
@@ -3912,26 +4519,24 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
         }
       }
 
-      const [getProjectTMRes] = await pool.execute("CALL GoalgetProjectOpenTM(?,?,?)", [
-        old_reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getProjectTMRes] = await pool.execute(
+        "CALL GoalgetProjectOpenTM(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
       const getProjectTM = getProjectTMRes[0];
       if (getProjectTM) {
         for (const gtm of getProjectTM) {
-          const [check_if_already_tmRes] = await pool.execute("CALL check_if_already_tm(?,?,?)", [
-            new_reg_id,
-            gtm.pid,
-            portfolio_id,
-          ]);
+          const [check_if_already_tmRes] = await pool.execute(
+            "CALL check_if_already_tm(?,?,?)",
+            [new_reg_id, gtm.pid, portfolio_id]
+          );
 
           const check_if_already_tm = check_if_already_tmRes[0];
           if (check_if_already_tm.length == 0) {
-            const [check_if_pownerRes] = await pool.execute("CALL check_if_powner(?,?)", [
-              new_reg_id,
-              gtm.pid,
-            ]);
+            const [check_if_pownerRes] = await pool.execute(
+              "CALL check_if_powner(?,?)",
+              [new_reg_id, gtm.pid]
+            );
 
             const check_if_powner = check_if_pownerRes[0];
             if (check_if_powner.length == 0) {
@@ -3951,7 +4556,10 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL2 = `CALL InsertProjectMembers(?, ?)`;
-              await pool.execute(callProcedureSQL2, [paramNamesString2, paramValuesString2]);
+              await pool.execute(callProcedureSQL2, [
+                paramNamesString2,
+                paramValuesString2,
+              ]);
 
               const hdata = {
                 gid: gtm.pid,
@@ -3969,7 +4577,10 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+              await pool.execute(callProcedureSQL1, [
+                paramNamesString1,
+                paramValuesString1,
+              ]);
             }
             const del2 = `pmember = '${old_reg_id}' AND portfolio_id = '${portfolio_id}'`;
             await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
@@ -3988,11 +4599,17 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
         for (const gt of getTasks) {
           const updateFieldsValues = `tassignee = '${new_reg_id}'`;
           const upid = `tid  = '${gt.tid}' AND tassignee  = '${old_reg_id}'`;
-          await pool.execute("CALL UpdateTask(?, ?)", [updateFieldsValues, upid]);
+          await pool.execute("CALL UpdateTask(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
 
           const updateFieldsValues2 = `tcreated_by = '${reg_id}'`;
           const upid2 = `tid  = '${gt.tid}'`;
-          await pool.execute("CALL UpdateTask(?, ?)", [updateFieldsValues2, upid2]);
+          await pool.execute("CALL UpdateTask(?, ?)", [
+            updateFieldsValues2,
+            upid2,
+          ]);
 
           const hdata = {
             gid: gt.gid,
@@ -4010,26 +4627,34 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
         }
       }
 
-      const [getSubtasksRes] = await pool.execute("CALL GoalTMOpenSubtasks(?,?,?)", [
-        old_reg_id,
-        gid,
-        portfolio_id,
-      ]);
+      const [getSubtasksRes] = await pool.execute(
+        "CALL GoalTMOpenSubtasks(?,?,?)",
+        [old_reg_id, gid, portfolio_id]
+      );
 
       const getSubtasks = getSubtasksRes[0];
       if (getSubtasks) {
         for (const gs of getSubtasks) {
           const updateFieldsValues = `stassignee = '${new_reg_id}'`;
           const upid = `stid  = '${gs.stid}' AND stassignee  = '${old_reg_id}'`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [updateFieldsValues, upid]);
+          await pool.execute("CALL UpdateSubtask(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
 
           const updateFieldsValues2 = `stcreated_by = '${reg_id}'`;
           const upid2 = `stid  = '${gs.stid}'`;
-          await pool.execute("CALL UpdateSubtask(?, ?)", [updateFieldsValues2, upid2]);
+          await pool.execute("CALL UpdateSubtask(?, ?)", [
+            updateFieldsValues2,
+            upid2,
+          ]);
 
           const hdata = {
             gid: gs.gid,
@@ -4047,7 +4672,10 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
         }
       }
 
@@ -4057,7 +4685,10 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
       if (gmanager == old_reg_id) {
         const updateFieldsValues2 = `gmanager = ''`;
         const upid = `gid  = '${gid}'`;
-        await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
+        await pool.execute("CALL UpdateGoals(?, ?)", [
+          updateFieldsValues2,
+          upid,
+        ]);
       }
 
       const hdata = {
@@ -4074,7 +4705,10 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
         .join(", ");
 
       const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+      await pool.execute(callProcedureSQL1, [
+        paramNamesString1,
+        paramValuesString1,
+      ]);
 
       const del1 = `gmid = '${gmid_id}'`;
       await pool.execute("CALL DeleteGoalsMembers(?)", [del1]);
@@ -4100,7 +4734,9 @@ router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
     const upid = `gid  = '${gid}'`;
     await pool.execute("CALL UpdateGoals(?, ?)", [updateFieldsValues2, upid]);
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [gmember_id]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      gmember_id,
+    ]);
     const powner = check_powner[0][0];
     const hdata = {
       gid: gid,
@@ -4116,13 +4752,18 @@ router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     res.status(201).json({
       message: "Manager assigned successfully.",
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
@@ -4136,7 +4777,9 @@ router.patch("/goal/remove-goal-invited-member", async (req, res) => {
 
     const formattedDate = dateConversion();
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [user_id]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      user_id,
+    ]);
     const powner = check_powner[0][0];
 
     const hdata = {
@@ -4154,7 +4797,10 @@ router.patch("/goal/remove-goal-invited-member", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     const del1 = `igm_id = '${igm_id}'`;
     await pool.execute("CALL DeleteGoalsInvitedMembers(?)", [del1]);
@@ -4163,134 +4809,15 @@ router.patch("/goal/remove-goal-invited-member", async (req, res) => {
       message: "Removed successfully.",
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //add_SuggestedGMember
-router.patch("/goal/add-suggested-goal-member/:user_id/:gid/:suggest_id", async (req, res) => {
-  try {
-    const user_id = req.params.user_id;
-    const gid = req.params.gid;
-    const suggest_id = req.params.suggest_id;
-
-    const formattedDate = dateConversion();
-
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [user_id]);
-    const powner = check_powner[0][0];
-
-    const [check_user] = await pool.execute("CALL getStudentById(?)", [suggest_id]);
-    const user = check_user[0][0];
-
-    const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
-    const gdetail = gdetailRes[0][0];
-
-    const [check_Goal_members] = await pool.execute("CALL check_GoalMToClear(?,?)", [
-      gid,
-      suggest_id,
-    ]);
-    if (check_Goal_members[0].length == 0) {
-      const otherFields = {
-        status: "approved",
-        approve_date: "${formattedDate}",
-      };
-      const updateFieldsValues1 = convertObjectToProcedureParams(otherFields);
-      const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
-      await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [updateFieldsValues1, upid]);
-
-      const hdata = {
-        gid: gid,
-        h_date: formattedDate,
-        h_resource_id: powner.reg_id,
-        h_resource: `${powner.first_name} ${powner.last_name}`,
-        h_description: `${user.first_name} ${user.last_name} is approved by ${powner.first_name} ${powner.last_name}`,
-      };
-
-      const paramNamesString1 = Object.keys(hdata).join(", ");
-      const paramValuesString1 = Object.values(hdata)
-        .map((value) => `'${value}'`)
-        .join(", ");
-
-      const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
-
-      const data5 = {
-        gid: gid,
-        portfolio_id: gdetail.portfolio_id,
-        gmember: suggest_id,
-        status: `send`,
-        gcreated_by: user_id,
-        sent_date: formattedDate,
-        sent_notify_clear: `no`,
-      };
-
-      const paramNamesString5 = Object.keys(data5).join(", ");
-      const paramValuesString5 = Object.values(data5)
-        .map((value) => `'${value}'`)
-        .join(", ");
-
-      const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-      await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
-
-      const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, suggest_id]);
-      const gmid = getgmid[0][0]?.gmid;
-
-      const hdata6 = {
-        gid: gid,
-        h_date: formattedDate,
-        h_resource_id: powner.reg_id,
-        h_resource: `${powner.first_name} ${powner.last_name}`,
-        h_description: `${powner.first_name} ${powner.last_name} sent goal team member request to ${user.first_name} ${user.last_name}`,
-        gmember_id: gmid,
-      };
-
-      const paramNamesString6 = Object.keys(hdata6).join(", ");
-      const paramValuesString6 = Object.values(hdata6)
-        .map((value) => `'${value}'`)
-        .join(", ");
-
-      const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
-
-      const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolio2(?)", [
-        gdetail.portfolio_id,
-      ]);
-      const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
-
-      const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-      const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
-      const mailOptions = {
-        from: process.env.SMTP_USER,
-        to: user.email_address,
-        subject: "Goal Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-          `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
-        ),
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          res.status(500).json({
-            error: "Failed to send invitation.",
-          });
-        } else {
-          res.status(201).json({
-            message: "Added successfully.",
-          });
-        }
-      });
-    }
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
-  }
-});
-
-//add_Suggested_IGmember
 router.patch(
-  "/goal/add-invited-suggested-goal-member/:user_id/:gid/:suggest_id",
+  "/goal/add-suggested-goal-member/:user_id/:gid/:suggest_id",
   async (req, res) => {
     try {
       const user_id = req.params.user_id;
@@ -4299,24 +4826,34 @@ router.patch(
 
       const formattedDate = dateConversion();
 
-      const [check_powner] = await pool.execute("CALL getStudentById(?)", [user_id]);
+      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
       const powner = check_powner[0][0];
+
+      const [check_user] = await pool.execute("CALL getStudentById(?)", [
+        suggest_id,
+      ]);
+      const user = check_user[0][0];
 
       const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
       const gdetail = gdetailRes[0][0];
 
-      const [check_if_registered] = await pool.execute("CALL selectLogin(?)", [suggest_id]);
-      if (check_if_registered[0].length > 0) {
-        const [check_user] = await pool.execute("CALL getStudentById(?)", [suggest_id]);
-        const user = check_user[0][0];
+      const [check_Goal_members] = await pool.execute(
+        "CALL check_GoalMToClear(?,?)",
+        [gid, suggest_id]
+      );
+      if (check_Goal_members[0].length == 0) {
         const otherFields = {
           status: "approved",
           approve_date: "${formattedDate}",
         };
         const updateFieldsValues1 = convertObjectToProcedureParams(otherFields);
-
         const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
-        await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [updateFieldsValues1, upid]);
+        await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+          updateFieldsValues1,
+          upid,
+        ]);
 
         const hdata = {
           gid: gid,
@@ -4332,7 +4869,10 @@ router.patch(
           .join(", ");
 
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+        await pool.execute(callProcedureSQL1, [
+          paramNamesString1,
+          paramValuesString1,
+        ]);
 
         const data5 = {
           gid: gid,
@@ -4350,9 +4890,15 @@ router.patch(
           .join(", ");
 
         const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
-        await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+        await pool.execute(callProcedureSQL5, [
+          paramNamesString5,
+          paramValuesString5,
+        ]);
 
-        const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [gid, suggest_id]);
+        const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [
+          gid,
+          suggest_id,
+        ]);
         const gmid = getgmid[0][0]?.gmid;
 
         const hdata6 = {
@@ -4370,12 +4916,160 @@ router.patch(
           .join(", ");
 
         const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-        await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
-
-        const [getportfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-          suggest_id,
-          gdetail.portfolio_id,
+        await pool.execute(callProcedureSQL6, [
+          paramNamesString6,
+          paramValuesString6,
         ]);
+
+        const [check_Portfolio_owner_id] = await pool.execute(
+          "CALL getPortfolio2(?)",
+          [gdetail.portfolio_id]
+        );
+        const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
+
+        const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
+        const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const mailOptions = {
+          from: process.env.SMTP_USER,
+          to: user.email_address,
+          subject: "Goal Request | Decision 168",
+          html: generateEmailTemplate(
+            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
+          Just click the appropriate button below to join the Goal or request more information.
+          Portfolio : ${PortfolioName}`,
+            `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+          ),
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            res.status(500).json({
+              error: "Failed to send invitation.",
+            });
+          } else {
+            res.status(201).json({
+              message: "Added successfully.",
+            });
+          }
+        });
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Internal Server Error", details: error.message });
+    }
+  }
+);
+
+//add_Suggested_IGmember
+router.patch(
+  "/goal/add-invited-suggested-goal-member/:user_id/:gid/:suggest_id",
+  async (req, res) => {
+    try {
+      const user_id = req.params.user_id;
+      const gid = req.params.gid;
+      const suggest_id = req.params.suggest_id;
+
+      const formattedDate = dateConversion();
+
+      const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+        user_id,
+      ]);
+      const powner = check_powner[0][0];
+
+      const [gdetailRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
+      const gdetail = gdetailRes[0][0];
+
+      const [check_if_registered] = await pool.execute("CALL selectLogin(?)", [
+        suggest_id,
+      ]);
+      if (check_if_registered[0].length > 0) {
+        const [check_user] = await pool.execute("CALL getStudentById(?)", [
+          suggest_id,
+        ]);
+        const user = check_user[0][0];
+        const otherFields = {
+          status: "approved",
+          approve_date: "${formattedDate}",
+        };
+        const updateFieldsValues1 = convertObjectToProcedureParams(otherFields);
+
+        const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
+        await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+          updateFieldsValues1,
+          upid,
+        ]);
+
+        const hdata = {
+          gid: gid,
+          h_date: formattedDate,
+          h_resource_id: powner.reg_id,
+          h_resource: `${powner.first_name} ${powner.last_name}`,
+          h_description: `${user.first_name} ${user.last_name} is approved by ${powner.first_name} ${powner.last_name}`,
+        };
+
+        const paramNamesString1 = Object.keys(hdata).join(", ");
+        const paramValuesString1 = Object.values(hdata)
+          .map((value) => `'${value}'`)
+          .join(", ");
+
+        const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+        await pool.execute(callProcedureSQL1, [
+          paramNamesString1,
+          paramValuesString1,
+        ]);
+
+        const data5 = {
+          gid: gid,
+          portfolio_id: gdetail.portfolio_id,
+          gmember: suggest_id,
+          status: `send`,
+          gcreated_by: user_id,
+          sent_date: formattedDate,
+          sent_notify_clear: `no`,
+        };
+
+        const paramNamesString5 = Object.keys(data5).join(", ");
+        const paramValuesString5 = Object.values(data5)
+          .map((value) => `'${value}'`)
+          .join(", ");
+
+        const callProcedureSQL5 = `CALL InsertGoalsMembers(?, ?)`;
+        await pool.execute(callProcedureSQL5, [
+          paramNamesString5,
+          paramValuesString5,
+        ]);
+
+        const [getgmid] = await pool.execute("CALL check_GoalMToClear(?,?)", [
+          gid,
+          suggest_id,
+        ]);
+        const gmid = getgmid[0][0]?.gmid;
+
+        const hdata6 = {
+          gid: gid,
+          h_date: formattedDate,
+          h_resource_id: powner.reg_id,
+          h_resource: `${powner.first_name} ${powner.last_name}`,
+          h_description: `${powner.first_name} ${powner.last_name} sent goal team member request to ${user.first_name} ${user.last_name}`,
+          gmember_id: gmid,
+        };
+
+        const paramNamesString6 = Object.keys(hdata6).join(", ");
+        const paramValuesString6 = Object.values(hdata6)
+          .map((value) => `'${value}'`)
+          .join(", ");
+
+        const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
+        await pool.execute(callProcedureSQL6, [
+          paramNamesString6,
+          paramValuesString6,
+        ]);
+
+        const [getportfolio] = await pool.execute(
+          "CALL check_PortfolioMember(?,?)",
+          [suggest_id, gdetail.portfolio_id]
+        );
         if (getportfolio[0].length == 0) {
           const dataPort = {
             portfolio_id: gdetail.portfolio_id,
@@ -4392,12 +5086,16 @@ router.patch(
             .join(", ");
 
           const callProcedureSQLPort = `CALL InsertProjectPortfolioMember(?, ?)`;
-          await pool.execute(callProcedureSQLPort, [paramNamesStringPort, paramValuesStringPort]);
+          await pool.execute(callProcedureSQLPort, [
+            paramNamesStringPort,
+            paramValuesStringPort,
+          ]);
         }
 
-        const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolio2(?)", [
-          gdetail.portfolio_id,
-        ]);
+        const [check_Portfolio_owner_id] = await pool.execute(
+          "CALL getPortfolio2(?)",
+          [gdetail.portfolio_id]
+        );
         const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
 
         const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
@@ -4426,18 +5124,22 @@ router.patch(
           }
         });
       } else {
-        const [check_email] = await pool.execute("CALL check_goal_invited_email2(?,?)", [
-          suggest_id,
-          gid,
-        ]);
+        const [check_email] = await pool.execute(
+          "CALL check_goal_invited_email2(?,?)",
+          [suggest_id, gid]
+        );
         if (check_email[0].length == 0) {
           const otherFields = {
             status: "approved",
             approve_date: "${formattedDate}",
           };
-          const updateFieldsValues1 = convertObjectToProcedureParams(otherFields);
+          const updateFieldsValues1 =
+            convertObjectToProcedureParams(otherFields);
           const upid = `suggest_id  = '${suggest_id}' AND gid  = '${gid}'`;
-          await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [updateFieldsValues1, upid]);
+          await pool.execute("CALL UpdateGoalsSuggestedMembers(?, ?)", [
+            updateFieldsValues1,
+            upid,
+          ]);
 
           const hdata = {
             gid: gid,
@@ -4453,7 +5155,10 @@ router.patch(
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
 
           const data9 = {
             gid: gid,
@@ -4469,12 +5174,15 @@ router.patch(
             .join(", ");
 
           const callProcedureSQL9 = `CALL InsertGoalsInvitedMembers(?, ?)`;
-          await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
-          const [getportfolio] = await pool.execute("CALL check_PortfolioMember(?,?)", [
-            suggest_id,
-            gdetail.portfolio_id,
+          await pool.execute(callProcedureSQL9, [
+            paramNamesString9,
+            paramValuesString9,
           ]);
+
+          const [getportfolio] = await pool.execute(
+            "CALL check_PortfolioMember(?,?)",
+            [suggest_id, gdetail.portfolio_id]
+          );
           if (getportfolio[0].length == 0) {
             const dataPort = {
               portfolio_id: gdetail.portfolio_id,
@@ -4491,13 +5199,16 @@ router.patch(
               .join(", ");
 
             const callProcedureSQLPort = `CALL InsertProjectPortfolioMember(?, ?)`;
-            await pool.execute(callProcedureSQLPort, [paramNamesStringPort, paramValuesStringPort]);
+            await pool.execute(callProcedureSQLPort, [
+              paramNamesStringPort,
+              paramValuesStringPort,
+            ]);
           }
 
-          const [getigm_id] = await pool.execute("CALL check_goal_invited_email2(?,?)", [
-            suggest_id,
-            gid,
-          ]);
+          const [getigm_id] = await pool.execute(
+            "CALL check_goal_invited_email2(?,?)",
+            [suggest_id, gid]
+          );
 
           const igm_id = getigm_id[0][0]?.igm_id;
 
@@ -4516,11 +5227,15 @@ router.patch(
             .join(", ");
 
           const callProcedureSQL10 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL10, [paramNamesString10, paramValuesString10]);
-
-          const [check_Portfolio_owner_id] = await pool.execute("CALL getPortfolio2(?)", [
-            gdetail.portfolio_id,
+          await pool.execute(callProcedureSQL10, [
+            paramNamesString10,
+            paramValuesString10,
           ]);
+
+          const [check_Portfolio_owner_id] = await pool.execute(
+            "CALL getPortfolio2(?)",
+            [gdetail.portfolio_id]
+          );
           const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
 
           const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
@@ -4551,7 +5266,9 @@ router.patch(
         }
       }
     } catch (error) {
-      res.status(500).json({ error: "Internal Server Error", details: error.message });
+      res
+        .status(500)
+        .json({ error: "Internal Server Error", details: error.message });
     }
   }
 );
@@ -4572,7 +5289,9 @@ router.get("/goal/strategy-tasks/:sid", async (req, res) => {
 router.get("/goal/strategy-subtasks/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute("CALL Strategy_subtasks(?)", [sid]);
+    const [rows, fields] = await pool.execute("CALL Strategy_subtasks(?)", [
+      sid,
+    ]);
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -4586,31 +5305,45 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
   try {
     const [rows] = await pool.execute("CALL StrategyDetail(?)", [sid]);
 
-    const [getGoalRes] = await pool.execute("CALL GoalDetail(?)", [rows[0][0].gid]);
+    const [getGoalRes] = await pool.execute("CALL GoalDetail(?)", [
+      rows[0][0].gid,
+    ]);
     const get_goal_name = getGoalRes[0][0].gname;
     const get_goal_manager = getGoalRes[0][0].gmanager;
     const get_goal_owner = getGoalRes[0][0].gcreated_by;
 
-    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [rows[0][0].gdept_id]);
+    const [getDeptName] = await pool.execute("CALL get_PDepartment(?)", [
+      rows[0][0].gdept_id,
+    ]);
     const get_dept_name = getDeptName[0][0].department;
 
     const [getCreatedByName] = await pool.execute("CALL getStudentById(?)", [
       rows[0][0].screated_by,
     ]);
     const get_created_by_name =
-      getCreatedByName[0][0].first_name + " " + getCreatedByName[0][0].last_name;
+      getCreatedByName[0][0].first_name +
+      " " +
+      getCreatedByName[0][0].last_name;
 
-    const [kpi_t_progress_done_rows] = await pool.execute("CALL Strategyprogress_done(?)", [sid]);
+    const [kpi_t_progress_done_rows] = await pool.execute(
+      "CALL Strategyprogress_done(?)",
+      [sid]
+    );
 
-    const [kpi_t_progress_total_rows] = await pool.execute("CALL Strategyprogress_total(?)", [sid]);
+    const [kpi_t_progress_total_rows] = await pool.execute(
+      "CALL Strategyprogress_total(?)",
+      [sid]
+    );
 
-    const [kpi_st_progress_done_rows] = await pool.execute("CALL Strategysub_progress_done(?)", [
-      sid,
-    ]);
+    const [kpi_st_progress_done_rows] = await pool.execute(
+      "CALL Strategysub_progress_done(?)",
+      [sid]
+    );
 
-    const [kpi_st_progress_total_rows] = await pool.execute("CALL Strategysub_progress_total(?)", [
-      sid,
-    ]);
+    const [kpi_st_progress_total_rows] = await pool.execute(
+      "CALL Strategysub_progress_total(?)",
+      [sid]
+    );
 
     let kpi_progress = 0;
     let kpi_total_pro_progress = 0;
@@ -4623,11 +5356,14 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
     if (kpi_progress_total || kpi_sub_progress_total) {
       kpi_total_pro_progress_done = kpi_progress_done + kpi_sub_progress_done;
       kpi_total_pro_progress = kpi_progress_total + kpi_sub_progress_total;
-      const kpi_progressCal = (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
+      const kpi_progressCal =
+        (kpi_total_pro_progress_done / kpi_total_pro_progress) * 100;
       kpi_progress = Math.round(kpi_progressCal);
     }
 
-    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [rows[0][0].portfolio_id]);
+    const [get_portfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      rows[0][0].portfolio_id,
+    ]);
     const get_portfolio_createdby_id = get_portfolio[0][0]?.portfolio_createdby;
 
     const results = {
@@ -4643,18 +5379,32 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
       kpi_total_pro_progress_done,
     };
 
-    const [prorows] = await pool.execute("CALL StrategyAllProjectsList(?)", [sid]);
+    const [prorows] = await pool.execute("CALL StrategyAllProjectsList(?)", [
+      sid,
+    ]);
 
     const promises = prorows[0].map(async (item) => {
       const { pid } = item;
 
-      const [t_progress_done_rows] = await pool.execute("CALL progress_done(?)", [pid]);
+      const [t_progress_done_rows] = await pool.execute(
+        "CALL progress_done(?)",
+        [pid]
+      );
 
-      const [t_progress_total_rows] = await pool.execute("CALL progress_total(?)", [pid]);
+      const [t_progress_total_rows] = await pool.execute(
+        "CALL progress_total(?)",
+        [pid]
+      );
 
-      const [st_progress_done_rows] = await pool.execute("CALL sub_progress_done(?)", [pid]);
+      const [st_progress_done_rows] = await pool.execute(
+        "CALL sub_progress_done(?)",
+        [pid]
+      );
 
-      const [st_progress_total_rows] = await pool.execute("CALL sub_progress_total(?)", [pid]);
+      const [st_progress_total_rows] = await pool.execute(
+        "CALL sub_progress_total(?)",
+        [pid]
+      );
 
       let progressRes = 0;
       let total_pro_progress = 0;
@@ -4667,7 +5417,8 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
       if (progress_total || sub_progress_total) {
         total_pro_progress_done = progress_done + sub_progress_done;
         total_pro_progress = progress_total + sub_progress_total;
-        const progressCal = (total_pro_progress_done / total_pro_progress) * 100;
+        const progressCal =
+          (total_pro_progress_done / total_pro_progress) * 100;
         progressRes = Math.round(progressCal);
       }
 
@@ -4684,7 +5435,7 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
     res.status(200).json({
       kpiRes: results,
       projectRes: projectResults,
-      goalId: rows[0][0].gid
+      goalId: rows[0][0].gid,
     });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -4696,11 +5447,16 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
 router.get("/goal/view-history-date-strategy/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute("CALL view_history_date_strategy(?)", [sid]);
+    const [rows, fields] = await pool.execute(
+      "CALL view_history_date_strategy(?)",
+      [sid]
+    );
 
     const [KpiDetail] = await pool.execute("CALL StrategyDetail(?)", [sid]);
 
-    res.status(200).json({ history_dates: rows[0], KpiDetail: KpiDetail[0][0] });
+    res
+      .status(200)
+      .json({ history_dates: rows[0], KpiDetail: KpiDetail[0][0] });
   } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -4722,7 +5478,9 @@ router.patch("/goal/update-strategies", async (req, res) => {
 
     await pool.execute(storedProcedure);
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [user_id]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      user_id,
+    ]);
     const powner = check_powner[0][0];
 
     const hdata = {
@@ -4739,27 +5497,38 @@ router.patch("/goal/update-strategies", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     res.status(201).json({
       message: "KPI updated successfully.",
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //view_history_date_wise_strategy
-router.get("/goal/view-history-date-wise-strategy/:sid/:hdate", async (req, res) => {
-  const { sid, hdate } = req.params;
-  try {
-    const [rows, fields] = await pool.execute("CALL view_history_strategy(?,?)", [sid, hdate]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.get(
+  "/goal/view-history-date-wise-strategy/:sid/:hdate",
+  async (req, res) => {
+    const { sid, hdate } = req.params;
+    try {
+      const [rows, fields] = await pool.execute(
+        "CALL view_history_strategy(?,?)",
+        [sid, hdate]
+      );
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 //view_history_date_range_strategy
 router.get("/goal/view-history-date-range-strategy/:sid", async (req, res) => {
@@ -4767,11 +5536,10 @@ router.get("/goal/view-history-date-range-strategy/:sid", async (req, res) => {
   const start_date = req.body.start_date;
   const end_date = req.body.end_date;
   try {
-    const [rows, fields] = await pool.execute("CALL view_history_date_range_strategy(?,?,?)", [
-      sid,
-      start_date,
-      end_date,
-    ]);
+    const [rows, fields] = await pool.execute(
+      "CALL view_history_date_range_strategy(?,?,?)",
+      [sid, start_date, end_date]
+    );
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -4783,7 +5551,10 @@ router.get("/goal/view-history-date-range-strategy/:sid", async (req, res) => {
 router.get("/goal/view-all-history-strategy/:sid", async (req, res) => {
   const sid = req.params.sid;
   try {
-    const [rows, fields] = await pool.execute("CALL view_all_history_strategy(?)", [sid]);
+    const [rows, fields] = await pool.execute(
+      "CALL view_all_history_strategy(?)",
+      [sid]
+    );
     res.status(200).json(rows[0]);
   } catch (error) {
     console.error("Error executing stored procedure:", error);
@@ -4798,7 +5569,9 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
     let { sname } = req.body;
     const { sid, copy_detail, cust_strategy, ...otherFields } = req.body;
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [screated_by]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      screated_by,
+    ]);
     const powner = check_powner[0][0];
 
     const [sdetailRes] = await pool.execute("CALL StrategyDetail(?)", [sid]);
@@ -4820,7 +5593,9 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
       ...otherFields,
       ...additionalFields,
     };
-    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(", ");
+    const paramNamesString = Object.keys(requestBodyWithAdditionalFields).join(
+      ", "
+    );
     const paramValuesString = Object.values(requestBodyWithAdditionalFields)
       .map((value) => `'${value}'`)
       .join(", ");
@@ -4828,10 +5603,15 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
     const callProcedureSQL = `CALL InsertStrategies(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
-    const [getKPIRes] = await pool.execute("CALL GetInsertedKPI(?,?)", [sdetail.gid, screated_by]);
+    const [getKPIRes] = await pool.execute("CALL GetInsertedKPI(?,?)", [
+      sdetail.gid,
+      screated_by,
+    ]);
     const getKPI = getKPIRes[0][0];
 
-    const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [getKPI.portfolio_id]);
+    const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+      getKPI.portfolio_id,
+    ]);
     const PortfolioName = getPortfolio[0][0]?.portfolio_name;
 
     const hdata = {
@@ -4849,11 +5629,17 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
       .join(", ");
 
     const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-    await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+    await pool.execute(callProcedureSQL1, [
+      paramNamesString1,
+      paramValuesString1,
+    ]);
 
     if (copy_detail == "everything") {
       //projects
-      const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsListASC(?)", [sid]);
+      const [s_projectsRes] = await pool.execute(
+        "CALL StrategyAllProjectsListASC(?)",
+        [sid]
+      );
       const s_projects = s_projectsRes[0];
 
       if (s_projects && s_projects.length > 0) {
@@ -4880,9 +5666,15 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL = `CALL InsertProject(?, ?)`;
-          await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+          await pool.execute(callProcedureSQL, [
+            paramNamesString,
+            paramValuesString,
+          ]);
 
-          const [getProjectRes] = await pool.execute("CALL GetInsertedProject(?)", [screated_by]);
+          const [getProjectRes] = await pool.execute(
+            "CALL GetInsertedProject(?)",
+            [screated_by]
+          );
           const getProject = getProjectRes[0][0];
 
           const hdata = {
@@ -4901,10 +5693,16 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
             .join(", ");
 
           const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-          await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
 
           //Check Project Members
-          const [getMemberProjectRes] = await pool.execute("CALL getMemberProject(?)", [sp.pid]);
+          const [getMemberProjectRes] = await pool.execute(
+            "CALL getMemberProject(?)",
+            [sp.pid]
+          );
           const getMemberProject = getMemberProjectRes[0];
 
           //console.log(sp.pid);
@@ -4927,15 +5725,21 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL7 = `CALL InsertProjectMembers(?, ?)`;
-              await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
+              await pool.execute(callProcedureSQL7, [
+                paramNamesString7,
+                paramValuesString7,
+              ]);
 
-              const [check_user] = await pool.execute("CALL getStudentById(?)", [pm.pmember]);
+              const [check_user] = await pool.execute(
+                "CALL getStudentById(?)",
+                [pm.pmember]
+              );
               const user = check_user[0][0];
 
-              const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [
-                pm.pmember,
-                getProject.pid,
-              ]);
+              const [getpm_id] = await pool.execute(
+                "CALL check_ProjectMToClear(?,?)",
+                [pm.pmember, getProject.pid]
+              );
               const pm_id = getpm_id[0][0]?.pm_id;
 
               const hdata6 = {
@@ -4955,7 +5759,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+              await pool.execute(callProcedureSQL6, [
+                paramNamesString6,
+                paramValuesString6,
+              ]);
 
               const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
@@ -5014,7 +5821,9 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
           }
 
           //Check Project Tasks
-          const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [sp.pid]);
+          const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [
+            sp.pid,
+          ]);
           const p_tasks = p_tasksRes[0];
           if (p_tasks && p_tasks.length > 0) {
             for (const pt of p_tasks) {
@@ -5054,8 +5863,14 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL8 = `CALL InsertTask(?, ?)`;
-              await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
-              const [getTaskRes] = await pool.execute("CALL GetInsertedTask(?)", [screated_by]);
+              await pool.execute(callProcedureSQL8, [
+                paramNamesString8,
+                paramValuesString8,
+              ]);
+              const [getTaskRes] = await pool.execute(
+                "CALL GetInsertedTask(?)",
+                [screated_by]
+              );
               const getTask = getTaskRes[0][0];
 
               const hdata9 = {
@@ -5075,7 +5890,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 .join(", ");
 
               const callProcedureSQL9 = `CALL InsertProjectHistory(?, ?)`;
-              await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
+              await pool.execute(callProcedureSQL9, [
+                paramNamesString9,
+                paramValuesString9,
+              ]);
 
               //Check Subtasks
               const [Check_Task_SubtasksRes] = await pool.execute(
@@ -5086,7 +5904,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
               if (Check_Task_Subtasks && Check_Task_Subtasks.length > 0) {
                 for (const ts of Check_Task_Subtasks) {
                   const project_name = sp.pname;
-                  const letter = project_name.trim().substring(0, 2).toUpperCase();
+                  const letter = project_name
+                    .trim()
+                    .substring(0, 2)
+                    .toUpperCase();
                   const random_num = Math.floor(Math.random() * 10000) + 1;
                   const get_stcode = `${letter}-${random_num}`;
 
@@ -5123,11 +5944,15 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                     .join(", ");
 
                   const callProcedureSQL9 = `CALL InsertSubtask(?, ?)`;
-                  await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
-                  const [getSubtaskRes] = await pool.execute("CALL GetInsertedSubtask(?)", [
-                    screated_by,
+                  await pool.execute(callProcedureSQL9, [
+                    paramNamesString9,
+                    paramValuesString9,
                   ]);
+
+                  const [getSubtaskRes] = await pool.execute(
+                    "CALL GetInsertedSubtask(?)",
+                    [screated_by]
+                  );
                   const getSubtask = getSubtaskRes[0][0];
 
                   const hdata10 = {
@@ -5147,7 +5972,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                     .join(", ");
 
                   const callProcedureSQL10 = `CALL InsertProjectHistory(?, ?)`;
-                  await pool.execute(callProcedureSQL10, [paramNamesString10, paramValuesString10]);
+                  await pool.execute(callProcedureSQL10, [
+                    paramNamesString10,
+                    paramValuesString10,
+                  ]);
                 }
               }
             }
@@ -5160,7 +5988,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
       if (cust_strategy == "1") {
         //Import Strategies with Projects Only
         //projects
-        const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsListASC(?)", [sid]);
+        const [s_projectsRes] = await pool.execute(
+          "CALL StrategyAllProjectsListASC(?)",
+          [sid]
+        );
         const s_projects = s_projectsRes[0];
 
         if (s_projects && s_projects.length > 0) {
@@ -5181,15 +6012,22 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
               dept_id: getKPI.gdept_id,
             };
 
-            const paramNamesString = Object.keys(insertProjectFields).join(", ");
+            const paramNamesString =
+              Object.keys(insertProjectFields).join(", ");
             const paramValuesString = Object.values(insertProjectFields)
               .map((value) => `'${value}'`)
               .join(", ");
 
             const callProcedureSQL = `CALL InsertProject(?, ?)`;
-            await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+            await pool.execute(callProcedureSQL, [
+              paramNamesString,
+              paramValuesString,
+            ]);
 
-            const [getProjectRes] = await pool.execute("CALL GetInsertedProject(?)", [screated_by]);
+            const [getProjectRes] = await pool.execute(
+              "CALL GetInsertedProject(?)",
+              [screated_by]
+            );
             const getProject = getProjectRes[0][0];
 
             const hdata = {
@@ -5208,7 +6046,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
           }
         }
       }
@@ -5216,7 +6057,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
       if (cust_strategy == "2") {
         //Import Strategies with Projects, Task & Its Subtask without assignee
         //projects
-        const [s_projectsRes] = await pool.execute("CALL StrategyAllProjectsListASC(?)", [sid]);
+        const [s_projectsRes] = await pool.execute(
+          "CALL StrategyAllProjectsListASC(?)",
+          [sid]
+        );
         const s_projects = s_projectsRes[0];
 
         if (s_projects && s_projects.length > 0) {
@@ -5237,15 +6081,22 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
               dept_id: getKPI.gdept_id,
             };
 
-            const paramNamesString = Object.keys(insertProjectFields).join(", ");
+            const paramNamesString =
+              Object.keys(insertProjectFields).join(", ");
             const paramValuesString = Object.values(insertProjectFields)
               .map((value) => `'${value}'`)
               .join(", ");
 
             const callProcedureSQL = `CALL InsertProject(?, ?)`;
-            await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+            await pool.execute(callProcedureSQL, [
+              paramNamesString,
+              paramValuesString,
+            ]);
 
-            const [getProjectRes] = await pool.execute("CALL GetInsertedProject(?)", [screated_by]);
+            const [getProjectRes] = await pool.execute(
+              "CALL GetInsertedProject(?)",
+              [screated_by]
+            );
             const getProject = getProjectRes[0][0];
 
             const hdata = {
@@ -5264,15 +6115,23 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
+            await pool.execute(callProcedureSQL1, [
+              paramNamesString1,
+              paramValuesString1,
+            ]);
 
             //Check Project Tasks
-            const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [sp.pid]);
+            const [p_tasksRes] = await pool.execute("CALL pro_all_tasks(?)", [
+              sp.pid,
+            ]);
             const p_tasks = p_tasksRes[0];
             if (p_tasks && p_tasks.length > 0) {
               for (const pt of p_tasks) {
                 const project_name = sp.pname;
-                const letter = project_name.trim().substring(0, 2).toUpperCase();
+                const letter = project_name
+                  .trim()
+                  .substring(0, 2)
+                  .toUpperCase();
                 const random_num = Math.floor(Math.random() * 10000) + 1;
                 const get_tcode = `${letter}-${random_num}`;
                 const data8 = {
@@ -5307,8 +6166,14 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL8 = `CALL InsertTask(?, ?)`;
-                await pool.execute(callProcedureSQL8, [paramNamesString8, paramValuesString8]);
-                const [getTaskRes] = await pool.execute("CALL GetInsertedTask(?)", [screated_by]);
+                await pool.execute(callProcedureSQL8, [
+                  paramNamesString8,
+                  paramValuesString8,
+                ]);
+                const [getTaskRes] = await pool.execute(
+                  "CALL GetInsertedTask(?)",
+                  [screated_by]
+                );
                 const getTask = getTaskRes[0][0];
 
                 const hdata9 = {
@@ -5328,7 +6193,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL9 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
+                await pool.execute(callProcedureSQL9, [
+                  paramNamesString9,
+                  paramValuesString9,
+                ]);
 
                 //Check Subtasks
                 const [Check_Task_SubtasksRes] = await pool.execute(
@@ -5339,7 +6207,10 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                 if (Check_Task_Subtasks && Check_Task_Subtasks.length > 0) {
                   for (const ts of Check_Task_Subtasks) {
                     const project_name = sp.pname;
-                    const letter = project_name.trim().substring(0, 2).toUpperCase();
+                    const letter = project_name
+                      .trim()
+                      .substring(0, 2)
+                      .toUpperCase();
                     const random_num = Math.floor(Math.random() * 10000) + 1;
                     const get_stcode = `${letter}-${random_num}`;
 
@@ -5376,11 +6247,15 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
                       .join(", ");
 
                     const callProcedureSQL9 = `CALL InsertSubtask(?, ?)`;
-                    await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
-                    const [getSubtaskRes] = await pool.execute("CALL GetInsertedSubtask(?)", [
-                      screated_by,
+                    await pool.execute(callProcedureSQL9, [
+                      paramNamesString9,
+                      paramValuesString9,
                     ]);
+
+                    const [getSubtaskRes] = await pool.execute(
+                      "CALL GetInsertedSubtask(?)",
+                      [screated_by]
+                    );
                     const getSubtask = getSubtaskRes[0][0];
 
                     const hdata10 = {
@@ -5418,7 +6293,9 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
       sid: getKPI.sid,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
@@ -5431,7 +6308,9 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
 
     const formattedDate = dateConversion();
 
-    const [check_powner] = await pool.execute("CALL getStudentById(?)", [user_id]);
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+      user_id,
+    ]);
     const powner = check_powner[0][0];
 
     const [getGoalRes] = await pool.execute("CALL GoalDetail(?)", [gid]);
@@ -5442,7 +6321,10 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
       // Use forEach with async/await
       await Promise.all(
         team_member.map(async (t) => {
-          const [checkgs_idRes] = await pool.execute("CALL check_g_suggested(?,?)", [gid, t]);
+          const [checkgs_idRes] = await pool.execute(
+            "CALL check_g_suggested(?,?)",
+            [gid, t]
+          );
           if (!checkgs_idRes[0] || checkgs_idRes[0].length === 0) {
             const data6 = {
               gid: gid,
@@ -5459,12 +6341,20 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL6 = `CALL InsertGoalsSuggestedMembers(?, ?)`;
-            await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+            await pool.execute(callProcedureSQL6, [
+              paramNamesString6,
+              paramValuesString6,
+            ]);
 
-            const [check_user] = await pool.execute("CALL getStudentById(?)", [t]);
+            const [check_user] = await pool.execute("CALL getStudentById(?)", [
+              t,
+            ]);
             const user = check_user[0][0];
 
-            const [getgs_id] = await pool.execute("CALL check_g_suggested(?,?)", [gid, t]);
+            const [getgs_id] = await pool.execute(
+              "CALL check_g_suggested(?,?)",
+              [gid, t]
+            );
             const gs_id = getgs_id[0][0]?.gs_id;
             //console.log(gs_id);
 
@@ -5483,7 +6373,10 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
               .join(", ");
 
             const callProcedureSQL7 = `CALL InsertProjectHistory(?, ?)`;
-            await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
+            await pool.execute(callProcedureSQL7, [
+              paramNamesString7,
+              paramValuesString7,
+            ]);
           }
         })
       );
@@ -5497,11 +6390,17 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
             return res.status(400).json({ error: "Invalid email address." });
           }
 
-          const [check_if_registered] = await pool.execute("CALL selectLogin(?)", [im]);
+          const [check_if_registered] = await pool.execute(
+            "CALL selectLogin(?)",
+            [im]
+          );
           if (check_if_registered[0].length > 0) {
             const t = check_if_registered[0][0]?.reg_id;
             if (getGoal.pcreated_by != rid) {
-              const [checkgs_idRes] = await pool.execute("CALL check_g_suggested(?,?)", [gid, t]);
+              const [checkgs_idRes] = await pool.execute(
+                "CALL check_g_suggested(?,?)",
+                [gid, t]
+              );
 
               if (!checkgs_idRes[0] || checkgs_idRes[0].length === 0) {
                 const data6 = {
@@ -5519,12 +6418,21 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL6 = `CALL InsertGoalsSuggestedMembers(?, ?)`;
-                await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
+                await pool.execute(callProcedureSQL6, [
+                  paramNamesString6,
+                  paramValuesString6,
+                ]);
 
-                const [check_user] = await pool.execute("CALL getStudentById(?)", [t]);
+                const [check_user] = await pool.execute(
+                  "CALL getStudentById(?)",
+                  [t]
+                );
                 const user = check_user[0][0];
 
-                const [getgs_id] = await pool.execute("CALL check_g_suggested(?,?)", [gid, t]);
+                const [getgs_id] = await pool.execute(
+                  "CALL check_g_suggested(?,?)",
+                  [gid, t]
+                );
                 const gs_id = getgs_id[0][0]?.gs_id;
                 //console.log(gs_id);
 
@@ -5543,16 +6451,22 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL7 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
+                await pool.execute(callProcedureSQL7, [
+                  paramNamesString7,
+                  paramValuesString7,
+                ]);
               }
             }
           } else {
-            const [check_email] = await pool.execute("CALL check_invited_suggestemail(?,?)", [
-              im,
-              gid,
-            ]);
+            const [check_email] = await pool.execute(
+              "CALL check_invited_suggestemail(?,?)",
+              [im, gid]
+            );
             if (check_email[0].length == 0) {
-              const [checkgs_idRes] = await pool.execute("CALL check_g_suggested(?,?)", [gid, im]);
+              const [checkgs_idRes] = await pool.execute(
+                "CALL check_g_suggested(?,?)",
+                [gid, im]
+              );
 
               if (!checkgs_idRes[0] || checkgs_idRes[0].length === 0) {
                 const data10 = {
@@ -5570,9 +6484,15 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL10 = `CALL InsertGoalsSuggestedMembers(?, ?)`;
-                await pool.execute(callProcedureSQL10, [paramNamesString10, paramValuesString10]);
+                await pool.execute(callProcedureSQL10, [
+                  paramNamesString10,
+                  paramValuesString10,
+                ]);
 
-                const [getgs_id] = await pool.execute("CALL check_g_suggested(?,?)", [gid, im]);
+                const [getgs_id] = await pool.execute(
+                  "CALL check_g_suggested(?,?)",
+                  [gid, im]
+                );
                 const gs_id = getgs_id[0][0]?.gs_id;
                 //console.log(im_id);
 
@@ -5591,7 +6511,10 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
                   .join(", ");
 
                 const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
-                await pool.execute(callProcedureSQL11, [paramNamesString11, paramValuesString11]);
+                await pool.execute(callProcedureSQL11, [
+                  paramNamesString11,
+                  paramValuesString11,
+                ]);
               }
             }
           }
@@ -5604,90 +6527,98 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
     });
   } catch (error) {
     console.error("Error", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //getGoalCreateDD
-router.get("/goal/get-goal-create-dd/:portfolio_id/:user_id", async (req, res) => {
-  const { portfolio_id, user_id } = req.params;
-  try {
-    const [PortfolioDepartment] = await pool.execute("CALL get_PortfolioDepartment(?)", [
-      portfolio_id,
-    ]);
-    const Deptpromises = PortfolioDepartment[0].map(async (item) => {
-      const { department } = item;
-      const label = department;
-      const data = {
-        ...item,
-        label,
-      };
-
-      return data;
-    });
-
-    const PortfolioDepartmentResults = await Promise.all(Deptpromises);
-
-    const [AssignList] = await pool.execute("CALL getAccepted_PortTM(?)", [portfolio_id]);
-    const promises = AssignList[0].map(async (item) => {
-      const { sent_to } = item;
-
-      const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
-      let data;
-      let label = "";
-      if (getName && getName[0] && getName[0][0]) {
-        if (user_id == getName[0][0].reg_id) {
-          label = "Assign To Me";
-        } else {
-          label = getName[0][0].first_name + " " + getName[0][0].last_name;
-        }
-
-        const member_reg_id = getName[0][0].reg_id;
-        data = {
-          sent_to,
+router.get(
+  "/goal/get-goal-create-dd/:portfolio_id/:user_id",
+  async (req, res) => {
+    const { portfolio_id, user_id } = req.params;
+    try {
+      const [PortfolioDepartment] = await pool.execute(
+        "CALL get_PortfolioDepartment(?)",
+        [portfolio_id]
+      );
+      const Deptpromises = PortfolioDepartment[0].map(async (item) => {
+        const { department } = item;
+        const label = department;
+        const data = {
+          ...item,
           label,
-          member_reg_id,
         };
-      }
-      return data;
-    });
 
-    const AssignManagerListResults = await Promise.all(promises);
-    const AssignManagerListRes = AssignManagerListResults.filter(Boolean);
+        return data;
+      });
 
-    const mempromises = AssignList[0].map(async (item) => {
-      const { sent_to } = item;
+      const PortfolioDepartmentResults = await Promise.all(Deptpromises);
 
-      const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
-      let data2;
-      let name = "";
-      if (getName && getName[0] && getName[0][0]) {
-        if (user_id != getName[0][0].reg_id) {
-          name = getName[0][0].first_name + " " + getName[0][0].last_name;
-          const id = getName[0][0].reg_id;
-          data2 = {
+      const [AssignList] = await pool.execute("CALL getAccepted_PortTM(?)", [
+        portfolio_id,
+      ]);
+      const promises = AssignList[0].map(async (item) => {
+        const { sent_to } = item;
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        let data;
+        let label = "";
+        if (getName && getName[0] && getName[0][0]) {
+          if (user_id == getName[0][0].reg_id) {
+            label = "Assign To Me";
+          } else {
+            label = getName[0][0].first_name + " " + getName[0][0].last_name;
+          }
+
+          const member_reg_id = getName[0][0].reg_id;
+          data = {
             sent_to,
-            name,
-            id,
+            label,
+            member_reg_id,
           };
         }
-      }
-      return data2;
-    });
+        return data;
+      });
 
-    const AssignMemberListResults = await Promise.all(mempromises);
-    const AssignMemberListRes = AssignMemberListResults.filter(Boolean);
+      const AssignManagerListResults = await Promise.all(promises);
+      const AssignManagerListRes = AssignManagerListResults.filter(Boolean);
 
-    return res.status(200).json({
-      PortfolioDepartmentRes: PortfolioDepartmentResults,
-      AssignManagerListRes: AssignManagerListRes,
-      AssignMemberListRes: AssignMemberListRes,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error." });
+      const mempromises = AssignList[0].map(async (item) => {
+        const { sent_to } = item;
+
+        const [getName] = await pool.execute("CALL selectLogin(?)", [sent_to]);
+        let data2;
+        let name = "";
+        if (getName && getName[0] && getName[0][0]) {
+          if (user_id != getName[0][0].reg_id) {
+            name = getName[0][0].first_name + " " + getName[0][0].last_name;
+            const id = getName[0][0].reg_id;
+            data2 = {
+              sent_to,
+              name,
+              id,
+            };
+          }
+        }
+        return data2;
+      });
+
+      const AssignMemberListResults = await Promise.all(mempromises);
+      const AssignMemberListRes = AssignMemberListResults.filter(Boolean);
+
+      return res.status(200).json({
+        PortfolioDepartmentRes: PortfolioDepartmentResults,
+        AssignManagerListRes: AssignManagerListRes,
+        AssignMemberListRes: AssignMemberListRes,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error." });
+    }
   }
-});
+);
 
 //(only for asignee dropdown ) goal team members without read_more status
 router.get("/goal/goal-team-member/:gid", async (req, res) => {
