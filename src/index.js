@@ -20,6 +20,8 @@ require("./database/connection");
 
 app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
 app.use(express.json({ limit: "10mb" }));
+app.use(bodyParser.json({ limit: "500mb" }));
+app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(cors());
 app.use(User);
 app.use(Dashboard);
@@ -31,6 +33,5 @@ app.use(Goal);
 app.use(Tasks);
 app.use(Project);
 app.use(UpgradePlan);
-app.use(bodyParser.json({ limit: "500mb" }));
-app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
+
 app.listen(PORT, () => console.log(`Server Started at PORT:${PORT}`));
