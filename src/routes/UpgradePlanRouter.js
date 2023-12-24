@@ -5,6 +5,7 @@ const { dateConversion, transporter } = require("../utils/common-functions");
 const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const front_url = process.env.FRONTEND_URL;
 
 //getAllPack
 router.get("/upgrade-plan/get-all-pack/:user_id", async (req, res) => {
@@ -19,7 +20,7 @@ router.get("/upgrade-plan/get-all-pack/:user_id", async (req, res) => {
     ]);
     const getMyDetail = getMyDetailRes[0][0];
 
-    if (getMyDetail?.package_coupon_id != 0) {
+    if (getMyDetail && getMyDetail?.package_coupon_id != 0) {
       const [rows2] = await pool.execute("CALL getPackDetail(?)", [
         getMyDetail?.package_id,
       ]);
@@ -357,12 +358,11 @@ router.post("/upgrade-plan/create-checkout-session", async (req, res) => {
         mode: "subscription",
         customer: stripe_cusID,
         allow_promotion_codes: true,
-        success_url:
-          "http://localhost:3000/decision168/payment-success?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "http://localhost:3000/decision168/pricing-packages",
+        success_url: `${front_url}payment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${user_id}`,
+        cancel_url: `${front_url}pricing-packages`,
       });
       res
-        .status(303)
+        .status(200)
         .json({ session_id: session.id, session_url: session.url });
     } else {
       const session = await stripe.checkout.sessions.create({
@@ -374,12 +374,11 @@ router.post("/upgrade-plan/create-checkout-session", async (req, res) => {
         ],
         mode: "subscription",
         allow_promotion_codes: true,
-        success_url:
-          "http://localhost:3000/decision168/payment-success?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "http://localhost:3000/decision168/pricing-packages",
+        success_url: `${front_url}payment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${user_id}`,
+        cancel_url: `${front_url}pricing-packages`,
       });
       res
-        .status(303)
+        .status(200)
         .json({ session_id: session.id, session_url: session.url });
     }
   } catch (error) {
