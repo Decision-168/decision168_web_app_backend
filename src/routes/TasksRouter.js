@@ -6,9 +6,10 @@ const { dateConversion, transporter } = require("../utils/common-functions");
 const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { format } = require("mysql2");
+const authMiddleware = require("../middlewares/auth");
 
 //Dashboard (Grid view) All tasks
-router.get("/task/all-tasks-subtasks-grid-view/:reg_id", async (req, res) => {
+router.get("/task/all-tasks-subtasks-grid-view/:reg_id", authMiddleware , async (req, res) => {
   const { reg_id } = req.params;
   try {
     // Retrieve assigned task list portfolio
@@ -103,7 +104,7 @@ router.get("/task/all-tasks-subtasks-grid-view/:reg_id", async (req, res) => {
 });
 
 //Dashboard (List view) All Tasks
-router.get("/task/all-tasks-subtasks-list-view/:reg_id", async (req, res) => {
+router.get("/task/all-tasks-subtasks-list-view/:reg_id", authMiddleware , async (req, res) => {
   const { reg_id } = req.params;
   //(Pagination Code)
   const { page, pageSize } = req.query;
@@ -192,7 +193,7 @@ router.get("/task/all-tasks-subtasks-list-view/:reg_id", async (req, res) => {
 });
 
 //(LIST VIEW) All Porfolio Tasks and Subtsks by portfolio_id and reg_id
-router.get("/task/portfolio-tasks-subtasks-list-view/:portfolio_id/:reg_id", async (req, res) => {
+router.get("/task/portfolio-tasks-subtasks-list-view/:portfolio_id/:reg_id", authMiddleware , async (req, res) => {
   const { portfolio_id, reg_id } = req.params;
   const { page, pageSize } = req.query;
   const startIndex = (page - 1) * pageSize;
@@ -280,7 +281,7 @@ router.get("/task/portfolio-tasks-subtasks-list-view/:portfolio_id/:reg_id", asy
 });
 
 //(GRID VIEW) All Porfolio Tasks and Subtsks by portfolio_id and reg_id
-router.get("/task/portfolio-tasks-subtasks-grid-view/:portfolio_id/:reg_id", async (req, res) => {
+router.get("/task/portfolio-tasks-subtasks-grid-view/:portfolio_id/:reg_id", authMiddleware , async (req, res) => {
   const { portfolio_id, reg_id } = req.params;
 
   try {
@@ -376,7 +377,7 @@ router.get("/task/portfolio-tasks-subtasks-grid-view/:portfolio_id/:reg_id", asy
 });
 
 //Portfolio tasks from portfolio page [Done]
-router.get("/task/portfolio-tasks/:portfolio_id", async (req, res) => {
+router.get("/task/portfolio-tasks/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   //(Pagination Code)
   const { page, pageSize } = req.query;
@@ -437,7 +438,7 @@ router.get("/task/portfolio-tasks/:portfolio_id", async (req, res) => {
 });
 
 //(Not In use) get Portfolio Task list by portfolio id and reg_id
-router.get("/task/portfolio-tasks-list/:portfolio_id/:reg_id", async (req, res) => {
+router.get("/task/portfolio-tasks-list/:portfolio_id/:reg_id", authMiddleware , async (req, res) => {
   const { portfolio_id, reg_id } = req.params;
 
   try {
@@ -457,7 +458,7 @@ router.get("/task/portfolio-tasks-list/:portfolio_id/:reg_id", async (req, res) 
 });
 
 //get Task Details by task id
-router.get("/task/task-detail/:task_id", async (req, res) => {
+router.get("/task/task-detail/:task_id", authMiddleware , async (req, res) => {
   const { task_id } = req.params;
   try {
     const [taskDetails] = await pool.execute("CALL TaskDetail(?)", [task_id]);
@@ -493,7 +494,7 @@ router.get("/task/task-detail/:task_id", async (req, res) => {
 });
 
 // Subtask Details
-router.get("/subtask/subtask-detail/:subtask_id", async (req, res) => {
+router.get("/subtask/subtask-detail/:subtask_id", authMiddleware , async (req, res) => {
   const { subtask_id } = req.params;
   try {
     const [subtaskDetails] = await pool.execute("CALL SubtaskDetail(?)", [subtask_id]);
@@ -526,7 +527,7 @@ router.get("/subtask/subtask-detail/:subtask_id", async (req, res) => {
 });
 
 // Insert Task
-router.post("/task/insert-task/:user_id", async (req, res) => {
+router.post("/task/insert-task/:user_id", authMiddleware , async (req, res) => {
   //TO DO change the let to const for below two lines
   let { user_id } = req.params;
   let { portfolio_id, project_id, team_member2, links, link_comments, sid, gid, tname, tdes, tnote, tfile, tpriority, dept, tdue_date } = req.body;
@@ -695,7 +696,7 @@ router.post("/task/insert-task/:user_id", async (req, res) => {
 });
 
 // Edit Task
-router.patch("/task/edit-task/:user_id", async (req, res) => {
+router.patch("/task/edit-task/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   let { portfolio_id, tid, project_id, team_member2, links, link_comments, sid, gid, tname, tdes, tnote, tfile, tpriority, dept, tdue_date } = req.body;
   try {
@@ -915,7 +916,7 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
 });
 
 // Insert Subtask
-router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) => {
+router.post("/subtask/insert-subtask/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   let { user_id, portfolio_id } = req.params;
   const { tid, tproject_assign, sid, gid, dept, taskArray } = req.body;
   let inserted_task_id; // Declare outside the try block
@@ -1099,7 +1100,7 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
 });
 
 // Edit SubTask
-router.post("/subtask/edit-subtask/:user_id/:portfolio_id", async (req, res) => {
+router.post("/subtask/edit-subtask/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   const { stid, stproject_assign, team_member2, slinks, slink_comments, sid, gid, stname, stdes, stnote, stfile, tpriority, dept, tdue_date } = req.body;
   try {
@@ -1304,7 +1305,7 @@ router.post("/subtask/edit-subtask/:user_id/:portfolio_id", async (req, res) => 
 });
 
 // Change task Status
-router.patch("/task/change-status/:user_id", async (req, res) => {
+router.patch("/task/change-status/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { tid, tassignee, status_but } = req.body;
   try {
@@ -1457,7 +1458,7 @@ router.patch("/task/change-status/:user_id", async (req, res) => {
 });
 
 // Change task Status on checkbox
-router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
+router.patch("/task/checkbox-change-status/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { tid, tassignee } = req.body;
   try {
@@ -1625,7 +1626,7 @@ router.patch("/task/checkbox-change-status/:user_id", async (req, res) => {
 });
 
 // Change Subtask Status
-router.patch("/subtask/change-status/:user_id", async (req, res) => {
+router.patch("/subtask/change-status/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { stid, stassignee, status_but } = req.body;
   try {
@@ -1752,7 +1753,7 @@ router.patch("/subtask/change-status/:user_id", async (req, res) => {
 });
 
 // Change Subtask Status on checkbox
-router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
+router.patch("/subtask/checkbox-change-status/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { stid, stassignee } = req.body;
   try {
@@ -1907,7 +1908,7 @@ router.patch("/subtask/checkbox-change-status/:user_id", async (req, res) => {
 });
 
 //  Team Member Task list
-router.get("/task/team-member-tasks-list/:project_id/:task_assignee", async (req, res) => {
+router.get("/task/team-member-tasks-list/:project_id/:task_assignee", authMiddleware , async (req, res) => {
   const { project_id, task_assignee } = req.params;
   try {
     const [ProjectDetailCheck] = await pool.execute("CALL ProjectDetailCheck(?)", [project_id]);
@@ -1927,7 +1928,7 @@ router.get("/task/team-member-tasks-list/:project_id/:task_assignee", async (req
 });
 
 //  Task details for edit page
-router.get("/task/portfolios-edit-task/:user_id", async (req, res) => {
+router.get("/task/portfolios-edit-task/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { tid, portfolio_id } = req.body;
   try {
@@ -1946,7 +1947,7 @@ router.get("/task/portfolios-edit-task/:user_id", async (req, res) => {
 });
 
 //get projects
-router.get("/get-projects-list/:portfolio_id/:user_id", async (req, res) => {
+router.get("/get-projects-list/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
 
   try {
@@ -1966,7 +1967,7 @@ router.get("/get-projects-list/:portfolio_id/:user_id", async (req, res) => {
 });
 
 //  Project Task list
-router.get("/task/project-tasks-list/:project_id", async (req, res) => {
+router.get("/task/project-tasks-list/:project_id", authMiddleware , async (req, res) => {
   const { project_id } = req.params;
   try {
     const [ProjectDetailCheck] = await pool.execute("CALL ProjectDetailCheck(?)", [project_id]);
@@ -1983,7 +1984,7 @@ router.get("/task/project-tasks-list/:project_id", async (req, res) => {
 });
 
 //  Download History
-router.get("/task/download-history", async (req, res) => {
+router.get("/task/download-history", authMiddleware , async (req, res) => {
   const { tfile_name, tid, user_id } = req.body;
   try {
     const [taskDetail] = await pool.execute("CALL getTaskById(?)", [tid]);
@@ -2026,7 +2027,7 @@ router.get("/task/download-history", async (req, res) => {
 });
 
 //Trash Task files
-router.get("/task/trash-tasks-files/:portfolio_id", async (req, res) => {
+router.get("/task/trash-tasks-files/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const [TrashTaskFiles] = await pool.execute("CALL TrashTaskFiles(?)", [portfolio_id]);
@@ -2040,7 +2041,7 @@ router.get("/task/trash-tasks-files/:portfolio_id", async (req, res) => {
 });
 
 // Task Editable fields
-router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
+router.patch("/task/table-editable/:portfolio_id", authMiddleware , async (req, res) => {
   let { portfolio_id } = req.params;
   const { div_class, div_field, div_id, txt, user_id } = req.body;
   try {
@@ -2803,7 +2804,7 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
 });
 
 //  Duplicate Task
-router.post("/task/duplicate-task", async (req, res) => {
+router.post("/task/duplicate-task", authMiddleware , async (req, res) => {
   const { tid, tname, copy_detail, cust_tws, user_id } = req.body;
   try {
     const formattedDate = dateConversion();
@@ -2963,7 +2964,7 @@ router.post("/task/duplicate-task", async (req, res) => {
 });
 
 //  Insert Comment
-router.post("/task/insert-comment/:user_id", async (req, res) => {
+router.post("/task/insert-comment/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { project_id, tid, stid, message } = req.body;
   try {
@@ -3067,7 +3068,7 @@ router.post("/task/insert-comment/:user_id", async (req, res) => {
 });
 
 //  Delete Comment
-router.get("/task/delete-comment/:user_id/:cid", async (req, res) => {
+router.get("/task/delete-comment/:user_id/:cid", authMiddleware , async (req, res) => {
   const { user_id, cid } = req.params;
   try {
     const [comment_row] = await pool.execute("CALL get_comment(?)", [cid]);
@@ -3113,7 +3114,7 @@ router.get("/task/delete-comment/:user_id/:cid", async (req, res) => {
 });
 
 //  Insert Task File
-router.patch("/task/insert-task-file/:user_id", async (req, res) => {
+router.patch("/task/insert-task-file/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { tid, task_file, tcode } = req.body;
   try {
@@ -3189,7 +3190,7 @@ router.patch("/task/insert-task-file/:user_id", async (req, res) => {
 });
 
 //  Insert Subtask File
-router.patch("/subtask/insert-subtask-file/:user_id", async (req, res) => {
+router.patch("/subtask/insert-subtask-file/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { stid, stask_file, stcode } = req.body;
   try {
@@ -3266,7 +3267,7 @@ router.patch("/subtask/insert-subtask-file/:user_id", async (req, res) => {
 });
 
 //  Todays Tasks
-router.get("/task/today-tasks/:user_id", async (req, res) => {
+router.get("/task/today-tasks/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   const { tdue_date } = req.body;
   try {
@@ -3285,7 +3286,7 @@ router.get("/task/today-tasks/:user_id", async (req, res) => {
 });
 
 //  Weeks Tasks
-router.get("/task/week-tasks/:user_id", async (req, res) => {
+router.get("/task/week-tasks/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   try {
     let currentDate = new Date();
@@ -3313,7 +3314,7 @@ router.get("/task/week-tasks/:user_id", async (req, res) => {
 });
 
 //  Tasks List
-router.get("/task/tasks-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/task/tasks-list/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [createdTaskList] = await pool.execute("CALL CreatedTaskList(?,?)", [portfolio_id, user_id]);
@@ -3329,7 +3330,7 @@ router.get("/task/tasks-list/:user_id/:portfolio_id", async (req, res) => {
 });
 
 //  Project tasks
-router.get("/task/project-tasks", async (req, res) => {
+router.get("/task/project-tasks", authMiddleware , async (req, res) => {
   const { project_id } = req.body;
   try {
     const [p_tasks] = await pool.execute("CALL p_tasks(?)", [project_id]);
@@ -3343,7 +3344,7 @@ router.get("/task/project-tasks", async (req, res) => {
 });
 
 //  KPI tasks
-router.get("/task/kpi-tasks", async (req, res) => {
+router.get("/task/kpi-tasks", authMiddleware , async (req, res) => {
   const { sid } = req.body;
   try {
     const [Strategy_tasks] = await pool.execute("CALL Strategy_tasks(?)", [sid]);
@@ -3357,7 +3358,7 @@ router.get("/task/kpi-tasks", async (req, res) => {
 });
 
 //  Goal tasks
-router.get("/task/goal-tasks", async (req, res) => {
+router.get("/task/goal-tasks", authMiddleware , async (req, res) => {
   const { gid } = req.body;
   try {
     const [Goal_tasks] = await pool.execute("CALL Goal_tasks(?)", [gid]);
@@ -3371,7 +3372,7 @@ router.get("/task/goal-tasks", async (req, res) => {
 });
 
 //  User tasks
-router.get("/task/user-tasks", async (req, res) => {
+router.get("/task/user-tasks", authMiddleware , async (req, res) => {
   const { reg_id } = req.body;
   try {
     const [get_all_task] = await pool.execute("CALL get_all_task(?)", [reg_id]);
@@ -3385,7 +3386,7 @@ router.get("/task/user-tasks", async (req, res) => {
 });
 
 //get Task Comments
-router.get("/task/get-task-comments/:tid/:user_id", async (req, res) => {
+router.get("/task/get-task-comments/:tid/:user_id", authMiddleware , async (req, res) => {
   const { tid, user_id } = req.params;
   try {
     // Call stored procedure to get task comments
@@ -3443,7 +3444,7 @@ router.get("/task/get-task-comments/:tid/:user_id", async (req, res) => {
 });
 
 //getSubtaskComments
-router.get("/subtask/get-subtask-comments/:subtask_id/:user_id", async (req, res) => {
+router.get("/subtask/get-subtask-comments/:subtask_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL getSubtaskComments(?)", [subtask_id]);
@@ -3488,7 +3489,7 @@ router.get("/subtask/get-subtask-comments/:subtask_id/:user_id", async (req, res
 });
 
 //  Duplicate Subtask
-router.post("/subtask/duplicate-subtask", async (req, res) => {
+router.post("/subtask/duplicate-subtask", authMiddleware , async (req, res) => {
   const { stid, stname, copy_detail, user_id } = req.body;
   try {
     const formattedDate = dateConversion();
@@ -3585,7 +3586,7 @@ router.post("/subtask/duplicate-subtask", async (req, res) => {
 });
 
 //  User subtasks
-router.get("/subtask/user-subtasks", async (req, res) => {
+router.get("/subtask/user-subtasks", authMiddleware , async (req, res) => {
   const { reg_id } = req.body;
   try {
     const [get_all_subtask] = await pool.execute("CALL get_all_subtask(?)", [reg_id]);
@@ -3599,7 +3600,7 @@ router.get("/subtask/user-subtasks", async (req, res) => {
 });
 
 //  Project subtasks
-router.get("/subtask/project-subtasks", async (req, res) => {
+router.get("/subtask/project-subtasks", authMiddleware , async (req, res) => {
   const { project_id } = req.body;
   try {
     const [p_subtasks] = await pool.execute("CALL p_subtasks(?)", [project_id]);
@@ -3613,7 +3614,7 @@ router.get("/subtask/project-subtasks", async (req, res) => {
 });
 
 //  KPI subtasks
-router.get("/subtask/kpi-subtasks", async (req, res) => {
+router.get("/subtask/kpi-subtasks", authMiddleware , async (req, res) => {
   const { sid } = req.body;
   try {
     const [Strategy_subtasks] = await pool.execute("CALL Strategy_subtasks(?)", [sid]);
@@ -3627,7 +3628,7 @@ router.get("/subtask/kpi-subtasks", async (req, res) => {
 });
 
 //  Goal subtasks
-router.get("/subtask/goal-subtasks", async (req, res) => {
+router.get("/subtask/goal-subtasks", authMiddleware , async (req, res) => {
   const { gid } = req.body;
   try {
     const [Goal_subtasks] = await pool.execute("CALL Goal_subtasks(?)", [gid]);
@@ -3641,7 +3642,7 @@ router.get("/subtask/goal-subtasks", async (req, res) => {
 });
 
 //get Subtasks List by portfolio id
-router.get("/subtask/portfolio-subtasks/:portfolio_id", async (req, res) => {
+router.get("/subtask/portfolio-subtasks/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const [portfolio_subtasks] = await pool.execute("CALL portfolio_subtasks(?)", [portfolio_id]);
@@ -3655,7 +3656,7 @@ router.get("/subtask/portfolio-subtasks/:portfolio_id", async (req, res) => {
 });
 
 //  Portfolio tasks
-router.get("/task/portfolio-tasks/:portfolio_id", async (req, res) => {
+router.get("/task/portfolio-tasks/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const [portfolio_tasksNew] = await pool.execute("CALL portfolio_tasksNew(?)", [portfolio_id]);

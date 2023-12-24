@@ -3,9 +3,10 @@ const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { convertObjectToProcedureParams } = require("../utils/common-functions");
 const moment = require("moment");
+const authMiddleware = require("../middlewares/auth");
 
 //get user details by user id
-router.get("/user/get-user/:reg_id", async (req, res) => {
+router.get("/user/get-user/:reg_id", authMiddleware , async (req, res) => {
   const { reg_id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getStudentById(?)", [
@@ -19,7 +20,7 @@ router.get("/user/get-user/:reg_id", async (req, res) => {
 });
 
 //get package details by pack id
-router.get("/user/get-package/:pack_id", async (req, res) => {
+router.get("/user/get-package/:pack_id", authMiddleware , async (req, res) => {
   const { pack_id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getPackDetail(?)", [
@@ -33,7 +34,7 @@ router.get("/user/get-package/:pack_id", async (req, res) => {
 });
 
 //get user all counts by email id and user id
-router.get("/user/get-all-counts/:email_id/:id", async (req, res) => {
+router.get("/user/get-all-counts/:email_id/:id", authMiddleware , async (req, res) => {
   const email_id = req.params.email_id;
   const id = req.params.id;
   try {
@@ -75,7 +76,7 @@ router.get("/user/get-all-counts/:email_id/:id", async (req, res) => {
 });
 
 //get motivator
-router.get("/user/get-motivator", async (req, res) => {
+router.get("/user/get-motivator", authMiddleware , async (req, res) => {
   const { id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL Motivator()");
@@ -87,7 +88,7 @@ router.get("/user/get-motivator", async (req, res) => {
 });
 
 //get countries
-router.get("/user/get-countries", async (req, res) => {
+router.get("/user/get-countries", authMiddleware , async (req, res) => {
   const { id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getCountries()");
@@ -99,7 +100,7 @@ router.get("/user/get-countries", async (req, res) => {
 });
 
 //get country by country code
-router.get("/user/get-country/:code", async (req, res) => {
+router.get("/user/get-country/:code", authMiddleware , async (req, res) => {
   const { code } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getCountryByCode(?)", [
@@ -113,7 +114,7 @@ router.get("/user/get-country/:code", async (req, res) => {
 });
 
 //update profile
-router.patch("/user/update-profile/:id", async (req, res) => {
+router.patch("/user/update-profile/:id", authMiddleware , async (req, res) => {
   const reg_id = req.params.id;
   const updates = convertObjectToProcedureParams(req.body); // Convert data to the format 'key1 = "value1", key2 = "value2", ...'
   try {
@@ -135,7 +136,7 @@ router.patch("/user/update-profile/:id", async (req, res) => {
 });
 
 //get dashboard(my day + my next168) recent 5 notifications by user id
-router.get("/user/get-recent-notifications/:id", async (req, res) => {
+router.get("/user/get-recent-notifications/:id", authMiddleware , async (req, res) => {
   const id = req.params.id;
   try {
     //my day section
@@ -184,7 +185,7 @@ router.get("/user/get-recent-notifications/:id", async (req, res) => {
 });
 
 //get dashboard + bell icon alert notifications by user id
-router.get("/user/get-alert-notifications/:id", async (req, res) => {
+router.get("/user/get-alert-notifications/:id", authMiddleware , async (req, res) => {
   const id = req.params.id;
   try {
     const currentDate = new Date();
@@ -600,7 +601,7 @@ router.get("/user/get-alert-notifications/:id", async (req, res) => {
 //update dashboard + bell icon clear alert notifications by different id's, user id and type
 router.patch(
   "/user/update-alert-notifications/:id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const id = req.params.id;
     const user_id = req.params.user_id;
     const type = req.body.type;
@@ -805,7 +806,7 @@ router.patch(
 //update bell icon clear all alert notifications by user_id
 router.patch(
   "/user/update-all-alert-notifications/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     try {
       const currentDate = new Date();
@@ -1177,7 +1178,7 @@ router.patch(
 );
 
 //My Alert Page API's
-router.get("/user/get-my-alert-notifications/:id", async (req, res) => {
+router.get("/user/get-my-alert-notifications/:id", authMiddleware , async (req, res) => {
   const id = req.params.id;
   try {
     const currentDate = new Date();

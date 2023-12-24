@@ -3,9 +3,10 @@ const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
+const authMiddleware = require("../middlewares/auth");
 
 // Get All Data Trash Modules
-router.get("/trash/all-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/trash/all-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [trash_goals] = await pool.execute("CALL TrashGoals(?,?)", [user_id, portfolio_id]);
@@ -407,7 +408,7 @@ router.get("/trash/all-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Goal Trash Modules
-router.get("/trash/goal-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/trash/goal-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [trash_goals] = await pool.execute("CALL TrashGoals(?,?)", [user_id, portfolio_id]);
@@ -443,7 +444,7 @@ router.get("/trash/goal-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get KPI Trash Modules
-router.get("/trash/kpi-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/trash/kpi-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [trash_kpis] = await pool.execute("CALL TrashStrategies(?,?)", [user_id, portfolio_id]);
@@ -479,7 +480,7 @@ router.get("/trash/kpi-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Project Trash Modules
-router.get("/trash/project-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/trash/project-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [trash_projects] = await pool.execute("CALL TrashProjects(?,?)", [portfolio_id, user_id]);
@@ -515,7 +516,7 @@ router.get("/trash/project-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Task Trash Modules
-router.get("/trash/task-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/trash/task-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [trash_tasks] = await pool.execute("CALL TrashTasks(?,?)", [user_id, portfolio_id]);
@@ -649,7 +650,7 @@ router.get("/trash/task-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Files Trash Modules
-router.get("/trash/files-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/trash/files-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
 
   try {
@@ -871,7 +872,7 @@ router.get("/trash/files-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 //  Get User Detail by ID
-router.get("/trash/user/:user_id", async (req, res) => {
+router.get("/trash/user/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   try {
     const [user_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
@@ -883,7 +884,7 @@ router.get("/trash/user/:user_id", async (req, res) => {
 });
 
 // Delete Portfolio
-router.patch("/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/portfolio/:portf_id/:user_id", authMiddleware , async (req, res) => {
   const { portf_id, user_id } = req.params;
   try {
     const [portfolio_row] = await pool.execute("CALL getPortfolio(?,?)", [portf_id, user_id]);
@@ -959,7 +960,7 @@ router.patch("/trash/delete/portfolio/:portf_id/:user_id", async (req, res) => {
 });
 
 // Delete Goal
-router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/goal/:goal_id/:user_id", authMiddleware , async (req, res) => {
   const { goal_id, user_id } = req.params;
   try {
     const [goal_row] = await pool.execute("CALL file_itGoalDetail(?)", [goal_id]);
@@ -1029,7 +1030,7 @@ router.patch("/trash/delete/goal/:goal_id/:user_id", async (req, res) => {
 });
 
 // Delete KPI
-router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/kpi/:strategy_id/:user_id", authMiddleware , async (req, res) => {
   const { strategy_id, user_id } = req.params;
   try {
     const [kpi_row] = await pool.execute("CALL file_itStrategyDetail(?)", [strategy_id]);
@@ -1082,7 +1083,7 @@ router.patch("/trash/delete/kpi/:strategy_id/:user_id", async (req, res) => {
 });
 
 // Delete Project
-router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/project/:project_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, user_id } = req.params;
   try {
     const [project_row] = await pool.execute("CALL file_itProjectDetail(?,?)", [project_id, user_id]);
@@ -1128,7 +1129,7 @@ router.patch("/trash/delete/project/:project_id/:user_id", async (req, res) => {
 });
 
 // Delete Task
-router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/task/:task_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, user_id } = req.params;
   try {
     const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [task_id]);
@@ -1162,7 +1163,7 @@ router.patch("/trash/delete/task/:task_id/:user_id", async (req, res) => {
 });
 
 // Delete Subtask
-router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/subtask/:subtask_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [subtask_row] = await pool.execute("CALL file_itcheck_subtask(?)", [subtask_id]);
@@ -1193,7 +1194,7 @@ router.patch("/trash/delete/subtask/:subtask_id/:user_id", async (req, res) => {
 });
 
 // Delete Project File
-router.patch("/trash/delete/project-file/:project_id/:pfile_id/:user_id", async (req, res) => {
+router.patch("/trash/delete/project-file/:project_id/:pfile_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, pfile_id, user_id } = req.params;
   try {
     const [project_file_row] = await pool.execute("CALL pfile_detailfile_it(?)", [pfile_id]);
@@ -1244,7 +1245,7 @@ router.patch("/trash/delete/project-file/:project_id/:pfile_id/:user_id", async 
 );
 
 // Delete Task File
-router.patch("/trash/delete/task-file/:task_id/:task_file_name/:user_id", async (req, res) => {
+router.patch("/trash/delete/task-file/:task_id/:task_file_name/:user_id", authMiddleware , async (req, res) => {
   const { task_id, task_file_name, user_id } = req.params;
   try {
     const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [task_id]);
@@ -1290,7 +1291,7 @@ router.patch("/trash/delete/task-file/:task_id/:task_file_name/:user_id", async 
 });
 
 // Delete Subtask File
-router.patch("/trash/delete/subtask-file/:subtask_id/:subtask_file_name/:user_id", async (req, res) => {
+router.patch("/trash/delete/subtask-file/:subtask_id/:subtask_file_name/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, subtask_file_name, user_id } = req.params;
   try {
     const [subtask_row] = await pool.execute("CALL getSubtaskById(?)", [subtask_id]);
@@ -1336,7 +1337,7 @@ router.patch("/trash/delete/subtask-file/:subtask_id/:subtask_file_name/:user_id
 });
 
 // Reopen Portfolio
-router.patch("/trash/retrieve/portfolio/:portf_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/portfolio/:portf_id/:user_id", authMiddleware , async (req, res) => {
   const { portf_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1450,7 +1451,7 @@ router.patch("/trash/retrieve/portfolio/:portf_id/:user_id", async (req, res) =>
 });
 
 // Reopen Goal
-router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { goal_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1583,7 +1584,7 @@ router.patch("/trash/retrieve/goal/:goal_id/:portfolio_id/:user_id", async (req,
 });
 
 // Reopen KPI
-router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { strategy_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1702,7 +1703,7 @@ router.patch("/trash/retrieve/kpi/:strategy_id/:portfolio_id/:user_id", async (r
 });
 
 // Reopen Project
-router.patch("/trash/retrieve/project/:project_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/project/:project_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1823,7 +1824,7 @@ router.patch("/trash/retrieve/project/:project_id/:portfolio_id/:user_id", async
 });
 
 // Reopen Task
-router.patch("/trash/retrieve/task/:task_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/task/:task_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1926,7 +1927,7 @@ router.patch("/trash/retrieve/task/:task_id/:portfolio_id/:user_id", async (req,
 });
 
 // Reopen Subtask
-router.patch("/trash/retrieve/subtask/:subtask_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/subtask/:subtask_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [owner_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
@@ -1960,7 +1961,7 @@ router.patch("/trash/retrieve/subtask/:subtask_id/:user_id", async (req, res) =>
 });
 
 // Reopen Project File
-router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, pfile_id, user_id } = req.params;
   try {
     const [project_file_row] = await pool.execute("CALL check_pfile_trash(?)", [pfile_id]);
@@ -2001,7 +2002,7 @@ router.patch("/trash/retrieve/project-file/:project_id/:pfile_id/:user_id", asyn
 });
 
 // Reopen Task File
-router.patch("/trash/retrieve/task-file/:task_id/:tfile/:trash_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/task-file/:task_id/:tfile/:trash_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, tfile, trash_id, user_id } = req.params;
   try {
     const [task_row] = await pool.execute("CALL file_itgetTaskById(?)", [task_id]);
@@ -2062,7 +2063,7 @@ router.patch("/trash/retrieve/task-file/:task_id/:tfile/:trash_id/:user_id", asy
 });
 
 // Reopen Subtask File
-router.patch("/trash/retrieve/subtask-file/:subtask_id/:stfile/:trash_id/:user_id", async (req, res) => {
+router.patch("/trash/retrieve/subtask-file/:subtask_id/:stfile/:trash_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, stfile, trash_id, user_id } = req.params;
   try {
     const [subtask_row] = await pool.execute("CALL getSubtaskById(?)", [subtask_id]);
@@ -2124,7 +2125,7 @@ router.patch("/trash/retrieve/subtask-file/:subtask_id/:stfile/:trash_id/:user_i
 });
 
 // Delete Forever Goal
-router.patch("/trash/delete-forever/goal/:gid/:user_id", async (req, res) => {
+router.patch("/trash/delete-forever/goal/:gid/:user_id", authMiddleware , async (req, res) => {
   const { gid, user_id } = req.params;
   try {
     const [goal_row] = await pool.execute("CALL check_goal_trash(?,?)", [user_id, gid]);
@@ -2185,7 +2186,7 @@ router.patch("/trash/delete-forever/goal/:gid/:user_id", async (req, res) => {
 });
 
 // Delete Forever KPI
-router.patch("/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
+router.patch("/trash/delete-forever/kpi/:sid/:user_id", authMiddleware , async (req, res) => {
   const { sid, user_id } = req.params;
   try {
     const [kpi_row] = await pool.execute("CALL check_strategy_trash(?,?)", [user_id, sid]);
@@ -2238,7 +2239,7 @@ router.patch("/trash/delete-forever/kpi/:sid/:user_id", async (req, res) => {
 });
 
 // Delete Forever Project
-router.patch("/trash/delete-forever/project/:pid/:user_id", async (req, res) => {
+router.patch("/trash/delete-forever/project/:pid/:user_id", authMiddleware , async (req, res) => {
   const { pid, user_id } = req.params;
   try {
     const [project_row] = await pool.execute("CALL check_project_trash(?,?)", [pid, user_id]);
@@ -2283,7 +2284,7 @@ router.patch("/trash/delete-forever/project/:pid/:user_id", async (req, res) => 
 });
 
 // Delete Forever Task
-router.patch("/trash/delete-forever/task/:tid", async (req, res) => {
+router.patch("/trash/delete-forever/task/:tid", authMiddleware , async (req, res) => {
   const { tid } = req.params;
   try {
     const [task_row] = await pool.execute("CALL check_task2_new(?)", [tid]);
@@ -2304,7 +2305,7 @@ router.patch("/trash/delete-forever/task/:tid", async (req, res) => {
 });
 
 // Delete Forever Subtask
-router.patch("/trash/delete-forever/subtask/:stid", async (req, res) => {
+router.patch("/trash/delete-forever/subtask/:stid", authMiddleware , async (req, res) => {
   const { stid } = req.params;
   try {
     const [task_row] = await pool.execute("CALL check_subtask2(?)", [stid]);
@@ -2323,7 +2324,7 @@ router.patch("/trash/delete-forever/subtask/:stid", async (req, res) => {
 });
 
 // Delete Forever Project File
-router.patch("/trash/delete-forever/project-file/:pfile_id", async (req, res) => {
+router.patch("/trash/delete-forever/project-file/:pfile_id", authMiddleware , async (req, res) => {
   const { pfile_id } = req.params;
   try {
     const [file_row] = await pool.execute("CALL check_pfile_trash(?)", [pfile_id]);
@@ -2341,7 +2342,7 @@ router.patch("/trash/delete-forever/project-file/:pfile_id", async (req, res) =>
 });
 
 // Delete Forever Task File
-router.patch("/trash/delete-forever/task-file/:task_id/:trash_id/:user_id", async (req, res) => {
+router.patch("/trash/delete-forever/task-file/:task_id/:trash_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, trash_id, user_id } = req.params;
   try {
     const [trash_row] = await pool.execute("CALL check_tfile_task_trash(?,?)", [trash_id, task_id]);
@@ -2359,7 +2360,7 @@ router.patch("/trash/delete-forever/task-file/:task_id/:trash_id/:user_id", asyn
 });
 
 // Delete Forever Subtask File
-router.patch("/trash/delete-forever/subtask-file/:subtask_id/:strash_id/:user_id", async (req, res) => {
+router.patch("/trash/delete-forever/subtask-file/:subtask_id/:strash_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, strash_id, user_id } = req.params;
   try {
     const [trash_row] = await pool.execute("CALL check_stfile_subtask_trash(?,?)", [strash_id, subtask_id]);

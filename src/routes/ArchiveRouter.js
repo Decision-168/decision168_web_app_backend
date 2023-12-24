@@ -3,9 +3,10 @@ const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
+const authMiddleware = require("../middlewares/auth");
 
 // Get All Archive Modules
-router.get("/archive/all-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/archive/all-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
@@ -238,7 +239,7 @@ router.get("/archive/all-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Goal Archive Modules
-router.get("/archive/goal-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/archive/goal-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [archive_goals] = await pool.execute("CALL ArchiveGoals(?,?)", [user_id, portfolio_id]);
@@ -279,7 +280,7 @@ router.get("/archive/goal-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get KPI Archive Modules
-router.get("/archive/kpi-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/archive/kpi-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [archive_kpis] = await pool.execute("CALL ArchiveStrategies(?,?)", [user_id, portfolio_id]);
@@ -320,7 +321,7 @@ router.get("/archive/kpi-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Project Archive Modules
-router.get("/archive/project-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/archive/project-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [archive_projects] = await pool.execute("CALL ArchiveProjects(?,?)", [portfolio_id, user_id]);
@@ -361,7 +362,7 @@ router.get("/archive/project-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 // Get Task Archive Modules
-router.get("/archive/task-data/:user_id/:portfolio_id", async (req, res) => {
+router.get("/archive/task-data/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [archive_tasks] = await pool.execute("CALL ArchiveTasks(?,?)", [user_id, portfolio_id]);
@@ -521,7 +522,7 @@ router.get("/archive/task-data/:user_id/:portfolio_id", async (req, res) => {
 });
 
 //  Get User Detail by ID
-router.get("/archive/user/:user_id", async (req, res) => {
+router.get("/archive/user/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   try {
     const [user_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
@@ -533,7 +534,7 @@ router.get("/archive/user/:user_id", async (req, res) => {
 });
 
 // Archive Portfolio
-router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
+router.patch("/archive/portfolio/:portf_id/:user_id", authMiddleware , async (req, res) => {
   const { portf_id, user_id } = req.params;
   try {
     const [portfolio_row] = await pool.execute("CALL getPortfolioNotArc(?,?)", [
@@ -706,7 +707,7 @@ router.patch("/archive/portfolio/:portf_id/:user_id", async (req, res) => {
 });
 
 // Archive Goal
-router.patch("/archive/goal/:goal_id/:user_id", async (req, res) => {
+router.patch("/archive/goal/:goal_id/:user_id", authMiddleware , async (req, res) => {
   const { goal_id, user_id } = req.params;
   try {
     const [goal_row] = await pool.execute("CALL archiveGoalDetail(?)", [
@@ -855,7 +856,7 @@ router.patch("/archive/goal/:goal_id/:user_id", async (req, res) => {
 });
 
 // Archive KPI
-router.patch("/archive/kpi/:strategy_id/:user_id", async (req, res) => {
+router.patch("/archive/kpi/:strategy_id/:user_id", authMiddleware , async (req, res) => {
   const { strategy_id, user_id } = req.params;
   try {
     const [kpi_row] = await pool.execute("CALL archiveStrategyDetail(?)", [
@@ -977,7 +978,7 @@ router.patch("/archive/kpi/:strategy_id/:user_id", async (req, res) => {
 });
 
 // Archive Project
-router.patch("/archive/project/:project_id/:user_id", async (req, res) => {
+router.patch("/archive/project/:project_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, user_id } = req.params;
   try {
     const [project_row] = await pool.execute("CALL archiveProjectDetail(?,?)", [
@@ -1088,7 +1089,7 @@ router.patch("/archive/project/:project_id/:user_id", async (req, res) => {
 });
 
 // Archive Task
-router.patch("/archive/task/:task_id/:user_id", async (req, res) => {
+router.patch("/archive/task/:task_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, user_id } = req.params;
   try {
     const [task_row] = await pool.execute("CALL archivecheck_Donetask(?)", [
@@ -1146,7 +1147,7 @@ router.patch("/archive/task/:task_id/:user_id", async (req, res) => {
 });
 
 // Archive Subtask
-router.patch("/archive/subtask/:subtask_id/:user_id", async (req, res) => {
+router.patch("/archive/subtask/:subtask_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [subtask_row] = await pool.execute(
@@ -1189,7 +1190,7 @@ router.patch("/archive/subtask/:subtask_id/:user_id", async (req, res) => {
 // Reopen Portfolio
 router.patch(
   "/archive/reopen/portfolio/:portf_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portf_id, user_id } = req.params;
     try {
       var limitation = "";
@@ -1395,7 +1396,7 @@ router.patch(
 // Reopen Goal
 router.patch(
   "/archive/reopen/goal/:goal_id/:portfolio_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { goal_id, portfolio_id, user_id } = req.params;
     try {
       var limitation = "";
@@ -1615,7 +1616,7 @@ router.patch(
 // Reopen KPI
 router.patch(
   "/archive/reopen/kpi/:strategy_id/:portfolio_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { strategy_id, portfolio_id, user_id } = req.params;
     try {
       var limitation = "";
@@ -1807,7 +1808,7 @@ router.patch(
 // Reopen Project
 router.patch(
   "/archive/reopen/project/:project_id/:portfolio_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { project_id, portfolio_id, user_id } = req.params;
     try {
       var limitation = "";
@@ -1999,7 +2000,7 @@ router.patch(
 // Reopen Task
 router.patch(
   "/archive/reopen/task/:task_id/:portfolio_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { task_id, portfolio_id, user_id } = req.params;
     try {
       var limitation = "";
@@ -2148,7 +2149,7 @@ router.patch(
 // Reopen Subtask
 router.patch(
   "/archive/reopen/subtask/:subtask_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { subtask_id, user_id } = req.params;
     try {
       const [owner_row] = await pool.execute("CALL getStudentById(?)", [
@@ -2212,7 +2213,7 @@ router.patch(
 );
 
 // Goal Details
-router.get("/archive/goal-detail/:gid", async (req, res) => {
+router.get("/archive/goal-detail/:gid", authMiddleware , async (req, res) => {
   const { gid } = req.params;
   try {
     const [goal_detail] = await pool.execute("CALL file_itGoalDetail(?)", [
@@ -2226,7 +2227,7 @@ router.get("/archive/goal-detail/:gid", async (req, res) => {
 });
 
 // Kpi Details
-router.get("/archive/kpi-detail/:sid", async (req, res) => {
+router.get("/archive/kpi-detail/:sid", authMiddleware , async (req, res) => {
   const { sid } = req.params;
   try {
     const [kpi_detail] = await pool.execute("CALL file_itStrategyDetail(?)", [
@@ -2240,7 +2241,7 @@ router.get("/archive/kpi-detail/:sid", async (req, res) => {
 });
 
 // Project Details
-router.get("/archive/project-detail/:pid", async (req, res) => {
+router.get("/archive/project-detail/:pid", authMiddleware , async (req, res) => {
   const { pid } = req.params;
   try {
     const [project_detail] = await pool.execute(
@@ -2255,7 +2256,7 @@ router.get("/archive/project-detail/:pid", async (req, res) => {
 });
 
 // Project files Details
-router.get("/archive/project-files-detail/:pfile_id", async (req, res) => {
+router.get("/archive/project-files-detail/:pfile_id", authMiddleware , async (req, res) => {
   const { pfile_id } = req.params;
   try {
     const [project_files_detail] = await pool.execute(
@@ -2270,7 +2271,7 @@ router.get("/archive/project-files-detail/:pfile_id", async (req, res) => {
 });
 
 // Task Details
-router.get("/archive/task-detail/:tid", async (req, res) => {
+router.get("/archive/task-detail/:tid", authMiddleware , async (req, res) => {
   const { tid } = req.params;
   try {
     const [task_detail] = await pool.execute("CALL file_itgetTaskById(?)", [
@@ -2284,7 +2285,7 @@ router.get("/archive/task-detail/:tid", async (req, res) => {
 });
 
 // Subtask Details
-router.get("/archive/subtask-detail/:stid", async (req, res) => {
+router.get("/archive/subtask-detail/:stid", authMiddleware , async (req, res) => {
   const { stid } = req.params;
   try {
     const [subtask_detail] = await pool.execute(

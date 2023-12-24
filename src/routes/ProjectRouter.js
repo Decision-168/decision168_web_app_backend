@@ -8,11 +8,12 @@ const {
 } = require("../utils/common-functions");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
+const authMiddleware = require("../middlewares/auth");
 
 //Sidebar Project List
 router.get(
   "/project/get-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
@@ -302,7 +303,7 @@ router.get(
 //Dashboard Project List
 router.get(
   "/project/get-dashboard-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { user_id, portfolio_id } = req.params;
     try {
       const [regularList] = await pool.execute("CALL ProjectListRegular(?)", [
@@ -590,7 +591,7 @@ router.get(
 //Portfolio Project List
 router.get(
   "/project/get-portfolio-projects-list/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id, user_id } = req.params;
     try {
       const [regularList] = await pool.execute(
@@ -692,7 +693,7 @@ router.get(
 //get Project Member Data
 router.get(
   "/project/get-project-member-data/:pid/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { pid, user_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL check_ProjectMToClear(?,?)", [
@@ -709,7 +710,7 @@ router.get(
 );
 
 //project-request
-router.patch("/project-request/:pid/:pm_id/:flag", async (req, res) => {
+router.patch("/project-request/:pid/:pm_id/:flag", authMiddleware , async (req, res) => {
   const { pid, pm_id, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -832,7 +833,7 @@ router.patch("/project-request/:pid/:pm_id/:flag", async (req, res) => {
 });
 
 //getProjectById
-router.get("/project/get-project-by-id/:pid", async (req, res) => {
+router.get("/project/get-project-by-id/:pid", authMiddleware , async (req, res) => {
   const { pid } = req.params;
   try {
     const [rows] = await pool.execute("CALL getProjectById(?)", [pid]);
@@ -942,7 +943,7 @@ router.get("/project/get-project-by-id/:pid", async (req, res) => {
 });
 
 //getProjectTaskAssignee
-router.get("/project/get-project-task-assignee/:pid", async (req, res) => {
+router.get("/project/get-project-task-assignee/:pid", authMiddleware , async (req, res) => {
   const { pid } = req.params;
   try {
     const [taskrows] = await pool.execute("CALL p_tasks(?)", [pid]);
@@ -1052,7 +1053,7 @@ router.get("/project/get-project-task-assignee/:pid", async (req, res) => {
 });
 
 //ProjectFile
-router.get("/project/project-files/:pid", async (req, res) => {
+router.get("/project/project-files/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [project_rows] = await pool.execute("CALL ProjectFile(?)", [pid]);
@@ -1127,7 +1128,7 @@ router.get("/project/project-files/:pid", async (req, res) => {
 });
 
 //view_history_date
-router.get("/project/view-history-date-project/:pid", async (req, res) => {
+router.get("/project/view-history-date-project/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL view_history_date(?)", [pid]);
@@ -1143,7 +1144,7 @@ router.get("/project/view-history-date-project/:pid", async (req, res) => {
 //view_history_date_wise_project
 router.get(
   "/project/view-history-date-wise-project/:pid/:hdate",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { pid, hdate } = req.params;
     try {
       const [rows, fields] = await pool.execute("CALL view_history(?,?)", [
@@ -1161,7 +1162,7 @@ router.get(
 //view_history_date_range_project
 router.get(
   "/project/view-history-date-range-project/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const start_date = req.body.start_date;
     const end_date = req.body.end_date;
@@ -1179,7 +1180,7 @@ router.get(
 );
 
 //view_all_history_project
-router.get("/project/view-all-history-project/:pid", async (req, res) => {
+router.get("/project/view-all-history-project/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL view_all_history(?)", [
@@ -1193,7 +1194,7 @@ router.get("/project/view-all-history-project/:pid", async (req, res) => {
 });
 
 //getProjectComments
-router.get("/project/get-project-comments/:pid/:user_id", async (req, res) => {
+router.get("/project/get-project-comments/:pid/:user_id", authMiddleware , async (req, res) => {
   const { pid, user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL getProjectComments(?)", [pid]);
@@ -1250,7 +1251,7 @@ router.get("/project/get-project-comments/:pid/:user_id", async (req, res) => {
 });
 
 //MentionList
-router.get("/project/mention-list/:pid", async (req, res) => {
+router.get("/project/mention-list/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL MentionList(?)", [pid]);
@@ -1278,7 +1279,7 @@ router.get("/project/mention-list/:pid", async (req, res) => {
 //AcceptedProjectListByPortfolioRegular
 router.get(
   "/project/get-accepted-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
@@ -1297,7 +1298,7 @@ router.get(
 //PendingProjectListByPortfolioRegular
 router.get(
   "/project/get-pending-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
@@ -1316,7 +1317,7 @@ router.get(
 //ReadMoreProjectListByPortfolioRegular
 router.get(
   "/project/get-readmore-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
@@ -1333,7 +1334,7 @@ router.get(
 );
 
 //ProjectTeamMember
-router.get("/project/project-team-members/:pid", async (req, res) => {
+router.get("/project/project-team-members/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectTeamMember(?)", [pid]);
@@ -1352,7 +1353,7 @@ router.get("/project/project-team-members/:pid", async (req, res) => {
 });
 
 //ProjectDetail
-router.get("/project/project-detail/:user_id/:pid", async (req, res) => {
+router.get("/project/project-detail/:user_id/:pid", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
@@ -1370,7 +1371,7 @@ router.get("/project/project-detail/:user_id/:pid", async (req, res) => {
 //edit_project_files_notify
 router.patch(
   "/project/edit-project-files-notify/:pfile_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pfile_id = req.params.pfile_id;
     const final_mem = req.body.final_mem;
     try {
@@ -1393,7 +1394,7 @@ router.patch(
 //get_project_accepted_notification
 router.get(
   "/project/get-project-accepted-notification/:user_id/:pm_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const pm_id = req.params.pm_id;
     try {
@@ -1412,7 +1413,7 @@ router.get(
 //edit_project_members_notify
 router.patch(
   "/project/edit-project-members-notify/:pm_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pm_id = req.params.pm_id;
     try {
       const updateFieldsValues = `status_notify = 'seen'`;
@@ -1430,7 +1431,7 @@ router.patch(
 );
 
 //InvitedProjectMember
-router.get("/project/project-invited-member/:pid", async (req, res) => {
+router.get("/project/project-invited-member/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL InvitedProjectMember(?)", [pid]);
@@ -1444,7 +1445,7 @@ router.get("/project/project-invited-member/:pid", async (req, res) => {
 //edit_project_invite_members_notify
 router.patch(
   "/project/edit-project-invite-members-notify/:im_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const im_id = req.params.im_id;
     try {
       const updateFieldsValues = `status_notify = 'seen'`;
@@ -1464,7 +1465,7 @@ router.patch(
 //check_project_membership_notify
 router.get(
   "/project/project-invited-member/:user_id/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
     try {
@@ -1483,7 +1484,7 @@ router.get(
 //edit_project_membership_req_notify
 router.patch(
   "/project/edit-project-membership-req-notify/:req_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const req_id = req.params.req_id;
     try {
       const otherFields = {
@@ -1504,7 +1505,7 @@ router.patch(
 );
 
 //edit_project_comments_notify
-router.patch("/project/edit-project-comments-notify/:cid", async (req, res) => {
+router.patch("/project/edit-project-comments-notify/:cid", authMiddleware , async (req, res) => {
   const cid = req.params.cid;
   const final_mem = req.body.final_mem;
   try {
@@ -1526,7 +1527,7 @@ router.patch("/project/edit-project-comments-notify/:cid", async (req, res) => {
 //getProject_TaskCount
 router.get(
   "/project/get-project-task-count/:user_id/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
     try {
@@ -1543,7 +1544,7 @@ router.get(
 );
 
 //check_edit_request
-router.get("/project/check-edit-request/:user_id/:pid", async (req, res) => {
+router.get("/project/check-edit-request/:user_id/:pid", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
@@ -1561,7 +1562,7 @@ router.get("/project/check-edit-request/:user_id/:pid", async (req, res) => {
 //getAccepted_ProjTM
 router.get(
   "/project/get-accepted-project-team-member/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { pid } = req.params;
     try {
       const [rows] = await pool.execute("CALL getAccepted_ProjTM(?)", [pid]);
@@ -1576,7 +1577,7 @@ router.get(
 //progress_done3
 router.get(
   "/project/get-project-member-task-progress-done/:pid/:member_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const member_id = req.params.member_id;
     try {
@@ -1595,7 +1596,7 @@ router.get(
 //progress_total3
 router.get(
   "/project/get-project-member-task-progress-total/:pid/:member_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const member_id = req.params.member_id;
     try {
@@ -1614,7 +1615,7 @@ router.get(
 //sub_progress_done3
 router.get(
   "/project/get-project-member-subtask-progress-done/:pid/:member_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const member_id = req.params.member_id;
     try {
@@ -1633,7 +1634,7 @@ router.get(
 //sub_progress_total3
 router.get(
   "/project/get-project-member-subtask-progress-total/:pid/:member_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const member_id = req.params.member_id;
     try {
@@ -1650,7 +1651,7 @@ router.get(
 );
 
 //getTasksProjectLinks
-router.get("/project/get-project-tasks-links/:pid", async (req, res) => {
+router.get("/project/get-project-tasks-links/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL getTasksProjectLinks(?)", [
@@ -1664,7 +1665,7 @@ router.get("/project/get-project-tasks-links/:pid", async (req, res) => {
 });
 
 //getSubtasksProjectLinks
-router.get("/project/get-project-subtasks-links/:pid", async (req, res) => {
+router.get("/project/get-project-subtasks-links/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute(
@@ -1679,7 +1680,7 @@ router.get("/project/get-project-subtasks-links/:pid", async (req, res) => {
 });
 
 //TaskFile
-router.get("/project/task-file/:pid", async (req, res) => {
+router.get("/project/task-file/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL TaskFile(?)", [pid]);
@@ -1691,7 +1692,7 @@ router.get("/project/task-file/:pid", async (req, res) => {
 });
 
 //SubtaskFile
-router.get("/project/subtask-file/:pid", async (req, res) => {
+router.get("/project/subtask-file/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL SubtaskFile(?)", [pid]);
@@ -1703,7 +1704,7 @@ router.get("/project/subtask-file/:pid", async (req, res) => {
 });
 
 //SuggestedProjectMember
-router.get("/project/project-suggested-member/:pid", async (req, res) => {
+router.get("/project/project-suggested-member/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL SuggestedProjectMember(?)", [pid]);
@@ -1717,7 +1718,7 @@ router.get("/project/project-suggested-member/:pid", async (req, res) => {
 //SuggestedInviteProjectMember
 router.get(
   "/project/project-suggested-invite-member/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     try {
       const [rows] = await pool.execute(
@@ -1735,7 +1736,7 @@ router.get(
 //getPortfolioMemberCount
 router.get(
   "/project/get-portfolio-member-count/:user_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const portfolio_id = req.params.portfolio_id;
     try {
@@ -1752,7 +1753,7 @@ router.get(
 );
 
 //RequestAsProjectMember
-router.get("/project/request-as-project-member/:pid", async (req, res) => {
+router.get("/project/request-as-project-member/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL RequestAsProjectMember(?)", [pid]);
@@ -1764,7 +1765,7 @@ router.get("/project/request-as-project-member/:pid", async (req, res) => {
 });
 
 //getTasksbyID
-router.get("/project/get-tasks-by-id/:tid", async (req, res) => {
+router.get("/project/get-tasks-by-id/:tid", authMiddleware , async (req, res) => {
   const { tid } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getTasksbyID(?)", [tid]);
@@ -1776,7 +1777,7 @@ router.get("/project/get-tasks-by-id/:tid", async (req, res) => {
 });
 
 //getSubtasksbyID
-router.get("/project/get-subtasks-by-id/:stid", async (req, res) => {
+router.get("/project/get-subtasks-by-id/:stid", authMiddleware , async (req, res) => {
   const { stid } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getSubtasksbyID(?)", [
@@ -1792,7 +1793,7 @@ router.get("/project/get-subtasks-by-id/:stid", async (req, res) => {
 //check_pm
 router.get(
   "/project/check-pm/:user_id/:pid/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
     const portfolio_id = req.params.portfolio_id;
@@ -1813,7 +1814,7 @@ router.get(
 //ProjectDetailAccepted
 router.get(
   "/project/project-detail-accepted/:user_id/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
     try {
@@ -1832,7 +1833,7 @@ router.get(
 //check_edit_permission
 router.get(
   "/project/check-edit-permission/:member_id/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const member_id = req.params.member_id;
     const pid = req.params.pid;
     try {
@@ -1851,7 +1852,7 @@ router.get(
 //MentionListforAccepted
 router.get(
   "/project/accepted-project-mention-list/:pid/:member_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const member_id = req.params.member_id;
     try {
@@ -1870,7 +1871,7 @@ router.get(
 //ProjectDetailRequest
 router.get(
   "/project/project-detail-request/:user_id/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
     try {
@@ -1889,7 +1890,7 @@ router.get(
 //portfolio_projects_list
 router.get(
   "/project/portfolio-projects-list/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const portfolio_id = req.params.portfolio_id;
     try {
       const [rows] = await pool.execute("CALL portfolio_projectsRegular(?)", [
@@ -1904,7 +1905,7 @@ router.get(
 );
 
 //ProjectListRegular
-router.get("/project/get-my-project-list/:user_id", async (req, res) => {
+router.get("/project/get-my-project-list/:user_id", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   try {
     const [rows] = await pool.execute("CALL ProjectListRegular(?)", [user_id]);
@@ -1918,7 +1919,7 @@ router.get("/project/get-my-project-list/:user_id", async (req, res) => {
 //AcceptedProjectListRegular
 router.get(
   "/project/get-my-accepted-project-list/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     try {
       const [rows] = await pool.execute("CALL AcceptedProjectListRegular(?)", [
@@ -1935,7 +1936,7 @@ router.get(
 //PendingProjectListRegular
 router.get(
   "/project/get-my-pending-project-list/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     try {
       const [rows] = await pool.execute("CALL PendingProjectListRegular(?)", [
@@ -1952,7 +1953,7 @@ router.get(
 //ReadMoreProjectListRegular
 router.get(
   "/project/get-my-readmore-project-list/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const user_id = req.params.user_id;
     try {
       const [rows] = await pool.execute("CALL ReadMoreProjectListRegular(?)", [
@@ -1967,7 +1968,7 @@ router.get(
 );
 
 //InsertProject
-router.post("/project/insert-project", async (req, res) => {
+router.post("/project/insert-project", authMiddleware , async (req, res) => {
   try {
     let { portfolio_id } = req.body;
     let { pcreated_by } = req.body;
@@ -2496,7 +2497,7 @@ router.post("/project/insert-project", async (req, res) => {
 //project-invite-reject-request
 router.get(
   "/project-invite-reject-request/:pid/:im_id/:flag",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { pid, im_id, flag } = req.params;
     try {
       const formattedDate = dateConversion();
@@ -2555,7 +2556,7 @@ router.get(
 );
 
 //UpdateProject
-router.patch("/project/update-project", async (req, res) => {
+router.patch("/project/update-project", authMiddleware , async (req, res) => {
   try {
     let { pname } = req.body;
     let { pid } = req.body;
@@ -3078,7 +3079,7 @@ router.patch("/project/update-project", async (req, res) => {
 });
 
 //DuplicateProject
-router.post("/project/duplicate-project", async (req, res) => {
+router.post("/project/duplicate-project", authMiddleware , async (req, res) => {
   try {
     let { pcreated_by } = req.body;
     let { pname } = req.body;
@@ -3608,7 +3609,7 @@ router.post("/project/duplicate-project", async (req, res) => {
 });
 
 //UpdateProjectLinks
-router.patch("/project/update-project-links", async (req, res) => {
+router.patch("/project/update-project-links", authMiddleware , async (req, res) => {
   const { pid, pcreated_by, ...otherFields } = req.body;
   try {
     const formattedDate = dateConversion();
@@ -3647,7 +3648,7 @@ router.patch("/project/update-project-links", async (req, res) => {
 });
 
 //InsertProjectFiles
-router.post("/project/insert-project-files", async (req, res) => {
+router.post("/project/insert-project-files", authMiddleware , async (req, res) => {
   const { pid, pcreated_by, pfile } = req.body;
   try {
     const formattedDate = dateConversion();
@@ -3725,7 +3726,7 @@ router.post("/project/insert-project-files", async (req, res) => {
 //DeleteProjectFiles
 router.patch(
   "/project/delete-project-files/:pid/:pfile_id/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pid = req.params.pid;
     const pfile_id = req.params.pfile_id;
     const user_id = req.params.user_id;
@@ -3791,7 +3792,7 @@ router.patch(
 //direct_remove_projectmanager
 router.patch(
   "/project/direct-remove-project-manager/:pid/:pmember_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     try {
       const pid = req.params.pid;
       const pmember_id = req.params.pmember_id;
@@ -3839,7 +3840,7 @@ router.patch(
 );
 
 //delete_pMember
-router.patch("/project/remove-project-member/:pm_id", async (req, res) => {
+router.patch("/project/remove-project-member/:pm_id", authMiddleware , async (req, res) => {
   try {
     const pm_id = req.params.pm_id;
     console.log(pm_id);
@@ -3931,7 +3932,7 @@ router.patch("/project/remove-project-member/:pm_id", async (req, res) => {
 });
 
 //ProjectTeamMemberAccepted
-router.get("/project/project-team-member-accepted/:pid", async (req, res) => {
+router.get("/project/project-team-member-accepted/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectTeamMemberAccepted(?)", [
@@ -3945,7 +3946,7 @@ router.get("/project/project-team-member-accepted/:pid", async (req, res) => {
 });
 
 //project_open_work_new_assignee
-router.patch("/project/project-open-work-new-assignee", async (req, res) => {
+router.patch("/project/project-open-work-new-assignee", authMiddleware , async (req, res) => {
   const reg_id = req.body.reg_id;
   const new_reg_id = req.body.new_reg_id;
   const old_reg_id = req.body.old_reg_id;
@@ -4111,7 +4112,7 @@ router.patch("/project/project-open-work-new-assignee", async (req, res) => {
 //assign_projectmanager
 router.patch(
   "/project/assign-project-manager/:pid/:pmember",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     try {
       const pid = req.params.pid;
       const pmember = req.params.pmember;
@@ -4159,7 +4160,7 @@ router.patch(
 );
 
 //delete_iMember
-router.patch("/project/remove-project-invited-member", async (req, res) => {
+router.patch("/project/remove-project-invited-member", authMiddleware , async (req, res) => {
   try {
     const user_id = req.body.user_id;
     const im_id = req.body.im_id;
@@ -4209,7 +4210,7 @@ router.patch("/project/remove-project-invited-member", async (req, res) => {
 //add_SuggestedPMember
 router.patch(
   "/project/add-suggested-project-member/:user_id/:pid/:suggest_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     try {
       const user_id = req.params.user_id;
       const pid = req.params.pid;
@@ -4356,7 +4357,7 @@ router.patch(
 //add_Suggested_IPMember
 router.patch(
   "/project/add-invited-suggested-project-member/:user_id/:pid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     try {
       const user_id = req.params.user_id;
       const pid = req.params.pid;
@@ -4713,7 +4714,7 @@ router.patch(
 );
 
 //pdetail_SuggestTMember
-router.post("/project/insert-project-suggest-team-member", async (req, res) => {
+router.post("/project/insert-project-suggest-team-member", authMiddleware , async (req, res) => {
   try {
     let { pid } = req.body;
     let { user_id } = req.body;
@@ -4953,7 +4954,7 @@ router.post("/project/insert-project-suggest-team-member", async (req, res) => {
 });
 
 //request_as_member
-router.post("/project/insert-project-request-as-member", async (req, res) => {
+router.post("/project/insert-project-request-as-member", authMiddleware , async (req, res) => {
   try {
     let { pid } = req.body;
     let { user_id } = req.body;
@@ -5041,7 +5042,7 @@ router.post("/project/insert-project-request-as-member", async (req, res) => {
 //add_RequestedPMember
 router.patch(
   "/project/add-requested-project-member/:user_id/:pid/:member",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     try {
       const user_id = req.params.user_id;
       const pid = req.params.pid;
@@ -5185,7 +5186,7 @@ router.patch(
 //getAccepted_PortTM_ProjectList
 router.get(
   "/project/get-all-accepted-portfolio-team-member-project-list/:portfolio_id/:pid/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id, pid, user_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [
@@ -5235,7 +5236,7 @@ router.get(
 //getAccepted_GoalTM_ProjectList
 router.get(
   "/project/get-all-accepted-goal-team-member-project-list/:portfolio_id/:pid/:gid/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id, pid, gid, user_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [
@@ -5281,7 +5282,7 @@ router.get(
   }
 );
 
-router.post("/project/insert-project-member", async (req, res) => {
+router.post("/project/insert-project-member", authMiddleware , async (req, res) => {
   try {
     const { pid, pcreated_by, team_member, imemail } = req.body;
 
@@ -5647,7 +5648,7 @@ router.post("/project/insert-project-member", async (req, res) => {
 //getGoalCreateDD
 router.get(
   "/project/get-project-create-dd/:portfolio_id/:gid/:user_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id, gid, user_id } = req.params;
     try {
       let PortfolioResults = [];

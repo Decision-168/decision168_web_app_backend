@@ -6,10 +6,10 @@ const { isEmail } = require("validator");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { compareSync } = require("bcrypt");
 const router = express.Router();
-
+const authMiddleware = require("../middlewares/auth");
 
 //get all portfolio by user_id
-router.get("/portfolio/all-portfolios/:email_address/:user_id", async (req, res) => {
+router.get("/portfolio/all-portfolios/:email_address/:user_id", authMiddleware , async (req, res) => {
   const { email_address, user_id } = req.params;
   try {
     const [portfolioRowList] = await pool.execute("CALL get_SideBar_ALLPortfolio(?)", [
@@ -90,7 +90,7 @@ router.get("/portfolio/all-portfolios/:email_address/:user_id", async (req, res)
 });
 
 //get all portfolio by email_address
-router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
+router.get("/portfolio/get-all-portfolios/:email_address", authMiddleware , async (req, res) => {
   const { email_address } = req.params;
   try {
     const [rows] = await pool.execute("CALL get_SideBar_Portfolio(?)", [
@@ -106,7 +106,7 @@ router.get("/portfolio/get-all-portfolios/:email_address", async (req, res) => {
 //get project and task count by portfolio_id
 router.get(
   "/portfolio/get-project-and-task-count/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id } = req.params;
 
     try {
@@ -133,7 +133,7 @@ router.get(
 //get all accepted portfolio team members (Active and Inactive) by portfolio_id
 router.get(
   "/portfolio/get-all-accepted-portfolio-team-members/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL getAll_Accepted_PortTM(?)", [
@@ -174,7 +174,7 @@ router.get(
 //change portfolio member status by pim_id and portfolio_id
 router.patch(
   "/portfolio/change-portfolio-member-status/:pim_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const pim_id = req.params.pim_id;
     const portfolio_id = req.params.portfolio_id;
     const status = req.body.status;
@@ -322,7 +322,7 @@ router.patch(
 //open_work_new_assignee
 router.patch(
   "/portfolio/open-work-new-assignee/:reg_id/:new_reg_id/:old_reg_id/:pim_id/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const reg_id = req.params.reg_id; //user reg_id
     const new_reg_id = req.params.new_reg_id; //new portfolio member reg_id
     const old_reg_id = req.params.old_reg_id; //old portfolio member reg_id
@@ -820,7 +820,7 @@ router.patch(
 );
 
 //get portfolio details by portfolio_id
-router.get("/portfolio/get-portfolio-details/:portfolio_id", async (req, res) => {
+router.get("/portfolio/get-portfolio-details/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getPortfolio2(?)", [
@@ -847,7 +847,7 @@ router.get("/portfolio/get-portfolio-details/:portfolio_id", async (req, res) =>
 //get portfolio departments by portfolio_id
 router.get(
   "/portfolio/get-portfolio-departments/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL get_PortfolioDepartment(?)", [
@@ -862,7 +862,7 @@ router.get(
 );
 
 //insert project portfolio department
-router.post("/portfolio/insert-project-portfolio-department", async (req, res) => {
+router.post("/portfolio/insert-project-portfolio-department", authMiddleware , async (req, res) => {
   try {
     let { portfolio_id, departments, cus_departments, createdby } = req.body;
 
@@ -929,7 +929,7 @@ router.post("/portfolio/insert-project-portfolio-department", async (req, res) =
 });
 
 //update project portfolio department by portfolio_dept_id
-router.patch("/portfolio/update-portfolio-department/:id", async (req, res) => {
+router.patch("/portfolio/update-portfolio-department/:id", authMiddleware , async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -949,7 +949,7 @@ router.patch("/portfolio/update-portfolio-department/:id", async (req, res) => {
 });
 
 //insert project portfolio member
-router.post("/portfolio/insert-project-portfolio-member", async (req, res) => {
+router.post("/portfolio/insert-project-portfolio-member", authMiddleware , async (req, res) => {
   try {
     let { portfolio_id, imemail, sent_from } = req.body;
 
@@ -1036,7 +1036,7 @@ router.post("/portfolio/insert-project-portfolio-member", async (req, res) => {
 //portfolio-invite-request
 router.get(
   "/portfolio-invite-request/:portfolio_id/:pim_id/:flag",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id, pim_id, flag } = req.params;
     try {
       if (flag == 1) {
@@ -1116,7 +1116,7 @@ router.get(
 );
 
 //InsertPortfolio
-router.post("/portfolio/insert-portfolio", async (req, res) => {
+router.post("/portfolio/insert-portfolio", authMiddleware , async (req, res) => {
   try {
     let { email_address } = req.body;
 
@@ -1153,7 +1153,7 @@ router.post("/portfolio/insert-portfolio", async (req, res) => {
 });
 
 //UpdateProjectPortfolio
-router.patch("/portfolio/update-portfolio/:portfolio_id", async (req, res) => {
+router.patch("/portfolio/update-portfolio/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const updateData = Object.entries(req.body)
@@ -1169,7 +1169,7 @@ router.patch("/portfolio/update-portfolio/:portfolio_id", async (req, res) => {
 });
 
 //get portfolio count
-router.get("/portfolio/get-portfolio-count/:id", async (req, res) => {
+router.get("/portfolio/get-portfolio-count/:id", authMiddleware , async (req, res) => {
   const { id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getPortfolioCount(?)", [
@@ -1186,7 +1186,7 @@ router.get("/portfolio/get-portfolio-count/:id", async (req, res) => {
 //(only for asignee dropdown )get all accepted portfolio team members (Active and Inactive) by portfolio_id
 router.get(
   "/portfolio/get-all-accepted-active-portfolio-team-members/:portfolio_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id } = req.params;
     try {
       const [rows] = await pool.execute("CALL getAll_Accepted_PortTM(?)", [

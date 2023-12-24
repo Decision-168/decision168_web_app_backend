@@ -6,9 +6,10 @@ const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const front_url = process.env.FRONTEND_URL;
+const authMiddleware = require("../middlewares/auth");
 
 //getAllPack
-router.get("/upgrade-plan/get-all-pack/:user_id", async (req, res) => {
+router.get("/upgrade-plan/get-all-pack/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL getAllPack(?)", [user_id]);
@@ -121,7 +122,7 @@ router.get("/upgrade-plan/get-all-pack/:user_id", async (req, res) => {
 });
 
 //get_active_coupons
-router.get("/upgrade-plan/get-active-coupons", async (req, res) => {
+router.get("/upgrade-plan/get-active-coupons", authMiddleware , async (req, res) => {
   try {
     const [rows] = await pool.execute("CALL get_active_coupons()");
     res.status(200).json(rows[0]);
@@ -132,7 +133,7 @@ router.get("/upgrade-plan/get-active-coupons", async (req, res) => {
 });
 
 //free_trial_account_access
-router.post("/upgrade-plan/free-trial-account-access", async (req, res) => {
+router.post("/upgrade-plan/free-trial-account-access", authMiddleware , async (req, res) => {
   const { code, user_id } = req.body;
   try {
     const [check_codeRes] = await pool.execute("CALL check_code(?)", [code]);
@@ -248,7 +249,7 @@ router.post("/upgrade-plan/free-trial-account-access", async (req, res) => {
 });
 
 //insert_ContactSales
-router.post("/upgrade-plan/insert-contact-sales", async (req, res) => {
+router.post("/upgrade-plan/insert-contact-sales", authMiddleware , async (req, res) => {
   const { pass_total_users, user_id } = req.body;
   try {
     const [check_contactedRes] = await pool.execute("CALL check_contacted(?)", [
@@ -334,7 +335,7 @@ router.post("/upgrade-plan/insert-contact-sales", async (req, res) => {
 });
 
 //checkout_payment_session_initialize
-router.post("/upgrade-plan/create-checkout-session", async (req, res) => {
+router.post("/upgrade-plan/create-checkout-session", authMiddleware , async (req, res) => {
   const { price_id, user_id } = req.body;
   try {
     const [getCusIDRes] = await pool.execute("CALL getStudentById(?)", [
@@ -390,7 +391,7 @@ router.post("/upgrade-plan/create-checkout-session", async (req, res) => {
 });
 
 //insert_checkout_payment_data
-router.post("/upgrade-plan/insert-checkout-payment-data", async (req, res) => {
+router.post("/upgrade-plan/insert-checkout-payment-data", authMiddleware , async (req, res) => {
   const { session_id, user_id } = req.body;
   try {
     //Fetch checkout session details
@@ -524,7 +525,7 @@ router.post("/upgrade-plan/insert-checkout-payment-data", async (req, res) => {
 });
 
 //update_subscription
-router.post("/upgrade-plan/update-subscription", async (req, res) => {
+router.post("/upgrade-plan/update-subscription", authMiddleware , async (req, res) => {
   const { price_id, user_id } = req.body;
   try {
     const [packRes] = await pool.execute("CALL getPackByPriceID(?)", [
@@ -644,7 +645,7 @@ router.post("/upgrade-plan/update-subscription", async (req, res) => {
 });
 
 //downgrade_plan
-router.post("/upgrade-plan/downgrade-plan", async (req, res) => {
+router.post("/upgrade-plan/downgrade-plan", authMiddleware , async (req, res) => {
   const { user_id } = req.body;
   try {
     const [getCusIDRes] = await pool.execute("CALL getStudentById(?)", [
@@ -841,8 +842,7 @@ router.post("/upgrade-plan/downgrade-plan", async (req, res) => {
 
 //UpdateAllUsersPackageDetails
 router.post(
-  "/upgrade-plan/updtae-all-users-package-details",
-  async (req, res) => {
+  "/upgrade-plan/updtae-all-users-package-details", async (req, res) => {
     try {
       const currentDate = moment().format("YYYY-MM-DD HH:mm:ss");
       const [getUsersRes] = await pool.execute("CALL GetAllUsersPackage()");

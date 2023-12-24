@@ -3,9 +3,10 @@ const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { dateConversion } = require("../utils/common-functions");
 const moment = require("moment");
+const authMiddleware = require("../middlewares/auth");
 
 // Get All portfolio departments wise modules
-router.get("/file-cabinet/data/:portfolio_id/:user_id", async (req, res) => {
+router.get("/file-cabinet/data/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   const { user_id } = req.params;
   try {
@@ -625,7 +626,7 @@ router.get("/file-cabinet/data/:portfolio_id/:user_id", async (req, res) => {
 });
 
 //  Get User detail by ID
-router.get("/file-cabinet/get-student-detail/:user_id", async (req, res) => {
+router.get("/file-cabinet/get-student-detail/:user_id", authMiddleware , async (req, res) => {
   const { user_id } = req.params;
   try {
     const [user_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
@@ -637,7 +638,7 @@ router.get("/file-cabinet/get-student-detail/:user_id", async (req, res) => {
 });
 
 // Get All Portfolio departments
-router.get("/file-cabinet/files/:portfolio_id", async (req, res) => {
+router.get("/file-cabinet/files/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL get_PortfolioDepartment(?)", [portfolio_id]);
@@ -649,7 +650,7 @@ router.get("/file-cabinet/files/:portfolio_id", async (req, res) => {
 });
 
 // File it Goal
-router.patch("/file-cabinet/file-it/goal/:goal_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/file-it/goal/:goal_id/:user_id", authMiddleware , async (req, res) => {
   const { goal_id, user_id } = req.params;
   try {
     const [goal_row] = await pool.execute("CALL file_itGoalDetail(?)", [goal_id]);
@@ -733,7 +734,7 @@ router.patch("/file-cabinet/file-it/goal/:goal_id/:user_id", async (req, res) =>
 });
 
 // File it KPI
-router.patch("/file-cabinet/file-it/kpi/:strategy_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/file-it/kpi/:strategy_id/:user_id", authMiddleware , async (req, res) => {
   const { strategy_id, user_id } = req.params;
   try {
     const [kpi_row] = await pool.execute("CALL file_itStrategyDetail(?)", [strategy_id]);
@@ -802,7 +803,7 @@ router.patch("/file-cabinet/file-it/kpi/:strategy_id/:user_id", async (req, res)
 });
 
 // File it Project
-router.patch("/file-cabinet/file-it/project/:project_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/file-it/project/:project_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, user_id } = req.params;
   try {
     const [project_row] = await pool.execute("CALL file_itProjectDetail2(?)", [project_id]);
@@ -862,7 +863,7 @@ router.patch("/file-cabinet/file-it/project/:project_id/:user_id", async (req, r
 });
 
 // File it Task
-router.patch("/file-cabinet/file-it/task/:task_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/file-it/task/:task_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, user_id } = req.params;
   try {
     const [task_row] = await pool.execute("CALL check_Donetask(?)", [task_id]);
@@ -903,7 +904,7 @@ router.patch("/file-cabinet/file-it/task/:task_id/:user_id", async (req, res) =>
 });
 
 // File it Subtask
-router.patch("/file-cabinet/file-it/subtask/:subtask_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/file-it/subtask/:subtask_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [subtask_row] = await pool.execute("CALL check_Donesubtask(?)", [subtask_id]);
@@ -930,7 +931,7 @@ router.patch("/file-cabinet/file-it/subtask/:subtask_id/:user_id", async (req, r
 });
 
 // Reopen Goal
-router.patch("/file-cabinet/reopen/goal/:goal_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/reopen/goal/:goal_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { goal_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1054,7 +1055,7 @@ router.patch("/file-cabinet/reopen/goal/:goal_id/:portfolio_id/:user_id", async 
 });
 
 // Reopen KPI
-router.patch("/file-cabinet/reopen/kpi/:strategy_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/reopen/kpi/:strategy_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { strategy_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1172,7 +1173,7 @@ router.patch("/file-cabinet/reopen/kpi/:strategy_id/:portfolio_id/:user_id", asy
 });
 
 // Reopen Project
-router.patch("/file-cabinet/reopen/project/:project_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/reopen/project/:project_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { project_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1285,7 +1286,7 @@ router.patch("/file-cabinet/reopen/project/:project_id/:portfolio_id/:user_id", 
 });
 
 // Reopen Task
-router.patch("/file-cabinet/reopen/task/:task_id/:portfolio_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/reopen/task/:task_id/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { task_id, portfolio_id, user_id } = req.params;
   try {
     var limitation = "";
@@ -1388,7 +1389,7 @@ router.patch("/file-cabinet/reopen/task/:task_id/:portfolio_id/:user_id", async 
 });
 
 // Reopen Subtask
-router.patch("/file-cabinet/reopen/subtask/:subtask_id/:user_id", async (req, res) => {
+router.patch("/file-cabinet/reopen/subtask/:subtask_id/:user_id", authMiddleware , async (req, res) => {
   const { subtask_id, user_id } = req.params;
   try {
     const [owner_row] = await pool.execute("CALL getStudentById(?)", [user_id]);
@@ -1421,7 +1422,7 @@ router.patch("/file-cabinet/reopen/subtask/:subtask_id/:user_id", async (req, re
   }
 });
 
-router.get("/file-cabinet/recent-files/:user_id/:portfolio_id", async (req, res) => {
+router.get("/file-cabinet/recent-files/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [task_files] = await pool.execute("CALL task_5Files(?,?)", [user_id, portfolio_id]);
@@ -1471,7 +1472,7 @@ router.get("/file-cabinet/recent-files/:user_id/:portfolio_id", async (req, res)
   }
 });
 
-router.get("/file-cabinet/goal-detail/:gid", async (req, res) => {
+router.get("/file-cabinet/goal-detail/:gid", authMiddleware , async (req, res) => {
   const { gid } = req.params;
   try {
     const [goal_detail] = await pool.execute("CALL file_itGoalDetail(?)", [gid]);
@@ -1482,7 +1483,7 @@ router.get("/file-cabinet/goal-detail/:gid", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/kpi-detail/:sid", async (req, res) => {
+router.get("/file-cabinet/kpi-detail/:sid", authMiddleware , async (req, res) => {
   const { sid } = req.params;
   try {
     const [kpi_detail] = await pool.execute("CALL file_itStrategyDetail(?)", [sid]);
@@ -1493,7 +1494,7 @@ router.get("/file-cabinet/kpi-detail/:sid", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/project-detail/:pid", async (req, res) => {
+router.get("/file-cabinet/project-detail/:pid", authMiddleware , async (req, res) => {
   const { pid } = req.params;
   try {
     const [project_detail] = await pool.execute("CALL file_itProjectDetailPortfolio(?)", [pid]);
@@ -1504,7 +1505,7 @@ router.get("/file-cabinet/project-detail/:pid", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/project-files-detail/:pfile_id", async (req, res) => {
+router.get("/file-cabinet/project-files-detail/:pfile_id", authMiddleware , async (req, res) => {
   const { pfile_id } = req.params;
   try {
     const [project_files_detail] = await pool.execute("CALL pfile_detailfile_it(?)", [pfile_id]);
@@ -1515,7 +1516,7 @@ router.get("/file-cabinet/project-files-detail/:pfile_id", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/task-detail/:tid", async (req, res) => {
+router.get("/file-cabinet/task-detail/:tid", authMiddleware , async (req, res) => {
   const { tid } = req.params;
   try {
     const [task_detail] = await pool.execute("CALL file_itgetTaskById(?)", [tid]);
@@ -1526,7 +1527,7 @@ router.get("/file-cabinet/task-detail/:tid", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/subtask-detail/:stid", async (req, res) => {
+router.get("/file-cabinet/subtask-detail/:stid", authMiddleware , async (req, res) => {
   const { stid } = req.params;
   try {
     const [subtask_detail] = await pool.execute("CALL file_itcheck_subtask(?)", [stid]);
@@ -1537,7 +1538,7 @@ router.get("/file-cabinet/subtask-detail/:stid", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/department-detail/:deptId", async (req, res) => {
+router.get("/file-cabinet/department-detail/:deptId", authMiddleware , async (req, res) => {
   const { deptId } = req.params;
   try {
     const [department_detail] = await pool.execute("CALL get_PDepartment(?)", [deptId]);
@@ -1548,7 +1549,7 @@ router.get("/file-cabinet/department-detail/:deptId", async (req, res) => {
   }
 });
 
-router.get("/file-cabinet/goal-kpi-detail/:gid/:portfolio_dept_id/:portfolio_id", async (req, res) => {
+router.get("/file-cabinet/goal-kpi-detail/:gid/:portfolio_dept_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { gid, portfolio_dept_id, portfolio_id } = req.params;
   try {
     const [goal_kpi_detail] = await pool.execute("CALL file_itStrategiesCountGoalWise(?,?,?)", [gid, portfolio_dept_id, portfolio_id]);
@@ -1559,7 +1560,7 @@ router.get("/file-cabinet/goal-kpi-detail/:gid/:portfolio_dept_id/:portfolio_id"
   }
 });
 
-router.get("/file-cabinet/kpi-project-detail/:reg_id/:sid/:portfolio_dept_id/:portfolio_id", async (req, res) => {
+router.get("/file-cabinet/kpi-project-detail/:reg_id/:sid/:portfolio_dept_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { reg_id, sid, portfolio_dept_id, portfolio_id } = req.params;
   try {
     const [project_detail] = await pool.execute("CALL file_itProjectsStrategyWise(?,?,?,?)", [reg_id, sid, portfolio_dept_id, portfolio_id]);
@@ -1573,7 +1574,7 @@ router.get("/file-cabinet/kpi-project-detail/:reg_id/:sid/:portfolio_dept_id/:po
   }
 });
 
-router.get("/file-cabinet/task-subtask-detail/:reg_id/:tid/:portfolio_dept_id/:portfolio_id", async (req, res) => {
+router.get("/file-cabinet/task-subtask-detail/:reg_id/:tid/:portfolio_dept_id/:portfolio_id", authMiddleware , async (req, res) => {
   const { reg_id, tid, portfolio_dept_id, portfolio_id } = req.params;
   try {
     const [subtask_detail] = await pool.execute("CALL file_itSubtaskCountTaskWise(?,?,?,?)", [reg_id, tid, portfolio_dept_id, portfolio_id]);
@@ -1586,7 +1587,7 @@ router.get("/file-cabinet/task-subtask-detail/:reg_id/:tid/:portfolio_dept_id/:p
   }
 });
 
-router.get("/file-cabinet/portfolio-detail/:portfolio_id", async (req, res) => {
+router.get("/file-cabinet/portfolio-detail/:portfolio_id", authMiddleware , async (req, res) => {
   const { portfolio_id } = req.params;
   try {
     const [portfolio_detail] = await pool.execute("CALL getPortfolioById(?)", [portfolio_id]);

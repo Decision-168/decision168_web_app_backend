@@ -9,9 +9,10 @@ const {
 const moment = require("moment");
 const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
+const authMiddleware = require("../middlewares/auth");
 
 // //GoalsList
-// router.get("/goal/get-goals-list/:user_id/:portfolio_id", async (req, res) => {
+// router.get("/goal/get-goals-list/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
 //   const user_id = req.params.user_id;
 //   const portfolio_id = req.params.portfolio_id;
 //   try {
@@ -29,7 +30,7 @@ const { default: isEmail } = require("validator/lib/isEmail");
 // //AcceptedGoalsAllList
 // router.get(
 //   "/goal/get-accepted-goals-list/:user_id/:portfolio_id",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const user_id = req.params.user_id;
 //     const portfolio_id = req.params.portfolio_id;
 //     try {
@@ -48,7 +49,7 @@ const { default: isEmail } = require("validator/lib/isEmail");
 // //PendingGoalsAllList
 // router.get(
 //   "/goal/get-pending-goals-list/:user_id/:portfolio_id",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const user_id = req.params.user_id;
 //     const portfolio_id = req.params.portfolio_id;
 //     try {
@@ -67,7 +68,7 @@ const { default: isEmail } = require("validator/lib/isEmail");
 // //ReadMoreGoalsAllList
 // router.get(
 //   "/goal/get-readmore-goals-list/:user_id/:portfolio_id",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const user_id = req.params.user_id;
 //     const portfolio_id = req.params.portfolio_id;
 //     try {
@@ -84,7 +85,7 @@ const { default: isEmail } = require("validator/lib/isEmail");
 // );
 
 //AllGoalList
-router.get("/goal/get-all-goals-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/goal/get-all-goals-list/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
@@ -245,7 +246,7 @@ router.get("/goal/get-all-goals-list/:user_id/:portfolio_id", async (req, res) =
 });
 
 //check_PortfolioMemberActive
-router.get("/goal/check-portfolio-member-active/:email_id/:portfolio_id", async (req, res) => {
+router.get("/goal/check-portfolio-member-active/:email_id/:portfolio_id", authMiddleware , async (req, res) => {
   const email_id = req.params.email_id;
   const portfolio_id = req.params.portfolio_id;
   try {
@@ -261,7 +262,7 @@ router.get("/goal/check-portfolio-member-active/:email_id/:portfolio_id", async 
 });
 
 //getGoalCount
-router.get("/goal/get-goal-count/:user_id/:portfolio_id", async (req, res) => {
+router.get("/goal/get-goal-count/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
@@ -274,7 +275,7 @@ router.get("/goal/get-goal-count/:user_id/:portfolio_id", async (req, res) => {
 });
 
 //Goal_tasks
-router.get("/goal/get-goal-tasks/:gid", async (req, res) => {
+router.get("/goal/get-goal-tasks/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows, fields] = await pool.execute("CALL Goal_tasks(?)", [gid]);
@@ -286,7 +287,7 @@ router.get("/goal/get-goal-tasks/:gid", async (req, res) => {
 });
 
 //Goal_subtasks
-router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
+router.get("/goal/get-goal-subtasks/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows, fields] = await pool.execute("CALL Goal_subtasks(?)", [gid]);
@@ -298,7 +299,7 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 });
 
 // //Goalprogress_done
-// router.get("/goal/get-goal-task-progress-done/:gid", async (req, res) => {
+// router.get("/goal/get-goal-task-progress-done/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL Goalprogress_done(?)", [
@@ -312,7 +313,7 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 // });
 
 //Goalprogress_total
-// router.get("/goal/get-goal-task-progress-total/:gid", async (req, res) => {
+// router.get("/goal/get-goal-task-progress-total/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL Goalprogress_total(?)", [
@@ -326,7 +327,7 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 // });
 
 //Goalsub_progress_done
-// router.get("/goal/get-goal-subtask-progress-done/:gid", async (req, res) => {
+// router.get("/goal/get-goal-subtask-progress-done/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL Goalsub_progress_done(?)", [
@@ -340,7 +341,7 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 // });
 
 //Goalsub_progress_total
-// router.get("/goal/get-goal-subtask-progress-total/:gid", async (req, res) => {
+// router.get("/goal/get-goal-subtask-progress-total/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute(
@@ -355,7 +356,7 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 // });
 
 // //GoalProgress
-// router.get("/goal/get-goal-progress/:gid", async (req, res) => {
+// router.get("/goal/get-goal-progress/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [t_progress_done_rows] = await pool.execute(
@@ -399,7 +400,7 @@ router.get("/goal/get-goal-subtasks/:gid", async (req, res) => {
 // });
 
 //getStrategiesCount
-router.get("/goal/get-strategies-count/:user_id/:gid/:portfolio_id", async (req, res) => {
+router.get("/goal/get-strategies-count/:user_id/:gid/:portfolio_id", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   const portfolio_id = req.params.portfolio_id;
@@ -417,7 +418,7 @@ router.get("/goal/get-strategies-count/:user_id/:gid/:portfolio_id", async (req,
 });
 
 //InsertGoals
-router.post("/goal/insert-goal", async (req, res) => {
+router.post("/goal/insert-goal", authMiddleware , async (req, res) => {
   try {
     let { portfolio_id } = req.body;
     let { gcreated_by } = req.body;
@@ -860,7 +861,7 @@ router.post("/goal/insert-goal", async (req, res) => {
 });
 
 //goal-request
-router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
+router.get("/goal-request/:gid/:gmid/:flag", authMiddleware , async (req, res) => {
   const { gid, gmid, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -961,7 +962,7 @@ router.get("/goal-request/:gid/:gmid/:flag", async (req, res) => {
 });
 
 //goal-invite-reject-request
-router.get("/goal-invite-reject-request/:gid/:igm_id/:flag", async (req, res) => {
+router.get("/goal-invite-reject-request/:gid/:igm_id/:flag", authMiddleware , async (req, res) => {
   const { gid, igm_id, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -1009,7 +1010,7 @@ router.get("/goal-invite-reject-request/:gid/:igm_id/:flag", async (req, res) =>
 });
 
 //InsertStrategies
-router.post("/goal/insert-strategies", async (req, res) => {
+router.post("/goal/insert-strategies", authMiddleware , async (req, res) => {
   try {
     const formattedDate = dateConversion();
     const screated_by = req.body.screated_by;
@@ -1077,7 +1078,7 @@ router.post("/goal/insert-strategies", async (req, res) => {
 });
 
 //goal-overview-request
-router.get("/goal/goal-overview-request/:user_id/:gid", async (req, res) => {
+router.get("/goal/goal-overview-request/:user_id/:gid", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   try {
@@ -1112,7 +1113,7 @@ router.get("/goal/goal-overview-request/:user_id/:gid", async (req, res) => {
 });
 
 //getGoalMemberDetailbyGID
-router.get("/goal/goal-member-detail/:user_id/:gid", async (req, res) => {
+router.get("/goal/goal-member-detail/:user_id/:gid", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   try {
@@ -1125,7 +1126,7 @@ router.get("/goal/goal-member-detail/:user_id/:gid", async (req, res) => {
 });
 
 //get_PDepartment
-router.get("/goal/get-department-name/:dept_id", async (req, res) => {
+router.get("/goal/get-department-name/:dept_id", authMiddleware , async (req, res) => {
   const dept_id = req.params.dept_id;
   try {
     const [rows, fields] = await pool.execute("CALL get_PDepartment(?)", [dept_id]);
@@ -1137,7 +1138,7 @@ router.get("/goal/get-department-name/:dept_id", async (req, res) => {
 });
 
 // GoalTeamMember
-// router.get("/goal/goal-team-member/:gid", async (req, res) => {
+// router.get("/goal/goal-team-member/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL GoalTeamMember(?)", [gid]);
@@ -1149,7 +1150,7 @@ router.get("/goal/get-department-name/:dept_id", async (req, res) => {
 // });
 
 // //InvitedGoalMember
-// router.get("/goal/goal-invited-member/:gid", async (req, res) => {
+// router.get("/goal/goal-invited-member/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL InvitedGoalMember(?)", [
@@ -1163,7 +1164,7 @@ router.get("/goal/get-department-name/:dept_id", async (req, res) => {
 // });
 
 //GoalsAllStrategiesList
-router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
+router.get("/goal/goal-all-strategies-list/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [GoalRows] = await pool.execute("CALL GoalDetail(?)", [gid]);
@@ -1214,7 +1215,7 @@ router.get("/goal/goal-all-strategies-list/:gid", async (req, res) => {
 });
 
 //GoalDetail
-router.get("/goal/goal-detail/:gid", async (req, res) => {
+router.get("/goal/goal-detail/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]); //yeh wali
@@ -1331,7 +1332,7 @@ router.get("/goal/goal-detail/:gid", async (req, res) => {
 });
 
 //view_history_date_goal
-router.get("/goal/view-history-date-goal/:gid", async (req, res) => {
+router.get("/goal/view-history-date-goal/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows, fields] = await pool.execute("CALL view_history_date_goal(?)", [gid]);
@@ -1355,7 +1356,7 @@ router.get("/goal/view-history-date-goal/:gid", async (req, res) => {
 });
 
 //GoalDetailAccepted
-router.get("/goal/goal-detail-accepted/:user_id/:gid", async (req, res) => {
+router.get("/goal/goal-detail-accepted/:user_id/:gid", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   try {
@@ -1370,7 +1371,7 @@ router.get("/goal/goal-detail-accepted/:user_id/:gid", async (req, res) => {
 //getStrategiesCount
 // router.get(
 //   "/goal/get-strategies-count/:user_id/:gid/:portfolio_id",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const user_id = req.params.user_id;
 //     const gid = req.params.gid;
 //     const portfolio_id = req.params.portfolio_id;
@@ -1388,7 +1389,7 @@ router.get("/goal/goal-detail-accepted/:user_id/:gid", async (req, res) => {
 // );
 
 //file_itStrategy_tasks
-router.get("/goal/file-it-strategy-tasks/:sid", async (req, res) => {
+router.get("/goal/file-it-strategy-tasks/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows, fields] = await pool.execute("CALL file_itStrategy_tasks(?)", [sid]);
@@ -1400,7 +1401,7 @@ router.get("/goal/file-it-strategy-tasks/:sid", async (req, res) => {
 });
 
 //file_itStrategy_subtasks
-router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
+router.get("/goal/file-it-strategy-subtasks/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows, fields] = await pool.execute("CALL file_itStrategy_subtasks(?)", [sid]);
@@ -1412,7 +1413,7 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
 });
 
 // //Strategyprogress_done
-// router.get("/goal/get-strategy-task-progress-done/:sid", async (req, res) => {
+// router.get("/goal/get-strategy-task-progress-done/:sid", authMiddleware , async (req, res) => {
 //   const sid = req.params.sid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL Strategyprogress_done(?)", [
@@ -1426,7 +1427,7 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
 // });
 
 // //Strategyprogress_total
-// router.get("/goal/get-strategy-task-progress-total/:sid", async (req, res) => {
+// router.get("/goal/get-strategy-task-progress-total/:sid", authMiddleware , async (req, res) => {
 //   const sid = req.params.sid;
 //   try {
 //     const [rows, fields] = await pool.execute(
@@ -1443,7 +1444,7 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
 // //Strategysub_progress_done
 // router.get(
 //   "/goal/get-strategy-subtask-progress-done/:sid",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const sid = req.params.sid;
 //     try {
 //       const [rows, fields] = await pool.execute(
@@ -1461,7 +1462,7 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
 // //Strategysub_progress_total
 // router.get(
 //   "/goal/get-strategy-subtask-progress-total/:sid",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const sid = req.params.sid;
 //     try {
 //       const [rows, fields] = await pool.execute(
@@ -1477,7 +1478,7 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
 // );
 
 // //StrategyProgress
-// router.get("/goal/get-strategy-progress/:sid", async (req, res) => {
+// router.get("/goal/get-strategy-progress/:sid", authMiddleware , async (req, res) => {
 //   const sid = req.params.sid;
 //   try {
 //     const [t_progress_done_rows] = await pool.execute(
@@ -1521,7 +1522,7 @@ router.get("/goal/file-it-strategy-subtasks/:sid", async (req, res) => {
 // });
 
 //StrategyAllProjectsList
-router.get("/goal/get-strategy-all-projects-list/:sid", async (req, res) => {
+router.get("/goal/get-strategy-all-projects-list/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows] = await pool.execute("CALL StrategyAllProjectsList(?)", [sid]);
@@ -1565,7 +1566,7 @@ router.get("/goal/get-strategy-all-projects-list/:sid", async (req, res) => {
 });
 
 //p_tasks
-router.get("/goal/get-project-tasks/:pid", async (req, res) => {
+router.get("/goal/get-project-tasks/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL p_tasks(?)", [pid]);
@@ -1577,7 +1578,7 @@ router.get("/goal/get-project-tasks/:pid", async (req, res) => {
 });
 
 //p_subtasks
-router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
+router.get("/goal/get-project-subtasks/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL p_subtasks(?)", [pid]);
@@ -1589,7 +1590,7 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 });
 
 // //progress_done
-// router.get("/goal/get-project-task-progress-done/:pid", async (req, res) => {
+// router.get("/goal/get-project-task-progress-done/:pid", authMiddleware , async (req, res) => {
 //   const pid = req.params.pid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL progress_done(?)", [pid]);
@@ -1601,7 +1602,7 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 // });
 
 // //progress_total
-// router.get("/goal/get-project-task-progress-total/:pid", async (req, res) => {
+// router.get("/goal/get-project-task-progress-total/:pid", authMiddleware , async (req, res) => {
 //   const pid = req.params.pid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL progress_total(?)", [pid]);
@@ -1613,7 +1614,7 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 // });
 
 // //sub_progress_done
-// router.get("/goal/get-project-subtask-progress-done/:pid", async (req, res) => {
+// router.get("/goal/get-project-subtask-progress-done/:pid", authMiddleware , async (req, res) => {
 //   const pid = req.params.pid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL sub_progress_done(?)", [
@@ -1629,7 +1630,7 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 // //sub_progress_total
 // router.get(
 //   "/goal/get-project-subtask-progress-total/:pid",
-//   async (req, res) => {
+//   authMiddleware , async (req, res) => {
 //     const pid = req.params.pid;
 //     try {
 //       const [rows, fields] = await pool.execute("CALL sub_progress_total(?)", [
@@ -1644,7 +1645,7 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 // );
 
 // //ProjectProgress
-// router.get("/goal/get-project-progress/:pid", async (req, res) => {
+// router.get("/goal/get-project-progress/:pid", authMiddleware , async (req, res) => {
 //   const pid = req.params.pid;
 //   try {
 //     const [t_progress_done_rows] = await pool.execute("CALL progress_done(?)", [
@@ -1687,7 +1688,7 @@ router.get("/goal/get-project-subtasks/:pid", async (req, res) => {
 // });
 
 //CheckProjectTeamMember
-router.get("/goal/check-project-team-member/:user_id/:pid", async (req, res) => {
+router.get("/goal/check-project-team-member/:user_id/:pid", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
@@ -1700,7 +1701,7 @@ router.get("/goal/check-project-team-member/:user_id/:pid", async (req, res) => 
 });
 
 //getProjectCount
-router.get("/goal/get-project-count/:user_id/:portfolio_id", async (req, res) => {
+router.get("/goal/get-project-count/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
@@ -1713,7 +1714,7 @@ router.get("/goal/get-project-count/:user_id/:portfolio_id", async (req, res) =>
 });
 
 //check_notify_goal_suggested
-router.get("/goal/check-notify-goal-suggested/:gid", async (req, res) => {
+router.get("/goal/check-notify-goal-suggested/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows, fields] = await pool.execute("CALL check_notify_goal_suggested(?)", [gid]);
@@ -1725,7 +1726,7 @@ router.get("/goal/check-notify-goal-suggested/:gid", async (req, res) => {
 });
 
 // //SuggestedGoalMember
-// router.get("/goal/goal-suggested-member/:gid", async (req, res) => {
+// router.get("/goal/goal-suggested-member/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute("CALL SuggestedGoalMember(?)", [
@@ -1739,7 +1740,7 @@ router.get("/goal/check-notify-goal-suggested/:gid", async (req, res) => {
 // });
 
 // //SuggestedInviteGoalMember
-// router.get("/goal/goal-suggested-invite-member/:gid", async (req, res) => {
+// router.get("/goal/goal-suggested-invite-member/:gid", authMiddleware , async (req, res) => {
 //   const gid = req.params.gid;
 //   try {
 //     const [rows, fields] = await pool.execute(
@@ -1756,7 +1757,7 @@ router.get("/goal/check-notify-goal-suggested/:gid", async (req, res) => {
 //getAccepted_PortTM_GoalList
 router.get(
   "/goal/get-all-accepted-portfolio-team-member-goal-list/:portfolio_id/:gid",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     const { portfolio_id, gid } = req.params;
     try {
       const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [portfolio_id]);
@@ -1798,7 +1799,7 @@ router.get(
 );
 
 //check_gm
-router.get("/goal/check-gm/:user_id/:gid/:portfolio_id", async (req, res) => {
+router.get("/goal/check-gm/:user_id/:gid/:portfolio_id", authMiddleware , async (req, res) => {
   const user_id = req.params.user_id;
   const gid = req.params.gid;
   const portfolio_id = req.params.portfolio_id;
@@ -1812,7 +1813,7 @@ router.get("/goal/check-gm/:user_id/:gid/:portfolio_id", async (req, res) => {
 });
 
 //getProjectById
-router.get("/goal/get-project-by-id/:pid", async (req, res) => {
+router.get("/goal/get-project-by-id/:pid", authMiddleware , async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL getProjectById(?)", [pid]);
@@ -1824,7 +1825,7 @@ router.get("/goal/get-project-by-id/:pid", async (req, res) => {
 });
 
 //UpdateGoals
-router.patch("/goal/update-goal", async (req, res) => {
+router.patch("/goal/update-goal", authMiddleware , async (req, res) => {
   try {
     let { gname } = req.body;
     let { gid } = req.body;
@@ -2281,7 +2282,7 @@ router.patch("/goal/update-goal", async (req, res) => {
 });
 
 //DuplicateGoal
-router.post("/goal/duplicate-goal", async (req, res) => {
+router.post("/goal/duplicate-goal", authMiddleware , async (req, res) => {
   try {
     let { gcreated_by } = req.body;
     let { gname } = req.body;
@@ -3241,7 +3242,7 @@ router.post("/goal/duplicate-goal", async (req, res) => {
 });
 
 //view_history_date_wise_goal
-router.get("/goal/view-history-date-wise-goal/:gid/:hdate", async (req, res) => {
+router.get("/goal/view-history-date-wise-goal/:gid/:hdate", authMiddleware , async (req, res) => {
   const { gid, hdate } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL view_history_goal(?,?)", [gid, hdate]);
@@ -3253,7 +3254,7 @@ router.get("/goal/view-history-date-wise-goal/:gid/:hdate", async (req, res) => 
 });
 
 //view_history_date_range_goal
-router.get("/goal/view-history-date-range-goal/:gid", async (req, res) => {
+router.get("/goal/view-history-date-range-goal/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   const start_date = req.body.start_date;
   const end_date = req.body.end_date;
@@ -3271,7 +3272,7 @@ router.get("/goal/view-history-date-range-goal/:gid", async (req, res) => {
 });
 
 //view_all_history_goal
-router.get("/goal/view-all-history-goal/:gid", async (req, res) => {
+router.get("/goal/view-all-history-goal/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows, fields] = await pool.execute("CALL view_all_history_goal(?)", [gid]);
@@ -3283,7 +3284,7 @@ router.get("/goal/view-all-history-goal/:gid", async (req, res) => {
 });
 
 //gdetail_AddMember
-router.post("/goal/insert-goal-member", async (req, res) => {
+router.post("/goal/insert-goal-member", authMiddleware , async (req, res) => {
   try {
     const { gid, gcreated_by, team_member, imemail } = req.body;
 
@@ -3608,7 +3609,7 @@ router.post("/goal/insert-goal-member", async (req, res) => {
 });
 
 //direct_remove_goalmanager
-router.patch("/goal/direct-remove-goal-manager/:gid/:gmember_id", async (req, res) => {
+router.patch("/goal/direct-remove-goal-manager/:gid/:gmember_id", authMiddleware , async (req, res) => {
   try {
     const gid = req.params.gid;
     const gmember_id = req.params.gmember_id;
@@ -3645,7 +3646,7 @@ router.patch("/goal/direct-remove-goal-manager/:gid/:gmember_id", async (req, re
 });
 
 //delete_gMember
-router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
+router.patch("/goal/remove-goal-member/:gmid", authMiddleware , async (req, res) => {
   try {
     const gmid = req.params.gmid;
 
@@ -3777,7 +3778,7 @@ router.patch("/goal/remove-goal-member/:gmid", async (req, res) => {
 });
 
 //GoalTeamMemberAccepted
-router.get("/goal/get-goal-team-member-accepted/:gid", async (req, res) => {
+router.get("/goal/get-goal-team-member-accepted/:gid", authMiddleware , async (req, res) => {
   const gid = req.params.gid;
   try {
     const [rows, fields] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [gid]);
@@ -3789,7 +3790,7 @@ router.get("/goal/get-goal-team-member-accepted/:gid", async (req, res) => {
 });
 
 //goal_open_work_new_assignee
-router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
+router.patch("/goal/goal-open-work-new-assignee", authMiddleware , async (req, res) => {
   const reg_id = req.body.reg_id;
   const new_reg_id = req.body.new_reg_id;
   const old_reg_id = req.body.old_reg_id;
@@ -4090,7 +4091,7 @@ router.patch("/goal/goal-open-work-new-assignee", async (req, res) => {
 });
 
 //assign_goalmanager
-router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
+router.patch("/goal/assign-goal-manager/:gid/:gmember_id", authMiddleware , async (req, res) => {
   try {
     const gid = req.params.gid;
     const gmember_id = req.params.gmember_id;
@@ -4127,7 +4128,7 @@ router.patch("/goal/assign-goal-manager/:gid/:gmember_id", async (req, res) => {
 });
 
 //delete_iGMember
-router.patch("/goal/remove-goal-invited-member", async (req, res) => {
+router.patch("/goal/remove-goal-invited-member", authMiddleware , async (req, res) => {
   try {
     const user_id = req.body.user_id;
     const igm_id = req.body.igm_id;
@@ -4168,7 +4169,7 @@ router.patch("/goal/remove-goal-invited-member", async (req, res) => {
 });
 
 //add_SuggestedGMember
-router.patch("/goal/add-suggested-goal-member/:user_id/:gid/:suggest_id", async (req, res) => {
+router.patch("/goal/add-suggested-goal-member/:user_id/:gid/:suggest_id", authMiddleware , async (req, res) => {
   try {
     const user_id = req.params.user_id;
     const gid = req.params.gid;
@@ -4291,7 +4292,7 @@ router.patch("/goal/add-suggested-goal-member/:user_id/:gid/:suggest_id", async 
 //add_Suggested_IGmember
 router.patch(
   "/goal/add-invited-suggested-goal-member/:user_id/:gid/:suggest_id",
-  async (req, res) => {
+  authMiddleware , async (req, res) => {
     try {
       const user_id = req.params.user_id;
       const gid = req.params.gid;
@@ -4557,7 +4558,7 @@ router.patch(
 );
 
 //Strategy_tasks
-router.get("/goal/strategy-tasks/:sid", async (req, res) => {
+router.get("/goal/strategy-tasks/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows, fields] = await pool.execute("CALL Strategy_tasks(?)", [sid]);
@@ -4569,7 +4570,7 @@ router.get("/goal/strategy-tasks/:sid", async (req, res) => {
 });
 
 //Strategy_subtasks
-router.get("/goal/strategy-subtasks/:sid", async (req, res) => {
+router.get("/goal/strategy-subtasks/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows, fields] = await pool.execute("CALL Strategy_subtasks(?)", [sid]);
@@ -4581,7 +4582,7 @@ router.get("/goal/strategy-subtasks/:sid", async (req, res) => {
 });
 
 //StrategyDetail
-router.get("/goal/strategy-detail/:sid", async (req, res) => {
+router.get("/goal/strategy-detail/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows] = await pool.execute("CALL StrategyDetail(?)", [sid]);
@@ -4693,7 +4694,7 @@ router.get("/goal/strategy-detail/:sid", async (req, res) => {
 });
 
 //view_history_date_strategy
-router.get("/goal/view-history-date-strategy/:sid", async (req, res) => {
+router.get("/goal/view-history-date-strategy/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows, fields] = await pool.execute("CALL view_history_date_strategy(?)", [sid]);
@@ -4708,7 +4709,7 @@ router.get("/goal/view-history-date-strategy/:sid", async (req, res) => {
 });
 
 //UpdateStrategies
-router.patch("/goal/update-strategies", async (req, res) => {
+router.patch("/goal/update-strategies", authMiddleware , async (req, res) => {
   try {
     let { sname } = req.body;
     let { sid } = req.body;
@@ -4750,7 +4751,7 @@ router.patch("/goal/update-strategies", async (req, res) => {
 });
 
 //view_history_date_wise_strategy
-router.get("/goal/view-history-date-wise-strategy/:sid/:hdate", async (req, res) => {
+router.get("/goal/view-history-date-wise-strategy/:sid/:hdate", authMiddleware , async (req, res) => {
   const { sid, hdate } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL view_history_strategy(?,?)", [sid, hdate]);
@@ -4762,7 +4763,7 @@ router.get("/goal/view-history-date-wise-strategy/:sid/:hdate", async (req, res)
 });
 
 //view_history_date_range_strategy
-router.get("/goal/view-history-date-range-strategy/:sid", async (req, res) => {
+router.get("/goal/view-history-date-range-strategy/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   const start_date = req.body.start_date;
   const end_date = req.body.end_date;
@@ -4780,7 +4781,7 @@ router.get("/goal/view-history-date-range-strategy/:sid", async (req, res) => {
 });
 
 //view_all_history_strategy
-router.get("/goal/view-all-history-strategy/:sid", async (req, res) => {
+router.get("/goal/view-all-history-strategy/:sid", authMiddleware , async (req, res) => {
   const sid = req.params.sid;
   try {
     const [rows, fields] = await pool.execute("CALL view_all_history_strategy(?)", [sid]);
@@ -4792,7 +4793,7 @@ router.get("/goal/view-all-history-strategy/:sid", async (req, res) => {
 });
 
 //DuplicateStrategy
-router.post("/goal/duplicate-strategy", async (req, res) => {
+router.post("/goal/duplicate-strategy", authMiddleware , async (req, res) => {
   try {
     let { screated_by } = req.body;
     let { sname } = req.body;
@@ -5423,7 +5424,7 @@ router.post("/goal/duplicate-strategy", async (req, res) => {
 });
 
 //gdetail_SuggestTMember
-router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
+router.post("/goal/insert-goal-suggest-team-member", authMiddleware , async (req, res) => {
   try {
     let { gid } = req.body;
     let { user_id } = req.body;
@@ -5609,7 +5610,7 @@ router.post("/goal/insert-goal-suggest-team-member", async (req, res) => {
 });
 
 //getGoalCreateDD
-router.get("/goal/get-goal-create-dd/:portfolio_id/:user_id", async (req, res) => {
+router.get("/goal/get-goal-create-dd/:portfolio_id/:user_id", authMiddleware , async (req, res) => {
   const { portfolio_id, user_id } = req.params;
   try {
     const [PortfolioDepartment] = await pool.execute("CALL get_PortfolioDepartment(?)", [
@@ -5690,7 +5691,7 @@ router.get("/goal/get-goal-create-dd/:portfolio_id/:user_id", async (req, res) =
 });
 
 //(only for asignee dropdown ) goal team members without read_more status
-router.get("/goal/goal-team-member/:gid", async (req, res) => {
+router.get("/goal/goal-team-member/:gid", authMiddleware , async (req, res) => {
   const { gid } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL GoalTeamMember(?)", [gid]);
@@ -5717,7 +5718,7 @@ router.get("/goal/goal-team-member/:gid", async (req, res) => {
 
 //get Goal details
 
-router.get("/goal/goal-details/:gid", async (req, res) => {
+router.get("/goal/goal-details/:gid", authMiddleware , async (req, res) => {
   const { gid } = req.params;
   try {
     const [rows] = await pool.execute("CALL GoalDetail(?)", [gid]);
