@@ -13,7 +13,7 @@ const Trash = require("./routes/TrashRouter");
 const Tasks = require("./routes/TasksRouter");
 const Project = require("./routes/ProjectRouter");
 const UpgradePlan = require("./routes/UpgradePlanRouter");
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 // console.log(process.env.PORT);
 
 require("./database/connection");
