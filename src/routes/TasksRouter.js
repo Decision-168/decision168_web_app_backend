@@ -623,7 +623,9 @@ router.post("/task/insert-task/:user_id", async (req, res) => {
               subject: "Project Request | Decision 168",
               html: generateEmailTemplate(
                 `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${
+                  student.last_name
+                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                 `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -673,7 +675,8 @@ router.post("/task/insert-task/:user_id", async (req, res) => {
       // Formatting the date as "YYYY-MM-DD"
       const taskformattedDueDate = dueTDate.toISOString().split("T")[0];
 
-      const taskFieldsNames = "tcode, tname, tdes, tlink, tlink_comment, tnote, tfile, tpriority, tstatus, tstatus_date, tproject_assign, portfolio_id, tassignee, tcreated_by, tcreated_date, tnotify, tnotify_clear, tnotify_date, tdue_date, tdue_date_clear, gid, sid, dept_id";
+      const taskFieldsNames =
+        "tcode, tname, tdes, tlink, tlink_comment, tnote, tfile, tpriority, tstatus, tstatus_date, tproject_assign, portfolio_id, tassignee, tcreated_by, tcreated_date, tnotify, tnotify_clear, tnotify_date, tdue_date, tdue_date_clear, gid, sid, dept_id";
       const taskFieldsValues = `"${get_tcode}", "${tname}", "${tdes}", "${links_string}", "${link_comments_string}", "${tnote}", "${tfile_string}", "${tpriority}", 'to_do', "${formattedDate}", "${project_id}", "${portfolio_id}", "${team_member2}", "${user_id}", "${formattedDate}", 'yes', 'no', "${formattedDate}", "${taskformattedDueDate}", 'no', "${gid}", "${sid}", "${dept}"`;
 
       await pool.execute("CALL InsertTask(?,?)", [taskFieldsNames, taskFieldsValues]);
@@ -737,9 +740,7 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
         get_tcode = `T-${random_num}`;
       }
 
-      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [
-        project_id,
-      ]);
+      const [pdetail_mem] = await pool.execute("CALL getMemberProject(?)", [project_id]);
       const pdetail_member = pdetail_mem[0];
       let pro_member = [];
       let pro_member1 = [];
@@ -847,7 +848,9 @@ router.patch("/task/edit-task/:user_id", async (req, res) => {
               subject: "Project Request | Decision 168",
               html: generateEmailTemplate(
                 `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${
+                  student.last_name
+                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                 `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -1012,7 +1015,9 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
                   subject: "Project Request | Decision 168",
                   html: generateEmailTemplate(
                     `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${
+                      student.last_name
+                    } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                     `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -1062,7 +1067,8 @@ router.post("/subtask/insert-subtask/:user_id/:portfolio_id", async (req, res) =
           // Formatting the date as "YYYY-MM-DD"
           const taskformattedDueDate = dueTDate.toISOString().split("T")[0];
 
-          const taskFieldsNames = "tid, stcode, stname, stdes, stlink, stlink_comment, stnote, stfile, stpriority, ststatus, ststatus_date, stproject_assign, portfolio_id, stassignee, stcreated_by, stcreated_date, stnotify, stnotify_clear, stnotify_date, stdue_date, stdue_date_clear, gid, sid, dept_id";
+          const taskFieldsNames =
+            "tid, stcode, stname, stdes, stlink, stlink_comment, stnote, stfile, stpriority, ststatus, ststatus_date, stproject_assign, portfolio_id, stassignee, stcreated_by, stcreated_date, stnotify, stnotify_clear, stnotify_date, stdue_date, stdue_date_clear, gid, sid, dept_id";
           const taskFieldsValues = `"${tid}", "${get_tcode}", "${item.stname}", "${item.stdes}", "${slinks_string}", "${slink_comments_string}", "${item.stnote}", "${stfile_string}", "${item.stpriority}", 'to_do', "${formattedDate}", "${tproject_assign}", "${portfolio_id}", "${item.team_member2}", "${user_id}", "${formattedDate}", 'yes', 'no', "${formattedDate}", "${taskformattedDueDate}", 'no', "${gid}", "${sid}", "${dept}"`;
 
           await pool.execute("CALL InsertSubtask(?,?)", [taskFieldsNames, taskFieldsValues]);
@@ -1236,7 +1242,9 @@ router.post("/subtask/edit-subtask/:user_id/:portfolio_id", async (req, res) => 
               subject: "Project Request | Decision 168",
               html: generateEmailTemplate(
                 `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+            ${student.first_name} ${
+                  student.last_name
+                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
             Portfolio: ${get_portfolio_name}
             Project Short Description: ${pdes.substring(0, 100)}...`,
                 `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -2168,7 +2176,9 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                     subject: "Project Request | Decision 168",
                     html: generateEmailTemplate(
                       `Hello ${txt_row[0][0].first_name},
-                  ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+                  ${student.first_name} ${
+                        student.last_name
+                      } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
                   Portfolio: ${get_portfolio_name}
                   Project Short Description: ${pdes.substring(0, 100)}...`,
                       `<a href="${acceptProjectRequest}">Join Project</a>`,
@@ -2549,7 +2559,9 @@ router.patch("/task/table-editable/:portfolio_id", async (req, res) => {
                     subject: "Project Request | Decision 168",
                     html: generateEmailTemplate(
                       `Hello ${txt_row[0][0].first_name},
-                  ${student.first_name} ${student.last_name} has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
+                  ${student.first_name} ${
+                        student.last_name
+                      } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
                   Portfolio: ${get_portfolio_name}
                   Project Short Description: ${pdes.substring(0, 100)}...`,
                       `<a href="${acceptProjectRequest}">Join Project</a>`,

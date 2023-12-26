@@ -193,7 +193,7 @@ router.post("/user/forgot-password", async (req, res) => {
   }
 });
 
-//User Change Password
+//User Change Password (forget password)
 router.patch("/user/change-password/:id", async (req, res) => {
   const { password } = req.body;
   try {
@@ -217,5 +217,33 @@ router.patch("/user/change-password/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 });
+
+
+//Auth User update Password inside the App
+router.patch("/user/update-password/:id", async (req, res) => {
+  const { password } = req.body;
+  try {
+    const userId = req.params.id;
+
+    if (userId) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const dynamicFieldsValues = `password = '${hashedPassword}', login_password = '${password}'`;
+      const id = `reg_id  = '${userId}'`;
+      await pool.execute("CALL UpdateRegistration(?, ?)", [
+        dynamicFieldsValues,
+        id,
+      ]);
+      res.status(201).json({ message: "Password Changed successfully." });
+    } else {
+      return res
+        .status(400)
+        .json({ error: "Invalid token or user not found." });
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+
 
 module.exports = router;
