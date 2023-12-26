@@ -10,7 +10,7 @@ const config = {
     verificationLink: `http://localhost:5173/`,
   },
   production: {
-    verificationLink: process.env.PRODUCTION_VERIFICATION_LINK || "",
+    verificationLink: process.env.PRODUCTION || "",
   },
 };
 
