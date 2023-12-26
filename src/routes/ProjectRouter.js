@@ -113,6 +113,7 @@ router.get(
             type: "created-project",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -170,6 +171,7 @@ router.get(
             type: "accepted-project",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -220,6 +222,7 @@ router.get(
             type: "pending-requests",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -270,6 +273,7 @@ router.get(
             type: "more-info-requests",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -401,6 +405,7 @@ router.get(
             type: "created-project",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -458,6 +463,7 @@ router.get(
             type: "accepted-project",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -508,6 +514,7 @@ router.get(
             type: "pending-requests",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -558,6 +565,7 @@ router.get(
             type: "more-info-requests",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -670,6 +678,7 @@ router.get(
             type: "created-project",
             projectType: project_type,
             bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
           };
         });
       }
@@ -709,7 +718,7 @@ router.get(
 );
 
 //project-request
-router.patch("/project-request/:pid/:pm_id/:flag", async (req, res) => {
+router.get("/project-request/:pid/:pm_id/:flag", async (req, res) => {
   const { pid, pm_id, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -1275,63 +1284,6 @@ router.get("/project/mention-list/:pid", async (req, res) => {
   }
 });
 
-//AcceptedProjectListByPortfolioRegular
-router.get(
-  "/project/get-accepted-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
-    const user_id = req.params.user_id;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [rows] = await pool.execute(
-        "CALL AcceptedProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
-      );
-      res.status(200).json(rows[0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
-
-//PendingProjectListByPortfolioRegular
-router.get(
-  "/project/get-pending-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
-    const user_id = req.params.user_id;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [rows] = await pool.execute(
-        "CALL PendingProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
-      );
-      res.status(200).json(rows[0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
-
-//ReadMoreProjectListByPortfolioRegular
-router.get(
-  "/project/get-readmore-project-list/:user_id/:portfolio_id",
-  async (req, res) => {
-    const user_id = req.params.user_id;
-    const portfolio_id = req.params.portfolio_id;
-    try {
-      const [rows] = await pool.execute(
-        "CALL ReadMoreProjectListByPortfolioRegular(?,?)",
-        [portfolio_id, user_id]
-      );
-      res.status(200).json(rows[0]);
-    } catch (error) {
-      console.error("Error executing stored procedure:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-);
-
 //ProjectTeamMember
 router.get("/project/project-team-members/:pid", async (req, res) => {
   const pid = req.params.pid;
@@ -1366,6 +1318,109 @@ router.get("/project/project-detail/:user_id/:pid", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+//Project Notifications
+router.get(
+  "/project/project-notifications/:pid/:user_id",
+  async (req, res) => {
+    const { pid, user_id } = req.params;
+    try {
+      const [pFile_row] = await pool.execute("CALL ProjectFile(?)", [pid]);
+      const pfileData = pFile_row[0];
+      pfileData?.map(async (row) => {
+        const fileId = row.pfile_id;
+        let pFilesNotifyArr = row.pfnotify.split(",");
+        const user_index = pFilesNotifyArr.indexOf(user_id);
+        if (user_index !== -1) {
+          pFilesNotifyArr.splice(user_index, 1);
+        }
+        const finalMem = pFilesNotifyArr.join(",");
+        const otherFields = {
+          pfnotify: finalMem,
+          pfnotify_clear: finalMem,
+        };
+        const formattedParams = convertObjectToProcedureParams(otherFields);
+        const storedProcedure = `CALL UpdateProjectFiles('${formattedParams}', 'pfile_id = ${fileId}')`;
+        await pool.execute(storedProcedure);
+      });
+
+      const [pMember_row] = await pool.execute("CALL ProjectTeamMember(?)", [
+        pid,
+      ]);
+      const pMemberData = pMember_row[0];
+      pMemberData?.map(async (row) => {
+        const pmId = row.pm_id;
+        const [pNotify_row] = await pool.execute(
+          "CALL get_project_accepted_notification(?,?)",
+          [user_id, pmId]
+        );
+        const pNotifyData = pNotify_row[0];
+        pNotifyData?.map(async (row2) => {
+          const pmId2 = row2.pm_id;
+          const updateFieldsValues = `status_notify = 'seen'`;
+          const upid = `pm_id  = '${pmId2}'`;
+          await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
+        });
+      });
+
+      const [pIMember_row] = await pool.execute("CALL InvitedProjectMember(?)", [
+        pid,
+      ]);
+      const pIMemberData = pIMember_row[0];
+      pIMemberData?.map(async (row) => {
+        if(row.status == "accepted" && row.status_notify == "yes")
+        {
+          const imId = row.im_id;
+          const updateFieldsValues = `status_notify = 'seen'`;
+          const upid = `im_id  = '${imId}'`;
+          await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
+        }
+      });
+
+      const [pMembership_row] = await pool.execute("CALL check_project_membership_notify(?,?)",[user_id, pid]);
+      const pMembershipData = pMembership_row[0];
+      pMembershipData?.map(async (row) => {
+        const reqId = row.req_id;
+        const otherFields = {
+          mreq_notify: "seen",
+          mreq_notify_clear: "yes",
+        };
+        const formattedParams = convertObjectToProcedureParams(otherFields);
+        const storedProcedure = `CALL UpdateProjectRequestMember('${formattedParams}', 'req_id  = ${reqId}')`;
+        await pool.execute(storedProcedure);
+      })
+
+      const [pComment_row] = await pool.execute("CALL getProjectComments(?)", [pid]);
+      const pCommentData = pComment_row[0];
+      pCommentData?.map(async (row) => {
+        const commentId = row.cid;
+        let pCommentNotifyArr = row.c_notify.split(",");
+        const user_index = pCommentNotifyArr.indexOf(user_id);
+        if (user_index !== -1) {
+          pCommentNotifyArr.splice(user_index, 1);
+        }
+        const finalMem = pCommentNotifyArr.join(",");
+        const otherFields = {
+          c_notify: finalMem,
+          c_notify_clear: finalMem,
+        };
+        const formattedParams = convertObjectToProcedureParams(otherFields);
+        const storedProcedure = `CALL UpdateComments('${formattedParams}', 'cid = ${commentId}')`;
+        await pool.execute(storedProcedure);
+      });
+      res.status(200).json({ message: "Updated successfully" });
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
 
 //edit_project_files_notify
 router.patch(

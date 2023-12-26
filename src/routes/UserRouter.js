@@ -66,6 +66,233 @@ router.post("/user/register", async (req, res) => {
     const callProcedureSQL = `CALL InsertRegistration(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
+    const [inserted_reg] = await pool.execute("CALL LastInsertedRegID(?)", [
+      email_address,
+    ]);
+    const inserted_reg_id = inserted_reg[0][0].reg_id;
+
+    const [checkInvite] = await pool.execute("CALL checkInviteMemberEmail(?)", [
+      email_address,
+    ]);
+    const checkInvitation = checkInvite[0];
+    checkInvitation?.map(async (row) => {
+      if (row.status == "pending") {
+        const projectFieldsValues1 = `status = 'accepted', accept_date = '${formattedDate}', status_notify = 'yes', status_notify_clear = 'no'`;
+        const sent_to = `sent_to = '${email_address}'`;
+        await pool.execute("CALL UpdateProjectInvitedMembers(?,?)", [
+          projectFieldsValues1,
+          sent_to,
+        ]);
+        const [projectRow] = await pool.execute("CALL getProjectById(?)", [
+          row.pid,
+        ]);
+        const projectData = projectRow[0][0];
+        if (projectData) {
+          const history = {
+            pid: row.pid,
+            gid: projectData.gid,
+            sid: projectData.sid,
+            h_date: formattedDate,
+            h_resource: row.sent_to,
+            h_description: `Invite Accepted By ${row.sent_to}`,
+            pinvited_id: row.im_id,
+          };
+
+          const paramNamesString1 = Object.keys(history).join(", ");
+          const paramValuesString1 = Object.values(history)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL1, [
+            paramNamesString1,
+            paramValuesString1,
+          ]);
+
+          const [projectRow2] = await pool.execute(
+            "CALL ProjectDetailCheck(?)",
+            [row.pid]
+          );
+          const projectData2 = projectRow2[0][0];
+          const projectFieldsValues2 = `status = 'accepted', working_status = 'active', status_date = '${formattedDate}', status_notify = 'seen', portfolio_id = 'yes'`;
+          const sent_to = `sent_to = '${email_address}' AND portfolio_id = '${projectData2.portfolio_id}'`;
+          await pool.execute("CALL UpdateProjectPortfolioMember(?,?)", [
+            projectFieldsValues2,
+            sent_to,
+          ]);
+
+          const iData = {
+            pid: row.pid,
+            portfolio_id: projectData2.portfolio_id,
+            pmember: inserted_reg_id,
+            status: "accepted",
+            pcreated_by: row.sent_from,
+            status_date: formattedDate,
+          };
+
+          const paramNamesString2 = Object.keys(iData).join(", ");
+          const paramValuesString2 = Object.values(iData)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL2 = `CALL InsertProjectMembers(?, ?)`;
+          await pool.execute(callProcedureSQL2, [
+            paramNamesString2,
+            paramValuesString2,
+          ]);
+
+          const [inserted_pm] = await pool.execute(
+            "CALL LastInsertedProjectMembers(?)",
+            [inserted_reg_id]
+          );
+          const inserted_pm_id = inserted_pm[0][0].pm_id;
+
+          const history3 = {
+            pid: row.pid,
+            gid: projectData.gid,
+            sid: projectData.sid,
+            h_date: formattedDate,
+            h_resource: `${name.first_name} ${name.last_name}`,
+            h_description: `Team Member Request Accepted By ${name.first_name} ${name.last_name}`,
+            pmember_id: inserted_pm_id,
+          };
+
+          const paramNamesString3 = Object.keys(history3).join(", ");
+          const paramValuesString3 = Object.values(history3)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL3 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL3, [
+            paramNamesString3,
+            paramValuesString3,
+          ]);
+
+          const pData = {
+            pid: row.pid,
+            powner: row.sent_from,
+            pmember: inserted_reg_id,
+            edit_allow: "no",
+          };
+
+          const paramNamesString4 = Object.keys(pData).join(", ");
+          const paramValuesString4 = Object.values(pData)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL4 = `CALL InsertProjectManagement(?, ?)`;
+          await pool.execute(callProcedureSQL4, [
+            paramNamesString4,
+            paramValuesString4,
+          ]);
+
+          const [inserted_pmg] = await pool.execute(
+            "CALL LastInsertedProjectManagement(?)",
+            [inserted_reg_id]
+          );
+          const inserted_pmg_id = inserted_pmg[0][0].m_id;
+
+          const history5 = {
+            pid: row.pid,
+            gid: projectData.gid,
+            sid: projectData.sid,
+            h_date: formattedDate,
+            h_resource: `${name.first_name} ${name.last_name}`,
+            h_description: `Edit Permission not allowed to ${name.first_name} ${name.last_name}`,
+            pmanage_id: inserted_pmg_id,
+          };
+
+          const paramNamesString5 = Object.keys(history5).join(", ");
+          const paramValuesString5 = Object.values(history5)
+            .map((value) => `'${value}'`)
+            .join(", ");
+
+          const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
+          await pool.execute(callProcedureSQL5, [
+            paramNamesString5,
+            paramValuesString5,
+          ]);
+        }
+      }
+    });
+
+    const [checkInviteGoal] = await pool.execute(
+      "CALL checkGoalInviteMemberEmail(?)",
+      [email_address]
+    );
+    const checkInvitationGoal = checkInviteGoal[0];
+    checkInvitationGoal?.map(async (row) => {
+      if (row.status == "pending") {
+        const igm_id = row.igm_id;
+        const goalFieldsValues1 = `status = 'accepted', accept_date = '${formattedDate}', status_notify = 'yes', status_notify_clear = 'no'`;
+        const igmId = `igm_id = '${igm_id}'`;
+        await pool.execute("CALL UpdateGoalsInvitedMembers(?,?)", [
+          goalFieldsValues1,
+          igmId,
+        ]);
+
+        const history = {
+          gid: row.gid,
+          sid: row.sid,
+          h_date: formattedDate,
+          h_resource: row.sent_to,
+          h_description: `Invite Accepted By ${row.sent_to}`,
+          pinvited_id: igm_id,
+        };
+        const paramNamesString1 = Object.keys(history).join(", ");
+        const paramValuesString1 = Object.values(history)
+          .map((value) => `'${value}'`)
+          .join(", ");
+        const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
+        await pool.execute(callProcedureSQL1, [
+          paramNamesString1,
+          paramValuesString1,
+        ]);
+
+        const [goalRow2] = await pool.execute("CALL GoalDetail(?)", [row.gid]);
+        const goalData2 = goalRow2[0][0];
+
+        const goalFieldsValues2 = `status = 'accepted', working_status = 'active', status_date = '${formattedDate}', status_notify = 'seen', portfolio_id = 'yes'`;
+        const sent_to = `sent_to = '${email_address}' AND portfolio_id = '${goalData2.portfolio_id}'`;
+        await pool.execute("CALL UpdateProjectPortfolioMember(?,?)", [
+          goalFieldsValues2,
+          sent_to,
+        ]);
+
+        const iData = {
+          gid: row.gid,
+          portfolio_id: goalData2.portfolio_id,
+          gmember: inserted_reg_id,
+          status: "accepted",
+          gcreated_by: goalData2.gcreated_by,
+          sent_date: formattedDate,
+          sent_notify_clear: "yes",
+        };
+        const paramNamesString2 = Object.keys(iData).join(", ");
+        const paramValuesString2 = Object.values(iData)
+          .map((value) => `'${value}'`)
+          .join(", ");
+        const callProcedureSQL2 = `CALL InsertGoalsMembers(?, ?)`;
+        await pool.execute(callProcedureSQL2, [
+          paramNamesString2,
+          paramValuesString2,
+        ]);
+      }
+    });
+
+    const [check_portTM] = await pool.execute("CALL check_portTM(?)", [
+      email_address,
+    ]);
+    const check_portTMData = check_portTM[0];
+    check_portTMData?.map(async (item) => {
+      const goalFieldsValues3 = `status = 'accepted', working_status = 'active', status_date = ${formattedDate}, status_notify = 'yes', status_notify_clear = 'no'`;
+      const sent_to = `sent_to = '${email_address}'`;
+      await pool.execute("CALL UpdateProjectPortfolioMember(?,?)", [
+        goalFieldsValues3,
+        sent_to,
+      ]);
+    });
+
     const verificationLink = `http://localhost:5173/account-verification/${verificationToken}`;
     const mailOptions = {
       from: process.env.SMTP_USER,
@@ -178,9 +405,9 @@ router.post("/user/forgot-password", async (req, res) => {
         if (error) {
           res.status(500).json({ error: "Failed to send verification email." });
         } else {
-
           res.status(201).json({
-            message: "Reset Link has been sent to your Registered Email Address.",
+            message:
+              "Reset Link has been sent to your Registered Email Address.",
           });
         }
       });

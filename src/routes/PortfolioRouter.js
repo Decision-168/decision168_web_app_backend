@@ -1118,7 +1118,7 @@ router.get(
 //InsertPortfolio
 router.post("/portfolio/insert-portfolio", async (req, res) => {
   try {
-    let { email_address } = req.body;
+    let { email_address, portfolio_createdby } = req.body;
 
     if (!isEmail(email_address)) {
       return res.status(400).json({ error: "Invalid email address." });
@@ -1141,8 +1141,31 @@ router.post("/portfolio/insert-portfolio", async (req, res) => {
 
     const callProcedureSQL = `CALL InsertPortfolio(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
+    const [getPortfolio] = await pool.execute("CALL GetInsertedPortfolio(?)", [portfolio_createdby]);
+    const portfolioId = getPortfolio[0][0]?.portfolio_id;
+
+    const [check_powner] = await pool.execute("CALL getStudentById(?)", [portfolio_createdby]);
+    const powner = check_powner[0][0];
+
+    const data2 = {
+      portfolio_id: portfolioId,
+      sent_to: powner.email_address,
+      sent_from: portfolio_createdby,
+      status: `accepted`,
+      working_status: `active`,
+      status_date: formattedDate,
+    };
+
+    const paramNamesString2 = Object.keys(data2).join(", ");
+    const paramValuesString2 = Object.values(data2)
+      .map((value) => `'${value}'`)
+      .join(", ");
+
+    const callProcedureSQL2 = `CALL InsertProjectPortfolioMember(?, ?)`;
+    await pool.execute(callProcedureSQL2, [paramNamesString2, paramValuesString2]);
 
     res.status(201).json({
+      portfolioInsertedId: portfolioId,
       message: "Portfolio created successfully.",
     });
   } catch (error) {
