@@ -12,7 +12,7 @@ const {
   dateConversion,
 } = require("../utils/common-functions");
 const generateToken = require("../utils/auth");
-
+const config = require("../../config");
 //User Registration
 router.post("/user/register", async (req, res) => {
   try {
@@ -66,7 +66,7 @@ router.post("/user/register", async (req, res) => {
     const callProcedureSQL = `CALL InsertRegistration(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
-    const verificationLink = `http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com/account-verification/${verificationToken}`;
+    const verificationLink = `${config.verificationLink}account-verification/${verificationToken}`;
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email_address,
@@ -163,7 +163,7 @@ router.post("/user/forgot-password", async (req, res) => {
     if (userFound) {
       const userId = rows[0][0]?.reg_id;
       const userName = rows[0][0]?.first_name;
-      const resetPasswordLink = `http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com/change-password/${userId}`;
+      const resetPasswordLink = `${config.verificationLink}change-password/${userId}`;
       const mailOptions = {
         from: process.env.SMTP_USER,
         to: email_address,
