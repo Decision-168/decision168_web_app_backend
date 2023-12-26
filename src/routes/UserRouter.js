@@ -66,7 +66,7 @@ router.post("/user/register", async (req, res) => {
     const callProcedureSQL = `CALL InsertRegistration(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
-    const verificationLink = `http://localhost:5173/account-verification/${verificationToken}`;
+    const verificationLink = `http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com/account-verification/${verificationToken}`;
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email_address,
@@ -163,7 +163,7 @@ router.post("/user/forgot-password", async (req, res) => {
     if (userFound) {
       const userId = rows[0][0]?.reg_id;
       const userName = rows[0][0]?.first_name;
-      const resetPasswordLink = `http://localhost:5173/change-password/${userId}`;
+      const resetPasswordLink = `http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com/change-password/${userId}`;
       const mailOptions = {
         from: process.env.SMTP_USER,
         to: email_address,
@@ -178,9 +178,9 @@ router.post("/user/forgot-password", async (req, res) => {
         if (error) {
           res.status(500).json({ error: "Failed to send verification email." });
         } else {
-
           res.status(201).json({
-            message: "Reset Link has been sent to your Registered Email Address.",
+            message:
+              "Reset Link has been sent to your Registered Email Address.",
           });
         }
       });
