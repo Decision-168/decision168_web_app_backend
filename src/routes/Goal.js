@@ -7,9 +7,11 @@ const {
   transporter,
 } = require("../utils/common-functions");
 const moment = require("moment");
-const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
 const authMiddleware = require("../middlewares/auth");
+const generateGoalRequestEmailTemplate = require("../utils/GoalRequestEmailTemp");
+const generateGoalInviteRequestEmailTemplate = require("../utils/GoalInviteRequestEmailTemp");
+const generateProjectRequestEmailTemplate = require("../utils/ProjectRequestEmailTemp");
 
 // //GoalsList
 // router.get("/goal/get-goals-list/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
@@ -517,6 +519,7 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
     const gid = getGoal[0][0]?.gid;
     const gmanager = getGoal[0][0]?.gmanager;
     const gdept = getGoal[0][0]?.gdept;
+    const get_gdes = getGoal[0][0]?.gdes;
 
     const [check_powner] = await pool.execute("CALL getStudentById(?)", [
       gcreated_by,
@@ -621,17 +624,25 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
           portfolio_id,
         ]);
         const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+        const userFName = `${user.first_name} ${user.last_name}`;
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const short_gdes = get_gdes.substring(0, 100);
         const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
         const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const position = "manager";
         const mailOptions = {
           from: process.env.SMTP_USER,
           to: user.email_address,
           subject: "Goal Request | Decision 168",
-          html: generateEmailTemplate(
-            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a manager.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-            `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+          html: generateGoalRequestEmailTemplate(
+            userFName,
+            pownerFName,
+            gname,
+            PortfolioName,
+            short_gdes,
+            acceptRequest,
+            rejectRequest,
+            position
           ),
         };
 
@@ -707,17 +718,25 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
             portfolio_id,
           ]);
           const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+          const userFName = `${user.first_name} ${user.last_name}`;
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const short_gdes = get_gdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
           const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+          const position = "team member";
           const mailOptions = {
             from: process.env.SMTP_USER,
             to: user.email_address,
             subject: "Goal Request | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-              `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+            html: generateGoalRequestEmailTemplate(
+              userFName,
+              pownerFName,
+              gname,
+              PortfolioName,
+              short_gdes,
+              acceptRequest,
+              rejectRequest,
+              position
             ),
           };
 
@@ -836,17 +855,25 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
                   [portfolio_id]
                 );
                 const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+                const userFName = `${user.first_name} ${user.last_name}`;
+                const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                const short_gdes = get_gdes.substring(0, 100);
                 const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
                 const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+                const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
                   subject: "Goal Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                  html: generateGoalRequestEmailTemplate(
+                    userFName,
+                    pownerFName,
+                    gname,
+                    PortfolioName,
+                    short_gdes,
+                    acceptRequest,
+                    rejectRequest,
+                    position
                   ),
                 };
 
@@ -946,17 +973,23 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
                 [portfolio_id]
               );
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const short_gdes = get_gdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
               const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Goal Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateGoalInviteRequestEmailTemplate(
+                  pownerFName,
+                  gname,
+                  PortfolioName,
+                  short_gdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -2373,18 +2406,26 @@ router.patch("/goal/update-goal", authMiddleware, async (req, res) => {
               paramNamesString6,
               paramValuesString6,
             ]);
-
+            const userFName = `${user.first_name} ${user.last_name}`;
+            const pownerFName = `${powner.first_name} ${powner.last_name}`;
+            const get_gdes = gdetail.gdes;
+            const short_gdes = get_gdes.substring(0, 100);
             const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
             const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+            const position = "team member";
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Goal Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+              html: generateGoalRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                gname,
+                PortfolioName,
+                short_gdes,
+                acceptRequest,
+                rejectRequest,
+                position
               ),
             };
 
@@ -2542,18 +2583,26 @@ router.patch("/goal/update-goal", authMiddleware, async (req, res) => {
                   paramNamesString8,
                   paramValuesString8,
                 ]);
-
+                const userFName = `${user.first_name} ${user.last_name}`;
+                const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                const get_gdes = gdetail.gdes;
+                const short_gdes = get_gdes.substring(0, 100);
                 const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
                 const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+                const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
                   subject: "Goal Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                  html: generateGoalRequestEmailTemplate(
+                    userFName,
+                    pownerFName,
+                    gname,
+                    PortfolioName,
+                    short_gdes,
+                    acceptRequest,
+                    rejectRequest,
+                    position
                   ),
                 };
 
@@ -2647,18 +2696,24 @@ router.patch("/goal/update-goal", authMiddleware, async (req, res) => {
                 paramNamesString10,
                 paramValuesString10,
               ]);
-
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_gdes = gdetail.gdes;
+              const short_gdes = get_gdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
               const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Goal Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateGoalInviteRequestEmailTemplate(
+                  pownerFName,
+                  gdetail.gname,
+                  PortfolioName,
+                  short_gdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -2847,18 +2902,26 @@ router.post("/goal/duplicate-goal", authMiddleware, async (req, res) => {
                 paramNamesString6,
                 paramValuesString6,
               ]);
-
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_gdes = getGoal.gdes;
+              const short_gdes = get_gdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/goal-request/${getGoal.gid}/${gmid}/1`;
               const rejectRequest = `http://localhost:3000/goal-request/${getGoal.gid}/${gmid}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Goal Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateGoalRequestEmailTemplate(
+                  userFName,
+                  pownerFName,
+                  gname,
+                  PortfolioName,
+                  short_gdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -3063,19 +3126,28 @@ router.post("/goal/duplicate-goal", authMiddleware, async (req, res) => {
                     paramValuesString6,
                   ]);
 
+                  const userFName = `${user.first_name} ${user.last_name}`;
+                  const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                  const get_pdes = getProject.pdes;
+                  const short_pdes = get_pdes.substring(0, 100);
                   const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
                   const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
 
                   if (pm.pmember == sp.pmanager) {
+                    const position = "manager";
                     const mailOptions2 = {
                       from: process.env.SMTP_USER,
                       to: user.email_address,
                       subject: "Project Request | Decision 168",
-                      html: generateEmailTemplate(
-                        `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${sp.pname} as a manager.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                        `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                      html: generateProjectRequestEmailTemplate(
+                        userFName,
+                        pownerFName,
+                        sp.pname,
+                        PortfolioName,
+                        short_pdes,
+                        acceptRequest,
+                        rejectRequest,
+                        position
                       ),
                     };
 
@@ -3091,15 +3163,20 @@ router.post("/goal/duplicate-goal", authMiddleware, async (req, res) => {
                       }
                     });
                   } else {
+                    const position = "team member";
                     const mailOptions2 = {
                       from: process.env.SMTP_USER,
                       to: user.email_address,
                       subject: "Project Request | Decision 168",
-                      html: generateEmailTemplate(
-                        `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${sp.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                        `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                      html: generateProjectRequestEmailTemplate(
+                        userFName,
+                        pownerFName,
+                        sp.pname,
+                        PortfolioName,
+                        short_pdes,
+                        acceptRequest,
+                        rejectRequest,
+                        position
                       ),
                     };
 
@@ -3926,17 +4003,26 @@ router.post("/goal/insert-goal-member", authMiddleware, async (req, res) => {
               gdetail.portfolio_id,
             ]);
             const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+            const userFName = `${user.first_name} ${user.last_name}`;
+            const pownerFName = `${powner.first_name} ${powner.last_name}`;
+            const get_gdes = gdetail.gdes;
+            const short_gdes = get_gdes.substring(0, 100);
+            const position = "team member";
             const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
             const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Goal Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+              html: generateGoalRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                gdetail.gname,
+                PortfolioName,
+                short_gdes,
+                acceptRequest,
+                rejectRequest,
+                position
               ),
             };
 
@@ -4058,17 +4144,26 @@ router.post("/goal/insert-goal-member", authMiddleware, async (req, res) => {
                   [gdetail.portfolio_id]
                 );
                 const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+                const userFName = `${user.first_name} ${user.last_name}`;
+                const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                const get_gdes = gdetail.gdes;
+                const short_gdes = get_gdes.substring(0, 100);
                 const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
                 const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+                const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
                   subject: "Goal Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                  html: generateGoalRequestEmailTemplate(
+                    userFName,
+                    pownerFName,
+                    gdetail.gname,
+                    PortfolioName,
+                    short_gdes,
+                    acceptRequest,
+                    rejectRequest,
+                    position
                   ),
                 };
 
@@ -4168,17 +4263,24 @@ router.post("/goal/insert-goal-member", authMiddleware, async (req, res) => {
                 [gdetail.portfolio_id]
               );
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_gdes = gdetail.gdes;
+              const short_gdes = get_gdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
               const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Goal Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateGoalInviteRequestEmailTemplate(
+                  pownerFName,
+                  gdetail.gname,
+                  PortfolioName,
+                  short_gdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -4984,18 +5086,26 @@ router.patch(
           [gdetail.portfolio_id]
         );
         const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
-
+        const userFName = `${user.first_name} ${user.last_name}`;
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const get_gdes = gdetail.gdes;
+        const short_gdes = get_gdes.substring(0, 100);
         const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
         const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const position = "team member";
         const mailOptions = {
           from: process.env.SMTP_USER,
           to: user.email_address,
           subject: "Goal Request | Decision 168",
-          html: generateEmailTemplate(
-            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-            `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+          html: generateGoalRequestEmailTemplate(
+            userFName,
+            pownerFName,
+            gdetail.gname,
+            PortfolioName,
+            short_gdes,
+            acceptRequest,
+            rejectRequest,
+            position
           ),
         };
 
@@ -5156,18 +5266,26 @@ router.patch(
           [gdetail.portfolio_id]
         );
         const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
-
+        const userFName = `${user.first_name} ${user.last_name}`;
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const get_gdes = gdetail.gdes;
+        const short_gdes = get_gdes.substring(0, 100);
         const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
         const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const position = "team member";
         const mailOptions = {
           from: process.env.SMTP_USER,
           to: user.email_address,
           subject: "Goal Request | Decision 168",
-          html: generateEmailTemplate(
-            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-          Just click the appropriate button below to join the Goal or request more information.
-          Portfolio : ${PortfolioName}`,
-            `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+          html: generateGoalRequestEmailTemplate(
+            userFName,
+            pownerFName,
+            gdetail.gname,
+            PortfolioName,
+            short_gdes,
+            acceptRequest,
+            rejectRequest,
+            position
           ),
         };
 
@@ -5296,18 +5414,24 @@ router.patch(
             [gdetail.portfolio_id]
           );
           const PortfolioName = check_Portfolio_owner_id[0][0]?.portfolio_name;
-
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_gdes = gdetail.gdes;
+          const short_gdes = get_gdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
           const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+          const position = "team member";
           const mailOptions = {
             from: process.env.SMTP_USER,
             to: suggest_id,
             subject: "Goal Request | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${powner.first_name} ${powner.last_name} has requested you to join Goal ${gdetail.gname} as a team member.
-              Just click the appropriate button below to join the Goal or request more information.
-              Portfolio : ${PortfolioName}`,
-              `<a href="${acceptRequest}">Join Goal</a> <a href="${rejectRequest}">Need More Info</a>`
+            html: generateGoalInviteRequestEmailTemplate(
+              pownerFName,
+              gdetail.gname,
+              PortfolioName,
+              short_gdes,
+              acceptRequest,
+              rejectRequest,
+              position
             ),
           };
 
@@ -5826,20 +5950,28 @@ router.post("/goal/duplicate-strategy", authMiddleware, async (req, res) => {
                 paramNamesString6,
                 paramValuesString6,
               ]);
-
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
 
               if (pm.pmember == sp.pmanager) {
+                const position = "manager";
                 const mailOptions2 = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
                   subject: "Project Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${sp.pname} as a manager.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                  html: generateProjectRequestEmailTemplate(
+                    userFName,
+                    pownerFName,
+                    sp.pname,
+                    PortfolioName,
+                    short_pdes,
+                    acceptRequest,
+                    rejectRequest,
+                    position
                   ),
                 };
 
@@ -5855,15 +5987,20 @@ router.post("/goal/duplicate-strategy", authMiddleware, async (req, res) => {
                   }
                 });
               } else {
+                const position = "team member";
                 const mailOptions2 = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
                   subject: "Project Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${sp.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                  html: generateProjectRequestEmailTemplate(
+                    userFName,
+                    pownerFName,
+                    sp.pname,
+                    PortfolioName,
+                    short_pdes,
+                    acceptRequest,
+                    rejectRequest,
+                    position
                   ),
                 };
 

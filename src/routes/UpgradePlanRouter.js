@@ -4,10 +4,18 @@ const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { dateConversion, transporter } = require("../utils/common-functions");
 const moment = require("moment");
-const generateEmailTemplate = require("../utils/emailTemplate");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const front_url = process.env.FRONTEND_URL;
 const authMiddleware = require("../middlewares/auth");
+const generateContactedSalesEmailTemplate = require("../utils/ContactedSalesEmailTemp");
+const generatePaymentSuccessEmailTemplate = require("../utils/PaymentSuccessEmailTemp");
+const generateUpgradeSuccessEmailTemplate = require("../utils/UpgradeSuccessEmailTemp");
+const generateAutoRenewSubscriptionEmailTemplate = require("../utils/AutoRenewSubscriptionEmailTemp");
+const generateRefundRequestEmailTemplate = require("../utils/RefundRequestEmailTemp");
+const generateAutoRenewSubscriptionFailedEmailTemplate = require("../utils/AutoRenewSubscriptionFailEmailTemp");
+const generateRefundInitiatedEmailTemplate = require("../utils/RefundInitiatedEmailTemp");
+const generateDowngradeSuccessEmailTemplate = require("../utils/DowngradeSuccessEmailTemp");
+const generateFreeTrialExpiredEmailTemplate = require("../utils/FreeTrialExpiredEmailTemp");
 
 //getAllPack
 router.get(
@@ -320,13 +328,10 @@ router.post(
           from: process.env.SMTP_USER,
           to: "uzmakarjikar@gmail.com",
           subject: "Contacted Sales | Decision 168",
-          html: generateEmailTemplate(
-            `Hello SuperAdmin, ${getfname} has contacted you regarding the package. Please find information below:`,
-            ` Name: ${getfname}
-          <br><br>
-          Email: ${regInfo.email_address}
-          <br><br>
-          Phone: ${regInfo.phone_number}`
+          html: generateContactedSalesEmailTemplate(
+            getfname,
+            regInfo.email_address,
+            regInfo.phone_number
           ),
         };
 
@@ -501,20 +506,18 @@ router.post(
               dynamicFieldsValues,
               id,
             ]);
-
+            const userFname = `${getCusID.first_name} ${getCusID.last_name}`;
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: customer_email,
               subject: "Payment Successful | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${getCusID.first_name} ${getCusID.last_name}, Your subscription for ${pack.pack_name} package was successful. Please find details below:`,
-                `Paid Amount: $  ${paidAmount}
-              <br><br>
-              Pack Price: $ ${pack.pack_price}
-              <br><br>
-              Package Start: ${sub_start}
-              <br><br>
-              Package Expiry: ${sub_end}`
+              html: generatePaymentSuccessEmailTemplate(
+                userFname,
+                pack.pack_name,
+                paidAmount,
+                pack.pack_price,
+                sub_start,
+                sub_end
               ),
             };
 
@@ -627,20 +630,18 @@ router.post(
             dynamicFieldsValues,
             id,
           ]);
-
+          const userFname = `${getCusID.first_name} ${getCusID.last_name}`;
           const mailOptions = {
             from: process.env.SMTP_USER,
             to: customer_email,
             subject: "Upgrade Successful | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${getCusID.first_name} ${getCusID.last_name}, Your subscription for ${pack.pack_name} package was successful. Please find details below:`,
-              `Paid Amount: $ ${paidAmount}
-              <br><br>
-              Pack Price: $ ${pack.pack_price}
-              <br><br>
-              Package Start: ${sub_start}
-              <br><br>
-              Package Expiry: ${sub_end}`
+            html: generateUpgradeSuccessEmailTemplate(
+              userFname,
+              pack.pack_name,
+              paidAmount,
+              pack.pack_price,
+              sub_start,
+              sub_end
             ),
           };
 
@@ -774,15 +775,15 @@ router.post(
                 ]);
 
                 if (refund == "yes") {
+                  const getfname = `${getCusID.first_name} ${getCusID.last_name}`;
                   const mailOptions = {
                     from: process.env.SMTP_USER,
                     to: "uzmakarjikar@gmail.com",
                     subject: "Refund Request | Decision 168",
-                    html: generateEmailTemplate(
-                      `Hello SuperAdmin, ${getCusID.first_name} ${getCusID.last_name} has downgraded the package and requested you a Refund. Please go to Stripe and Refund by using Invoice ID.`,
-                      `Invoice ID:  ${refund_txn_id}
-                    <br><br>
-                    Refund Amount: $  ${refund_amount}`
+                    html: generateRefundRequestEmailTemplate(
+                      getfname,
+                      refund_txn_id,
+                      refund_amount
                     ),
                   };
 
@@ -795,15 +796,16 @@ router.post(
                       });
                     }
                   });
-
+                  const userFname = `${getCusID.first_name} ${getCusID.last_name}`;
                   const mailOptions2 = {
                     from: process.env.SMTP_USER,
                     to: getCusID.email_address,
                     subject:
                       "Downgrade Successful & Refund Initiated | Decision 168",
-                    html: generateEmailTemplate(
-                      `Hello ${getCusID.first_name} ${getCusID.last_name},  You have successfully downgraded the ${pack.pack_name} package ! Refund initiated and will credit in your account within 5 Working Days!`,
-                      `Refund Amount: $  ${refund_amount}`
+                    html: generateRefundInitiatedEmailTemplate(
+                      userFname,
+                      pack.pack_name,
+                      refund_amount
                     ),
                   };
 
@@ -821,13 +823,14 @@ router.post(
                       "Downgrade Successful ! Refund initiated and will credit in your account within 5 Working Days!",
                   });
                 } else {
+                  const userFname = `${getCusID.first_name} ${getCusID.last_name}`;
                   const mailOptions3 = {
                     from: process.env.SMTP_USER,
                     to: getCusID.email_address,
-                    subject: "Downgrade Successful| Decision 168",
-                    html: generateEmailTemplate(
-                      `Hello ${getCusID.first_name} ${getCusID.last_name},  You have successfully downgraded the ${pack.pack_name} package`,
-                      `No Refund!`
+                    subject: "Downgrade Successful | Decision 168",
+                    html: generateDowngradeSuccessEmailTemplate(
+                      userFname,
+                      pack.pack_name
                     ),
                   };
 
@@ -903,15 +906,12 @@ router.post(
                 dynamicFieldsValues,
                 id,
               ]);
-
+              const userFname = `${user.first_name} ${user.last_name}`;
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Free Trial Expired | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${user.first_name} ${user.last_name}, Your free trial Expired!`,
-                  `Now package switch to Solo !`
-                ),
+                html: generateFreeTrialExpiredEmailTemplate(userFname),
               };
 
               transporter.sendMail(mailOptions, (error, info) => {
@@ -966,20 +966,19 @@ router.post(
                     ]);
 
                     if (user.package_expiry != sub_end) {
+                      const userFname = `${user.first_name} ${user.last_name}`;
                       const mailOptions = {
                         from: process.env.SMTP_USER,
                         to: user.email_address,
                         subject:
                           "Auto Renew Subscription Successful | Decision 168",
-                        html: generateEmailTemplate(
-                          `Hello ${user.first_name} ${user.last_name}, Your auto renew subscription for ${user.pack_name} package was successful. Please find details below:`,
-                          `Paid Amount: $  ${paidAmount}
-                          <br><br>
-                          Pack Price: $ ${user.pack_price}
-                          <br><br>
-                          Package Start: ${sub_start}
-                          <br><br>
-                          Package Expiry: ${sub_end}`
+                        html: generateAutoRenewSubscriptionEmailTemplate(
+                          userFname,
+                          user.pack_name,
+                          paidAmount,
+                          user.pack_price,
+                          sub_start,
+                          sub_end
                         ),
                       };
 
@@ -1034,14 +1033,15 @@ router.post(
                     dynamicFieldsValues,
                     id,
                   ]);
-
+                  const userFname = `${user.first_name} ${user.last_name}`;
                   const mailOptions = {
                     from: process.env.SMTP_USER,
                     to: user.email_address,
                     subject: "Auto Renew Subscription Failed | Decision 168",
-                    html: generateEmailTemplate(
-                      `Hello ${user.first_name} ${user.last_name}, Your auto renew subscription for ${user.pack_name} package was failed.`,
-                      `Package Expired: ${cancel_sub_end}`
+                    html: generateAutoRenewSubscriptionFailedEmailTemplate(
+                      userFname,
+                      user.pack_name,
+                      cancel_sub_end
                     ),
                   };
 

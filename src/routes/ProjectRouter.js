@@ -7,9 +7,10 @@ const {
   dateConversion,
   transporter,
 } = require("../utils/common-functions");
-const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
 const authMiddleware = require("../middlewares/auth");
+const generateProjectRequestEmailTemplate = require("../utils/ProjectRequestEmailTemp");
+const generateProjectInviteRequestEmailTemplate = require("../utils/ProjectInviteRequestEmailTemp");
 
 //Sidebar Project List
 router.get(
@@ -2214,18 +2215,26 @@ router.post("/project/insert-project", authMiddleware, async (req, res) => {
         paramValuesString5,
       ]);
 
+      const userFName = `${user.first_name} ${user.last_name}`;
+      const pownerFName = `${powner.first_name} ${powner.last_name}`;
+      const get_pdes = getProject.pdes;
+      const short_pdes = get_pdes.substring(0, 100);
       const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
       const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
-
+      const position = "manager";
       const mailOptions2 = {
         from: process.env.SMTP_USER,
         to: user.email_address,
         subject: "Project Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a manager.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-          `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+        html: generateProjectRequestEmailTemplate(
+          userFName,
+          pownerFName,
+          pname,
+          PortfolioName,
+          short_pdes,
+          acceptRequest,
+          rejectRequest,
+          position
         ),
       };
 
@@ -2300,19 +2309,26 @@ router.post("/project/insert-project", authMiddleware, async (req, res) => {
             paramNamesString7,
             paramValuesString7,
           ]);
-
+          const userFName = `${user.first_name} ${user.last_name}`;
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_pdes = getProject.pdes;
+          const short_pdes = get_pdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
           const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
-
+          const position = "team member";
           const mailOptions2 = {
             from: process.env.SMTP_USER,
             to: user.email_address,
             subject: "Project Request | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-              `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+            html: generateProjectRequestEmailTemplate(
+              userFName,
+              pownerFName,
+              pname,
+              PortfolioName,
+              short_pdes,
+              acceptRequest,
+              rejectRequest,
+              position
             ),
           };
 
@@ -2400,19 +2416,26 @@ router.post("/project/insert-project", authMiddleware, async (req, res) => {
                 paramNamesString9,
                 paramValuesString9,
               ]);
-
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateProjectRequestEmailTemplate(
+                  userFName,
+                  pownerFName,
+                  pname,
+                  PortfolioName,
+                  short_pdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -2507,19 +2530,24 @@ router.post("/project/insert-project", authMiddleware, async (req, res) => {
                 paramNamesString11,
                 paramValuesString11,
               ]);
-
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-invite-reject-request/${getProject.pid}/${im_id}/1`;
               const rejectRequest = `http://localhost:3000/project-invite-reject-request/${getProject.pid}/${im_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateProjectInviteRequestEmailTemplate(
+                  pownerFName,
+                  pname,
+                  PortfolioName,
+                  short_pdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -2840,19 +2868,26 @@ router.patch("/project/update-project", authMiddleware, async (req, res) => {
               paramNamesString7,
               paramValuesString7,
             ]);
-
+            const userFName = `${user.first_name} ${user.last_name}`;
+            const pownerFName = `${powner.first_name} ${powner.last_name}`;
+            const get_pdes = pdetail.pdes;
+            const short_pdes = get_pdes.substring(0, 100);
             const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
             const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
-
+            const position = "team member";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+              html: generateProjectRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                pname,
+                PortfolioName,
+                short_pdes,
+                acceptRequest,
+                rejectRequest,
+                position
               ),
             };
 
@@ -2981,19 +3016,26 @@ router.patch("/project/update-project", authMiddleware, async (req, res) => {
                 paramNamesString9,
                 paramValuesString9,
               ]);
-
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = pdetail.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateProjectRequestEmailTemplate(
+                  userFName,
+                  pownerFName,
+                  pname,
+                  PortfolioName,
+                  short_pdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -3088,19 +3130,24 @@ router.patch("/project/update-project", authMiddleware, async (req, res) => {
                 paramNamesString11,
                 paramValuesString11,
               ]);
-
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = pdetail.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/1`;
               const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateProjectInviteRequestEmailTemplate(
+                  pownerFName,
+                  pname,
+                  PortfolioName,
+                  short_pdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -3274,20 +3321,28 @@ router.post("/project/duplicate-project", authMiddleware, async (req, res) => {
             paramNamesString6,
             paramValuesString6,
           ]);
-
+          const userFName = `${user.first_name} ${user.last_name}`;
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_pdes = getProject.pdes;
+          const short_pdes = get_pdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
           const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
 
           if (pm.pmember == pdetail.pmanager) {
+            const position = "manager";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a manager.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+              html: generateProjectRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                pname,
+                PortfolioName,
+                short_pdes,
+                acceptRequest,
+                rejectRequest,
+                position
               ),
             };
 
@@ -3303,15 +3358,20 @@ router.post("/project/duplicate-project", authMiddleware, async (req, res) => {
               }
             });
           } else {
+            const position = "team member";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+              html: generateProjectRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                pname,
+                PortfolioName,
+                short_pdes,
+                acceptRequest,
+                rejectRequest,
+                position
               ),
             };
 
@@ -4395,19 +4455,26 @@ router.patch(
           paramNamesString5,
           paramValuesString5,
         ]);
-
+        const userFName = `${user.first_name} ${user.last_name}`;
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const get_pdes = pdetail.pdes;
+        const short_pdes = get_pdes.substring(0, 100);
         const acceptRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/1`;
         const rejectRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/2`;
-
+        const position = "team member";
         const mailOptions2 = {
           from: process.env.SMTP_USER,
           to: user.email_address,
           subject: "Project Request | Decision 168",
-          html: generateEmailTemplate(
-            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-            `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+          html: generateProjectRequestEmailTemplate(
+            userFName,
+            pownerFName,
+            pdetail.pname,
+            PortfolioName,
+            short_pdes,
+            acceptRequest,
+            rejectRequest,
+            position
           ),
         };
 
@@ -4536,19 +4603,26 @@ router.patch(
           paramNamesString5,
           paramValuesString5,
         ]);
-
+        const userFName = `${user.first_name} ${user.last_name}`;
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const get_pdes = pdetail.pdes;
+        const short_pdes = get_pdes.substring(0, 100);
         const acceptRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/1`;
         const rejectRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/2`;
-
+        const position = "team member";
         const mailOptions2 = {
           from: process.env.SMTP_USER,
           to: user.email_address,
           subject: "Project Request | Decision 168",
-          html: generateEmailTemplate(
-            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-            `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+          html: generateProjectRequestEmailTemplate(
+            userFName,
+            pownerFName,
+            pdetail.pname,
+            PortfolioName,
+            short_pdes,
+            acceptRequest,
+            rejectRequest,
+            position
           ),
         };
 
@@ -4643,19 +4717,24 @@ router.patch(
             paramNamesString11,
             paramValuesString11,
           ]);
-
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_pdes = pdetail.pdes;
+          const short_pdes = get_pdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/1`;
           const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/2`;
-
+          const position = "team member";
           const mailOptions2 = {
             from: process.env.SMTP_USER,
             to: im,
             subject: "Project Request | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-              `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+            html: generateProjectInviteRequestEmailTemplate(
+              pownerFName,
+              pdetail.pname,
+              PortfolioName,
+              short_pdes,
+              acceptRequest,
+              rejectRequest,
+              position
             ),
           };
 
@@ -4750,19 +4829,24 @@ router.patch(
               paramNamesString11,
               paramValuesString11,
             ]);
-
+            const pownerFName = `${powner.first_name} ${powner.last_name}`;
+            const get_pdes = pdetail.pdes;
+            const short_pdes = get_pdes.substring(0, 100);
             const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/1`;
             const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/2`;
-
+            const position = "team member";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: im,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+              html: generateProjectInviteRequestEmailTemplate(
+                pownerFName,
+                pdetail.pname,
+                PortfolioName,
+                short_pdes,
+                acceptRequest,
+                rejectRequest,
+                position
               ),
             };
 
@@ -5450,17 +5534,26 @@ router.post(
                 [getProject.portfolio_id]
               );
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                html: generateProjectRequestEmailTemplate(
+                  userFName,
+                  pownerFName,
+                  getProject.pname,
+                  PortfolioName,
+                  short_pdes,
+                  acceptRequest,
+                  rejectRequest,
+                  position
                 ),
               };
 
@@ -5583,17 +5676,26 @@ router.post(
                     [getProject.portfolio_id]
                   );
                   const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+                  const userFName = `${user.first_name} ${user.last_name}`;
+                  const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                  const get_pdes = getProject.pdes;
+                  const short_pdes = get_pdes.substring(0, 100);
                   const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
                   const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
+                  const position = "team member";
                   const mailOptions = {
                     from: process.env.SMTP_USER,
                     to: user.email_address,
                     subject: "Project Request | Decision 168",
-                    html: generateEmailTemplate(
-                      `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
-              Just click the appropriate button below to join the Project or request more information.
-              Portfolio : ${PortfolioName}`,
-                      `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                    html: generateProjectRequestEmailTemplate(
+                      userFName,
+                      pownerFName,
+                      getProject.pname,
+                      PortfolioName,
+                      short_pdes,
+                      acceptRequest,
+                      rejectRequest,
+                      position
                     ),
                   };
 
@@ -5693,17 +5795,24 @@ router.post(
                   [getProject.portfolio_id]
                 );
                 const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+                const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                const get_pdes = getProject.pdes;
+                const short_pdes = get_pdes.substring(0, 100);
                 const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/1`;
                 const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/2`;
+                const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
                   to: im,
                   subject: "Project Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
-              Just click the appropriate button below to join the Project or request more information.
-              Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+                  html: generateProjectInviteRequestEmailTemplate(
+                    pownerFName,
+                    getProject.pname,
+                    PortfolioName,
+                    short_pdes,
+                    acceptRequest,
+                    rejectRequest,
+                    position
                   ),
                 };
 

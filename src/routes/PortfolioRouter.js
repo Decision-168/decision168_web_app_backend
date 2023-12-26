@@ -3,10 +3,9 @@ const express = require("express");
 const pool = require("../database/connection");
 const { dateConversion, transporter } = require("../utils/common-functions");
 const { isEmail } = require("validator");
-const generateEmailTemplate = require("../utils/emailTemplate");
-const { compareSync } = require("bcrypt");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth");
+const generatePortfolioRequestEmailTemplate = require("../utils/PortfolioRequestEmailTemp");
 
 //get all portfolio by user_id
 router.get(
@@ -313,12 +312,10 @@ router.patch(
                 upid,
               ]);
               statusChanged = true;
-              res
-                .status(200)
-                .json({
-                  message: "status changed successfully",
-                  statusChanged,
-                });
+              res.status(200).json({
+                message: "status changed successfully",
+                statusChanged,
+              });
             } else {
               const result = {
                 goal_countResult: goal_count,
@@ -1039,7 +1036,14 @@ router.post(
                 [sent_to, portfolio_id]
               );
               const PIM_id = getPID[0][0]?.pim_id;
-
+              const [check_powner] = await pool.execute(
+                "CALL getStudentById(?)",
+                [sent_from]
+              );
+              const powner = check_powner[0][0];
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_AboutPortfolio = getPortfolio[0][0]?.about_portfolio;
+              const AboutPortfolio = get_AboutPortfolio.substring(0, 100);
               const acceptRequest = `http://localhost:5173/portfolio-invite-request/${portfolio_id}/${PIM_id}/1`;
               const rejectRequest = `http://localhost:5173/portfolio-invite-request/${portfolio_id}/${PIM_id}/2`;
 
@@ -1047,10 +1051,12 @@ router.post(
                 from: process.env.SMTP_USER,
                 to: sent_to,
                 subject: "Portfolio Team Member Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${PortfolioName} has invited you to join ${PortfolioName} portfolio as a team member.
-            Just click the appropriate button below to join the portfolio or request more information.`,
-                  `<a href="${acceptRequest}">JOIN THE TEAM</a> <a href="${rejectRequest}">DENY REQUEST</a>`
+                html: generatePortfolioRequestEmailTemplate(
+                  pownerFName,
+                  PortfolioName,
+                  AboutPortfolio,
+                  acceptRequest,
+                  rejectRequest
                 ),
               };
 

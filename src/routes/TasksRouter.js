@@ -3,10 +3,8 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { dateConversion, transporter } = require("../utils/common-functions");
-const moment = require("moment");
-const generateEmailTemplate = require("../utils/emailTemplate");
-const { format } = require("mysql2");
 const authMiddleware = require("../middlewares/auth");
+const generateProjectRequestEmailTemplate = require("../utils/ProjectRequestEmailTemp");
 
 //Dashboard (Grid view) All tasks
 router.get(
@@ -816,22 +814,25 @@ router.post("/task/insert-task/:user_id", authMiddleware, async (req, res) => {
             }
 
             const RequestEmailID = team_member2_row[0][0].email_address;
-
+            const userFName = `${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}`;
+            const pownerFName = `${student.first_name} ${student.last_name}`;
+            const short_pdes = pdes.substring(0, 100);
             const acceptProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/1`;
             const rejectProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/2`;
+            const position = "team member";
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: RequestEmailID,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${
-                  student.last_name
-                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
-            Portfolio: ${get_portfolio_name}
-            Project Short Description: ${pdes.substring(0, 100)}...`,
-                `<a href="${acceptProjectRequest}">Join Project</a>`,
-                `<a href="${rejectProjectRequest}">Need More Info</a>`
+              html: generateProjectRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                pname,
+                get_portfolio_name,
+                short_pdes,
+                acceptProjectRequest,
+                rejectProjectRequest,
+                position
               ),
             };
 
@@ -918,12 +919,10 @@ router.post("/task/insert-task/:user_id", authMiddleware, async (req, res) => {
       ]);
     }
 
-    return res
-      .status(200)
-      .json({
-        taskInsertedId: taskInsertedId,
-        message: "Task Created Successfully.",
-      });
+    return res.status(200).json({
+      taskInsertedId: taskInsertedId,
+      message: "Task Created Successfully.",
+    });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -1135,22 +1134,25 @@ router.patch("/task/edit-task/:user_id", authMiddleware, async (req, res) => {
             }
 
             const RequestEmailID = team_member2_row[0][0].email_address;
-
+            const userFName = `${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}`;
+            const pownerFName = `${student.first_name} ${student.last_name}`;
+            const short_pdes = pdes.substring(0, 100);
             const acceptProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/1`;
             const rejectProjectRequest = `http://localhost:3000/project-request/${project_id}/${inserted_pm_id}/2`;
+            const position = "team member";
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: RequestEmailID,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${
-                  student.last_name
-                } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
-            Portfolio: ${get_portfolio_name}
-            Project Short Description: ${pdes.substring(0, 100)}...`,
-                `<a href="${acceptProjectRequest}">Join Project</a>`,
-                `<a href="${rejectProjectRequest}">Need More Info</a>`
+              html: generateProjectRequestEmailTemplate(
+                userFName,
+                pownerFName,
+                pname,
+                get_portfolio_name,
+                short_pdes,
+                acceptProjectRequest,
+                rejectProjectRequest,
+                position
               ),
             };
 
@@ -1372,22 +1374,25 @@ router.post(
                   }
 
                   const RequestEmailID = team_member2_row[0][0].email_address;
-
+                  const userFName = `${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}`;
+                  const pownerFName = `${student.first_name} ${student.last_name}`;
+                  const short_pdes = pdes.substring(0, 100);
                   const acceptProjectRequest = `http://localhost:3000/project-request/${tproject_assign}/${inserted_pm_id}/1`;
                   const rejectProjectRequest = `http://localhost:3000/project-request/${tproject_assign}/${inserted_pm_id}/2`;
+                  const position = "team member";
                   const mailOptions = {
                     from: process.env.SMTP_USER,
                     to: RequestEmailID,
                     subject: "Project Request | Decision 168",
-                    html: generateEmailTemplate(
-                      `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${
-                        student.last_name
-                      } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
-            Portfolio: ${get_portfolio_name}
-            Project Short Description: ${pdes.substring(0, 100)}...`,
-                      `<a href="${acceptProjectRequest}">Join Project</a>`,
-                      `<a href="${rejectProjectRequest}">Need More Info</a>`
+                    html: generateProjectRequestEmailTemplate(
+                      userFName,
+                      pownerFName,
+                      pname,
+                      get_portfolio_name,
+                      short_pdes,
+                      acceptProjectRequest,
+                      rejectProjectRequest,
+                      position
                     ),
                   };
 
@@ -1496,12 +1501,10 @@ router.post(
           })
         );
       }
-      return res
-        .status(200)
-        .json({
-          subtaskInsertedId: inserted_task_id,
-          message: "Subtask Created Successfully.",
-        });
+      return res.status(200).json({
+        subtaskInsertedId: inserted_task_id,
+        message: "Subtask Created Successfully.",
+      });
     } catch (error) {
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -1700,22 +1703,25 @@ router.post(
               }
 
               const RequestEmailID = team_member2_row[0][0].email_address;
-
+              const userFName = `${team_member2_row[0][0].first_name} ${team_member2_row[0][0].last_name}`;
+              const pownerFName = `${student.first_name} ${student.last_name}`;
+              const short_pdes = pdes.substring(0, 100);
               const acceptProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${inserted_pm_id}/1`;
               const rejectProjectRequest = `http://localhost:3000/project-request/${stproject_assign}/${inserted_pm_id}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: RequestEmailID,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${team_member2_row[0][0].first_name},
-            ${student.first_name} ${
-                    student.last_name
-                  } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
-            Portfolio: ${get_portfolio_name}
-            Project Short Description: ${pdes.substring(0, 100)}...`,
-                  `<a href="${acceptProjectRequest}">Join Project</a>`,
-                  `<a href="${rejectProjectRequest}">Need More Info</a>`
+                html: generateProjectRequestEmailTemplate(
+                  userFName,
+                  pownerFName,
+                  pname,
+                  get_portfolio_name,
+                  short_pdes,
+                  acceptProjectRequest,
+                  rejectProjectRequest,
+                  position
                 ),
               };
 
@@ -2969,22 +2975,25 @@ router.patch(
                     }
 
                     const RequestEmailID = txt_row[0][0].email_address;
-
+                    const userFName = `${txt_row[0][0].first_name} ${txt_row[0][0].last_name}`;
+                    const pownerFName = `${student.first_name} ${student.last_name}`;
+                    const short_pdes = pdes.substring(0, 100);
                     const acceptProjectRequest = `http://localhost:3000/project-request/${tdetail.tproject_assign}/${inserted_pm_id}/1`;
                     const rejectProjectRequest = `http://localhost:3000/project-request/${tdetail.tproject_assign}/${inserted_pm_id}/2`;
+                    const position = "team member";
                     const mailOptions = {
                       from: process.env.SMTP_USER,
                       to: RequestEmailID,
                       subject: "Project Request | Decision 168",
-                      html: generateEmailTemplate(
-                        `Hello ${txt_row[0][0].first_name},
-                  ${student.first_name} ${
-                          student.last_name
-                        } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
-                  Portfolio: ${get_portfolio_name}
-                  Project Short Description: ${pdes.substring(0, 100)}...`,
-                        `<a href="${acceptProjectRequest}">Join Project</a>`,
-                        `<a href="${rejectProjectRequest}">Need More Info</a>`
+                      html: generateProjectRequestEmailTemplate(
+                        userFName,
+                        pownerFName,
+                        pname,
+                        get_portfolio_name,
+                        short_pdes,
+                        acceptProjectRequest,
+                        rejectProjectRequest,
+                        position
                       ),
                     };
 
@@ -3485,22 +3494,25 @@ router.patch(
                     }
 
                     const RequestEmailID = txt_row[0][0].email_address;
-
+                    const userFName = `${txt_row[0][0].first_name} ${txt_row[0][0].last_name}`;
+                    const pownerFName = `${student.first_name} ${student.last_name}`;
+                    const short_pdes = pdes.substring(0, 100);
                     const acceptProjectRequest = `http://localhost:3000/project-request/${tdetail.stproject_assign}/${inserted_pm_id}/1`;
                     const rejectProjectRequest = `http://localhost:3000/project-request/${tdetail.stproject_assign}/${inserted_pm_id}/2`;
+                    const position = "team member";
                     const mailOptions = {
                       from: process.env.SMTP_USER,
                       to: RequestEmailID,
                       subject: "Project Request | Decision 168",
-                      html: generateEmailTemplate(
-                        `Hello ${txt_row[0][0].first_name},
-                  ${student.first_name} ${
-                          student.last_name
-                        } has requested you to join project ${pname} as a team member. Just click the appropriate button below to join the project or request more information.
-                  Portfolio: ${get_portfolio_name}
-                  Project Short Description: ${pdes.substring(0, 100)}...`,
-                        `<a href="${acceptProjectRequest}">Join Project</a>`,
-                        `<a href="${rejectProjectRequest}">Need More Info</a>`
+                      html: generateProjectRequestEmailTemplate(
+                        userFName,
+                        pownerFName,
+                        pname,
+                        get_portfolio_name,
+                        short_pdes,
+                        acceptProjectRequest,
+                        rejectProjectRequest,
+                        position
                       ),
                     };
 
@@ -3993,12 +4005,10 @@ router.post("/task/duplicate-task", authMiddleware, async (req, res) => {
             });
           }
         }
-        res
-          .status(200)
-          .json({
-            insertedTaskId: inserted_task_id,
-            message: "Task Copied Successfully.",
-          });
+        res.status(200).json({
+          insertedTaskId: inserted_task_id,
+          message: "Task Copied Successfully.",
+        });
       } else {
         res.status(400).json({ error: "Cannot Duplicate this task." });
       }
@@ -4752,12 +4762,10 @@ router.post("/subtask/duplicate-subtask", authMiddleware, async (req, res) => {
           paramNamesString2,
           paramValuesString2,
         ]);
-        res
-          .status(200)
-          .json({
-            insertedSubTaskId: inserted_task_id,
-            message: "Subtask Copied Successfully.",
-          });
+        res.status(200).json({
+          insertedSubTaskId: inserted_task_id,
+          message: "Subtask Copied Successfully.",
+        });
       } else {
         res.status(400).json({
           error: "Cannot Duplicate this task.",
