@@ -43,12 +43,10 @@ const dateConversion = () => {
   return formattedDate;
 };
 
-
 // Function to convert dynamic object to stored procedure parameters
 function convertObjectToProcedureParams(data) {
   // Check if data is defined and not null
   if (data === undefined || data === null) {
-    console.error('Invalid data object:', data);
     return null; // or return a default value if needed
   }
 
@@ -59,11 +57,10 @@ function convertObjectToProcedureParams(data) {
   const formattedEntries = entries.map(([key, value]) => `${key} = "${value}"`);
 
   // Join the formatted entries with commas
-  const formattedParams = formattedEntries.join(', ');
+  const formattedParams = formattedEntries.join(", ");
 
   return formattedParams;
 }
-
 
 module.exports = {
   transporter,

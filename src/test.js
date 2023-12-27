@@ -7,7 +7,6 @@ const obj = {
   taskArray: [],
 };
 
-console.log(JSON.stringify(obj));
 
 const data = {
   tid: 0,
@@ -51,7 +50,6 @@ const newDate = {
   ],
 };
 
-console.log(JSON.stringify(data));
 
 const editeData = {
   stid: 0,

@@ -1,12 +1,15 @@
+require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const { convertObjectToProcedureParams, dateConversion, transporter } = require("../utils/common-functions");
-const generateEmailTemplate = require("../utils/emailTemplate");
 const { default: isEmail } = require("validator/lib/isEmail");
+const authMiddleware = require("../middlewares/auth");
+const generateProjectRequestEmailTemplate = require("../utils/ProjectRequestEmailTemp");
+const generateProjectInviteRequestEmailTemplate = require("../utils/ProjectInviteRequestEmailTemp");
 
 //Sidebar Project List
-router.get("/project/get-project-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
@@ -252,7 +255,7 @@ router.get("/project/get-project-list/:user_id/:portfolio_id", async (req, res) 
 });
 
 //Dashboard Project List
-router.get("/project/get-dashboard-project-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-dashboard-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const { user_id, portfolio_id } = req.params;
   try {
     const [regularList] = await pool.execute("CALL ProjectListRegular(?)", [user_id]);
@@ -497,7 +500,7 @@ router.get("/project/get-dashboard-project-list/:user_id/:portfolio_id", async (
 });
 
 //Portfolio Project List
-router.get("/project/get-portfolio-projects-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-portfolio-projects-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const { portfolio_id, user_id } = req.params;
   try {
     const [regularList] = await pool.execute("CALL portfolio_projectsRegular(?)", [portfolio_id]);
@@ -579,20 +582,19 @@ router.get("/project/get-portfolio-projects-list/:user_id/:portfolio_id", async 
 });
 
 //get Project Member Data
-router.get("/project/get-project-member-data/:pid/:user_id", async (req, res) => {
+router.get("/project/get-project-member-data/:pid/:user_id", authMiddleware, async (req, res) => {
   const { pid, user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL check_ProjectMToClear(?,?)", [user_id, pid]);
     const memberDetail = rows[0][0];
     res.status(200).json(memberDetail);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //project-request
-router.patch("/project-request/:pid/:pm_id/:flag", async (req, res) => {
+router.patch("/project-request/:pid/:pm_id/:flag", authMiddleware, async (req, res) => {
   const { pid, pm_id, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -690,7 +692,7 @@ router.patch("/project-request/:pid/:pm_id/:flag", async (req, res) => {
 });
 
 //getProjectById
-router.get("/project/get-project-by-id/:pid", async (req, res) => {
+router.get("/project/get-project-by-id/:pid", authMiddleware, async (req, res) => {
   const { pid } = req.params;
   try {
     const [rows] = await pool.execute("CALL getProjectById(?)", [pid]);
@@ -756,13 +758,12 @@ router.get("/project/get-project-by-id/:pid", async (req, res) => {
       SuggestedInviteProjectMemberRes: SuggestedInviteProjectMember[0],
     });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getProjectTaskAssignee
-router.get("/project/get-project-task-assignee/:pid", async (req, res) => {
+router.get("/project/get-project-task-assignee/:pid", authMiddleware, async (req, res) => {
   const { pid } = req.params;
   try {
     const [taskrows] = await pool.execute("CALL p_tasks(?)", [pid]);
@@ -837,13 +838,12 @@ router.get("/project/get-project-task-assignee/:pid", async (req, res) => {
       projectSubtaskAssigneeDetail: projectSubtaskAssignee_parent.flat().filter(Boolean),
     });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ProjectFile
-router.get("/project/project-files/:pid", async (req, res) => {
+router.get("/project/project-files/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [project_rows] = await pool.execute("CALL ProjectFile(?)", [pid]);
@@ -907,13 +907,12 @@ router.get("/project/project-files/:pid", async (req, res) => {
       subtaskFileDetail: subtaskFile_parent.flat().filter(Boolean),
     });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //view_history_date
-router.get("/project/view-history-date-project/:pid", async (req, res) => {
+router.get("/project/view-history-date-project/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL view_history_date(?)", [pid]);
@@ -921,25 +920,23 @@ router.get("/project/view-history-date-project/:pid", async (req, res) => {
       history_dates: rows[0],
     });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //view_history_date_wise_project
-router.get("/project/view-history-date-wise-project/:pid/:hdate", async (req, res) => {
+router.get("/project/view-history-date-wise-project/:pid/:hdate", authMiddleware, async (req, res) => {
   const { pid, hdate } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL view_history(?,?)", [pid, hdate]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //view_history_date_range_project
-router.get("/project/view-history-date-range-project/:pid", async (req, res) => {
+router.get("/project/view-history-date-range-project/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const start_date = req.body.start_date;
   const end_date = req.body.end_date;
@@ -947,25 +944,23 @@ router.get("/project/view-history-date-range-project/:pid", async (req, res) => 
     const [rows, fields] = await pool.execute("CALL view_history_date_range(?,?,?)", [pid, start_date, end_date]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //view_all_history_project
-router.get("/project/view-all-history-project/:pid", async (req, res) => {
+router.get("/project/view-all-history-project/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL view_all_history(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getProjectComments
-router.get("/project/get-project-comments/:pid/:user_id", async (req, res) => {
+router.get("/project/get-project-comments/:pid/:user_id", authMiddleware, async (req, res) => {
   const { pid, user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL getProjectComments(?)", [pid]);
@@ -1009,13 +1004,12 @@ router.get("/project/get-project-comments/:pid/:user_id", async (req, res) => {
       projectCommentDetail: projectComment_parent.flat().filter(Boolean),
     });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //MentionList
-router.get("/project/mention-list/:pid", async (req, res) => {
+router.get("/project/mention-list/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL MentionList(?)", [pid]);
@@ -1035,52 +1029,48 @@ router.get("/project/mention-list/:pid", async (req, res) => {
       mentionDetail: mention_parent.flat().filter(Boolean),
     });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //AcceptedProjectListByPortfolioRegular
-router.get("/project/get-accepted-project-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-accepted-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
     const [rows] = await pool.execute("CALL AcceptedProjectListByPortfolioRegular(?,?)", [portfolio_id, user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //PendingProjectListByPortfolioRegular
-router.get("/project/get-pending-project-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-pending-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
     const [rows] = await pool.execute("CALL PendingProjectListByPortfolioRegular(?,?)", [portfolio_id, user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ReadMoreProjectListByPortfolioRegular
-router.get("/project/get-readmore-project-list/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-readmore-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
     const [rows] = await pool.execute("CALL ReadMoreProjectListByPortfolioRegular(?,?)", [portfolio_id, user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ProjectTeamMember
-router.get("/project/project-team-members/:pid", async (req, res) => {
+router.get("/project/project-team-members/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectTeamMember(?)", [pid]);
@@ -1093,26 +1083,24 @@ router.get("/project/project-team-members/:pid", async (req, res) => {
     });
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ProjectDetail
-router.get("/project/project-detail/:user_id/:pid", async (req, res) => {
+router.get("/project/project-detail/:user_id/:pid", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectDetail(?,?)", [pid, user_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //edit_project_files_notify
-router.patch("/project/edit-project-files-notify/:pfile_id", async (req, res) => {
+router.patch("/project/edit-project-files-notify/:pfile_id", authMiddleware, async (req, res) => {
   const pfile_id = req.params.pfile_id;
   const final_mem = req.body.final_mem;
   try {
@@ -1126,26 +1114,24 @@ router.patch("/project/edit-project-files-notify/:pfile_id", async (req, res) =>
     await pool.execute(storedProcedure);
     res.status(200).json({ message: "updated successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //get_project_accepted_notification
-router.get("/project/get-project-accepted-notification/:user_id/:pm_id", async (req, res) => {
+router.get("/project/get-project-accepted-notification/:user_id/:pm_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pm_id = req.params.pm_id;
   try {
     const [rows] = await pool.execute("CALL get_project_accepted_notification(?,?)", [user_id, pm_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //edit_project_members_notify
-router.patch("/project/edit-project-members-notify/:pm_id", async (req, res) => {
+router.patch("/project/edit-project-members-notify/:pm_id", authMiddleware, async (req, res) => {
   const pm_id = req.params.pm_id;
   try {
     const updateFieldsValues = `status_notify = 'seen'`;
@@ -1153,25 +1139,23 @@ router.patch("/project/edit-project-members-notify/:pm_id", async (req, res) => 
     await pool.execute("CALL UpdateProjectMembers(?, ?)", [updateFieldsValues, upid]);
     res.status(200).json({ message: "updated successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //InvitedProjectMember
-router.get("/project/project-invited-member/:pid", async (req, res) => {
+router.get("/project/project-invited-member/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL InvitedProjectMember(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //edit_project_invite_members_notify
-router.patch("/project/edit-project-invite-members-notify/:im_id", async (req, res) => {
+router.patch("/project/edit-project-invite-members-notify/:im_id", authMiddleware, async (req, res) => {
   const im_id = req.params.im_id;
   try {
     const updateFieldsValues = `status_notify = 'seen'`;
@@ -1179,26 +1163,24 @@ router.patch("/project/edit-project-invite-members-notify/:im_id", async (req, r
     await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [updateFieldsValues, upid]);
     res.status(200).json({ message: "updated successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //check_project_membership_notify
-router.get("/project/project-invited-member/:user_id/:pid", async (req, res) => {
+router.get("/project/project-invited-member/:user_id/:pid", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL check_project_membership_notify(?,?)", [user_id, pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //edit_project_membership_req_notify
-router.patch("/project/edit-project-membership-req-notify/:req_id", async (req, res) => {
+router.patch("/project/edit-project-membership-req-notify/:req_id", authMiddleware, async (req, res) => {
   const req_id = req.params.req_id;
   try {
     const otherFields = {
@@ -1212,13 +1194,12 @@ router.patch("/project/edit-project-membership-req-notify/:req_id", async (req, 
 
     res.status(200).json({ message: "updated successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //edit_project_comments_notify
-router.patch("/project/edit-project-comments-notify/:cid", async (req, res) => {
+router.patch("/project/edit-project-comments-notify/:cid", authMiddleware, async (req, res) => {
   const cid = req.params.cid;
   const final_mem = req.body.final_mem;
   try {
@@ -1232,224 +1213,206 @@ router.patch("/project/edit-project-comments-notify/:cid", async (req, res) => {
     await pool.execute(storedProcedure);
     res.status(200).json({ message: "updated successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getProject_TaskCount
-router.get("/project/get-project-task-count/:user_id/:pid", async (req, res) => {
+router.get("/project/get-project-task-count/:user_id/:pid", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL getProject_TaskCount(?,?)", [user_id, pid]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //check_edit_request
-router.get("/project/check-edit-request/:user_id/:pid", async (req, res) => {
+router.get("/project/check-edit-request/:user_id/:pid", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL check_edit_request(?,?)", [pid, user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getAccepted_ProjTM
-router.get("/project/get-accepted-project-team-member/:pid", async (req, res) => {
+router.get("/project/get-accepted-project-team-member/:pid", authMiddleware, async (req, res) => {
   const { pid } = req.params;
   try {
     const [rows] = await pool.execute("CALL getAccepted_ProjTM(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Internal server error." });
   }
 });
 
 //progress_done3
-router.get("/project/get-project-member-task-progress-done/:pid/:member_id", async (req, res) => {
+router.get("/project/get-project-member-task-progress-done/:pid/:member_id", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const member_id = req.params.member_id;
   try {
     const [rows, fields] = await pool.execute("CALL progress_done3(?,?)", [pid, member_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //progress_total3
-router.get("/project/get-project-member-task-progress-total/:pid/:member_id", async (req, res) => {
+router.get("/project/get-project-member-task-progress-total/:pid/:member_id", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const member_id = req.params.member_id;
   try {
     const [rows, fields] = await pool.execute("CALL progress_total3(?,?)", [pid, member_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //sub_progress_done3
-router.get("/project/get-project-member-subtask-progress-done/:pid/:member_id", async (req, res) => {
+router.get("/project/get-project-member-subtask-progress-done/:pid/:member_id", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const member_id = req.params.member_id;
   try {
     const [rows, fields] = await pool.execute("CALL sub_progress_done3(?,?)", [pid, member_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //sub_progress_total3
-router.get("/project/get-project-member-subtask-progress-total/:pid/:member_id", async (req, res) => {
+router.get("/project/get-project-member-subtask-progress-total/:pid/:member_id", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const member_id = req.params.member_id;
   try {
     const [rows, fields] = await pool.execute("CALL sub_progress_total3(?,?)", [pid, member_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getTasksProjectLinks
-router.get("/project/get-project-tasks-links/:pid", async (req, res) => {
+router.get("/project/get-project-tasks-links/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL getTasksProjectLinks(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getSubtasksProjectLinks
-router.get("/project/get-project-subtasks-links/:pid", async (req, res) => {
+router.get("/project/get-project-subtasks-links/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows, fields] = await pool.execute("CALL getSubtasksProjectLinks(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //TaskFile
-router.get("/project/task-file/:pid", async (req, res) => {
+router.get("/project/task-file/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL TaskFile(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //SubtaskFile
-router.get("/project/subtask-file/:pid", async (req, res) => {
+router.get("/project/subtask-file/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL SubtaskFile(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //SuggestedProjectMember
-router.get("/project/project-suggested-member/:pid", async (req, res) => {
+router.get("/project/project-suggested-member/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL SuggestedProjectMember(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //SuggestedInviteProjectMember
-router.get("/project/project-suggested-invite-member/:pid", async (req, res) => {
+router.get("/project/project-suggested-invite-member/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL SuggestedInviteProjectMember(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getPortfolioMemberCount
-router.get("/project/get-portfolio-member-count/:user_id/:portfolio_id", async (req, res) => {
+router.get("/project/get-portfolio-member-count/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const portfolio_id = req.params.portfolio_id;
   try {
     const [rows, fields] = await pool.execute("CALL getPortfolioMemberCount(?,?)", [user_id, portfolio_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //RequestAsProjectMember
-router.get("/project/request-as-project-member/:pid", async (req, res) => {
+router.get("/project/request-as-project-member/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL RequestAsProjectMember(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getTasksbyID
-router.get("/project/get-tasks-by-id/:tid", async (req, res) => {
+router.get("/project/get-tasks-by-id/:tid", authMiddleware, async (req, res) => {
   const { tid } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getTasksbyID(?)", [tid]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //getSubtasksbyID
-router.get("/project/get-subtasks-by-id/:stid", async (req, res) => {
+router.get("/project/get-subtasks-by-id/:stid", authMiddleware, async (req, res) => {
   const { stid } = req.params;
   try {
     const [rows, fields] = await pool.execute("CALL getSubtasksbyID(?)", [stid]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //check_pm
-router.get("/project/check-pm/:user_id/:pid/:portfolio_id", async (req, res) => {
+router.get("/project/check-pm/:user_id/:pid/:portfolio_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   const portfolio_id = req.params.portfolio_id;
@@ -1457,125 +1420,115 @@ router.get("/project/check-pm/:user_id/:pid/:portfolio_id", async (req, res) => 
     const [rows, fields] = await pool.execute("CALL check_pm(?,?,?)", [pid, portfolio_id, user_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ProjectDetailAccepted
-router.get("/project/project-detail-accepted/:user_id/:pid", async (req, res) => {
+router.get("/project/project-detail-accepted/:user_id/:pid", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectDetailAccepted(?,?)", [pid, user_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //check_edit_permission
-router.get("/project/check-edit-permission/:member_id/:pid", async (req, res) => {
+router.get("/project/check-edit-permission/:member_id/:pid", authMiddleware, async (req, res) => {
   const member_id = req.params.member_id;
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL check_edit_permission(?,?)", [pid, member_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //MentionListforAccepted
-router.get("/project/accepted-project-mention-list/:pid/:member_id", async (req, res) => {
+router.get("/project/accepted-project-mention-list/:pid/:member_id", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const member_id = req.params.member_id;
   try {
     const [rows] = await pool.execute("CALL MentionListforAccepted(?,?)", [pid, member_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ProjectDetailRequest
-router.get("/project/project-detail-request/:user_id/:pid", async (req, res) => {
+router.get("/project/project-detail-request/:user_id/:pid", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectDetailRequest(?,?)", [pid, user_id]);
     res.status(200).json(rows[0][0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //portfolio_projects_list
-router.get("/project/portfolio-projects-list/:portfolio_id", async (req, res) => {
+router.get("/project/portfolio-projects-list/:portfolio_id", authMiddleware, async (req, res) => {
   const portfolio_id = req.params.portfolio_id;
   try {
     const [rows] = await pool.execute("CALL portfolio_projectsRegular(?)", [portfolio_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ProjectListRegular
-router.get("/project/get-my-project-list/:user_id", async (req, res) => {
+router.get("/project/get-my-project-list/:user_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   try {
     const [rows] = await pool.execute("CALL ProjectListRegular(?)", [user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //AcceptedProjectListRegular
-router.get("/project/get-my-accepted-project-list/:user_id", async (req, res) => {
+router.get("/project/get-my-accepted-project-list/:user_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   try {
     const [rows] = await pool.execute("CALL AcceptedProjectListRegular(?)", [user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //PendingProjectListRegular
-router.get("/project/get-my-pending-project-list/:user_id", async (req, res) => {
+router.get("/project/get-my-pending-project-list/:user_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   try {
     const [rows] = await pool.execute("CALL PendingProjectListRegular(?)", [user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //ReadMoreProjectListRegular
-router.get("/project/get-my-readmore-project-list/:user_id", async (req, res) => {
+router.get("/project/get-my-readmore-project-list/:user_id", authMiddleware, async (req, res) => {
   const user_id = req.params.user_id;
   try {
     const [rows] = await pool.execute("CALL ReadMoreProjectListRegular(?)", [user_id]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //InsertProject
-router.post("/project/insert-project", async (req, res) => {
+router.post("/project/insert-project", authMiddleware, async (req, res) => {
   try {
     let { portfolio_id } = req.body;
     let { pcreated_by } = req.body;
@@ -1708,7 +1661,6 @@ router.post("/project/insert-project", async (req, res) => {
 
       const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [getProject.pmanager, getProject.pid]);
       const pm_id = getpm_id[0][0]?.pm_id;
-      //console.log(pm_id);
 
       const hdata5 = {
         pid: getProject.pid,
@@ -1729,19 +1681,18 @@ router.post("/project/insert-project", async (req, res) => {
       const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
       await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
 
+      const userFName = `${user.first_name} ${user.last_name}`;
+      const pownerFName = `${powner.first_name} ${powner.last_name}`;
+      const get_pdes = getProject.pdes;
+      const short_pdes = get_pdes.substring(0, 100);
       const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
       const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
-
+      const position = "manager";
       const mailOptions2 = {
         from: process.env.SMTP_USER,
         to: user.email_address,
         subject: "Project Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a manager.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-          `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-        ),
+        html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
       };
 
       transporter.sendMail(mailOptions2, (error) => {
@@ -1785,7 +1736,6 @@ router.post("/project/insert-project", async (req, res) => {
 
           const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [t, getProject.pid]);
           const pm_id = getpm_id[0][0]?.pm_id;
-          //console.log(pm_id);
 
           const hdata7 = {
             pid: getProject.pid,
@@ -1805,20 +1755,18 @@ router.post("/project/insert-project", async (req, res) => {
 
           const callProcedureSQL7 = `CALL InsertProjectHistory(?, ?)`;
           await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
-
+          const userFName = `${user.first_name} ${user.last_name}`;
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_pdes = getProject.pdes;
+          const short_pdes = get_pdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
           const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
-
+          const position = "team member";
           const mailOptions2 = {
             from: process.env.SMTP_USER,
             to: user.email_address,
             subject: "Project Request | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-              `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-            ),
+            html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
           };
 
           transporter.sendMail(mailOptions2, (error) => {
@@ -1871,7 +1819,6 @@ router.post("/project/insert-project", async (req, res) => {
 
               const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [rid, getProject.pid]);
               const pm_id = getpm_id[0][0]?.pm_id;
-              //console.log(pm_id);
 
               const hdata9 = {
                 pid: getProject.pid,
@@ -1891,20 +1838,18 @@ router.post("/project/insert-project", async (req, res) => {
 
               const callProcedureSQL9 = `CALL InsertProjectHistory(?, ?)`;
               await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-                ),
+                html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
               };
 
               transporter.sendMail(mailOptions2, (error) => {
@@ -1961,7 +1906,6 @@ router.post("/project/insert-project", async (req, res) => {
 
               const [getim_id] = await pool.execute("CALL check_invited_email(?,?,?)", [getProject.pid, pcreated_by, im]);
               const im_id = getim_id[0][0]?.im_id;
-              //console.log(im_id);
 
               const hdata11 = {
                 pid: getProject.pid,
@@ -1981,20 +1925,17 @@ router.post("/project/insert-project", async (req, res) => {
 
               const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
               await pool.execute(callProcedureSQL11, [paramNamesString11, paramValuesString11]);
-
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-invite-reject-request/${getProject.pid}/${im_id}/1`;
               const rejectRequest = `http://localhost:3000/project-invite-reject-request/${getProject.pid}/${im_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-                ),
+                html: generateProjectInviteRequestEmailTemplate(pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
               };
 
               transporter.sendMail(mailOptions2, (error) => {
@@ -2019,13 +1960,12 @@ router.post("/project/insert-project", async (req, res) => {
       pid: getProject.pid,
     });
   } catch (error) {
-    //console.error('Error in /goal/insert-goal:', error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //project-invite-reject-request
-router.get("/project-invite-reject-request/:pid/:im_id/:flag", async (req, res) => {
+router.get("/project-invite-reject-request/:pid/:im_id/:flag", authMiddleware, async (req, res) => {
   const { pid, im_id, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -2073,7 +2013,7 @@ router.get("/project-invite-reject-request/:pid/:im_id/:flag", async (req, res) 
 });
 
 //UpdateProject
-router.patch("/project/update-project", async (req, res) => {
+router.patch("/project/update-project", authMiddleware, async (req, res) => {
   try {
     let { pname } = req.body;
     let { pid } = req.body;
@@ -2188,21 +2128,20 @@ router.patch("/project/update-project", async (req, res) => {
       }
 
       const no_more_mem = all_ptm.filter((member) => !team_member.includes(member));
-      //console.log(no_more_mem);
+
       for (const no_mem of no_more_mem) {
         if (pdetail.pcreated_by == pcreated_by || portfolio_owner_id == pcreated_by) {
           if (pdetail.pmanager == no_mem) {
             const updateFieldsValues2 = `pmanager = ''`;
             const upid = `pid  = '${pid}'`;
             await pool.execute("CALL UpdateProject(?, ?)", [updateFieldsValues2, upid]);
-            //console.log("if", no_mem);
+
             const del1 = `pmember = '${no_mem}' AND pid = '${pid}'`;
             await pool.execute("CALL DeleteProjectMembers(?)", [del1]);
           } else {
             if (pdetail.pmanager != no_mem) {
               if (pdetail.portfolio_owner_id != no_mem) {
                 if (pdetail.pcreated_by != no_mem) {
-                  //console.log("else", no_mem);
                   const del2 = `pmember = '${no_mem}' AND pid = '${pid}'`;
                   await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
                 }
@@ -2239,7 +2178,6 @@ router.patch("/project/update-project", async (req, res) => {
 
             const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [t, pid]);
             const pm_id = getpm_id[0][0]?.pm_id;
-            //console.log(pm_id);
 
             const hdata7 = {
               pid: pid,
@@ -2259,20 +2197,18 @@ router.patch("/project/update-project", async (req, res) => {
 
             const callProcedureSQL7 = `CALL InsertProjectHistory(?, ?)`;
             await pool.execute(callProcedureSQL7, [paramNamesString7, paramValuesString7]);
-
+            const userFName = `${user.first_name} ${user.last_name}`;
+            const pownerFName = `${powner.first_name} ${powner.last_name}`;
+            const get_pdes = pdetail.pdes;
+            const short_pdes = get_pdes.substring(0, 100);
             const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
             const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
-
+            const position = "team member";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-              ),
+              html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
             };
 
             transporter.sendMail(mailOptions2, (error) => {
@@ -2301,21 +2237,20 @@ router.patch("/project/update-project", async (req, res) => {
       }
 
       const no_more_mem = all_ptm.filter((member) => !team_member.includes(member));
-      //console.log(no_more_mem);
+
       for (const no_mem of no_more_mem) {
         if (pdetail.pcreated_by == pcreated_by || portfolio_owner_id == pcreated_by) {
           if (pdetail.pmanager == no_mem) {
             const updateFieldsValues2 = `pmanager = ''`;
             const upid = `pid  = '${pid}'`;
             await pool.execute("CALL UpdateProject(?, ?)", [updateFieldsValues2, upid]);
-            //console.log("if", no_mem);
+
             const del1 = `pmember = '${no_mem}' AND pid = '${pid}'`;
             await pool.execute("CALL DeleteProjectMembers(?)", [del1]);
           } else {
             if (pdetail.pmanager != no_mem) {
               if (pdetail.portfolio_owner_id != no_mem) {
                 if (pdetail.pcreated_by != no_mem) {
-                  //console.log("else", no_mem);
                   const del2 = `pmember = '${no_mem}' AND pid = '${pid}'`;
                   await pool.execute("CALL DeleteProjectMembers(?)", [del2]);
                 }
@@ -2359,7 +2294,6 @@ router.patch("/project/update-project", async (req, res) => {
 
               const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [rid, pid]);
               const pm_id = getpm_id[0][0]?.pm_id;
-              //console.log(pm_id);
 
               const hdata9 = {
                 pid: pid,
@@ -2379,20 +2313,18 @@ router.patch("/project/update-project", async (req, res) => {
 
               const callProcedureSQL9 = `CALL InsertProjectHistory(?, ?)`;
               await pool.execute(callProcedureSQL9, [paramNamesString9, paramValuesString9]);
-
+              const userFName = `${user.first_name} ${user.last_name}`;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = pdetail.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
               const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: user.email_address,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-                ),
+                html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
               };
 
               transporter.sendMail(mailOptions2, (error) => {
@@ -2449,7 +2381,6 @@ router.patch("/project/update-project", async (req, res) => {
 
               const [getim_id] = await pool.execute("CALL check_invited_email(?,?,?)", [pid, pcreated_by, im]);
               const im_id = getim_id[0][0]?.im_id;
-              //console.log(im_id);
 
               const hdata11 = {
                 pid: pid,
@@ -2469,20 +2400,17 @@ router.patch("/project/update-project", async (req, res) => {
 
               const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
               await pool.execute(callProcedureSQL11, [paramNamesString11, paramValuesString11]);
-
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = pdetail.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/1`;
               const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/2`;
-
+              const position = "team member";
               const mailOptions2 = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-                ),
+                html: generateProjectInviteRequestEmailTemplate(pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
               };
 
               transporter.sendMail(mailOptions2, (error) => {
@@ -2511,7 +2439,7 @@ router.patch("/project/update-project", async (req, res) => {
 });
 
 //DuplicateProject
-router.post("/project/duplicate-project", async (req, res) => {
+router.post("/project/duplicate-project", authMiddleware, async (req, res) => {
   try {
     let { pcreated_by } = req.body;
     let { pname } = req.body;
@@ -2609,7 +2537,6 @@ router.post("/project/duplicate-project", async (req, res) => {
 
           const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [pm.pmember, getProject.pid]);
           const pm_id = getpm_id[0][0]?.pm_id;
-          //console.log(pm_id);
 
           const hdata6 = {
             pid: getProject.pid,
@@ -2629,22 +2556,20 @@ router.post("/project/duplicate-project", async (req, res) => {
 
           const callProcedureSQL6 = `CALL InsertProjectHistory(?, ?)`;
           await pool.execute(callProcedureSQL6, [paramNamesString6, paramValuesString6]);
-
+          const userFName = `${user.first_name} ${user.last_name}`;
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_pdes = getProject.pdes;
+          const short_pdes = get_pdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
           const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
 
           if (pm.pmember == pdetail.pmanager) {
-            console.log("1");
+            const position = "manager";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a manager.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-              ),
+              html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
             };
 
             transporter.sendMail(mailOptions2, (error) => {
@@ -2659,16 +2584,12 @@ router.post("/project/duplicate-project", async (req, res) => {
               }
             });
           } else {
+            const position = "team member";
             const mailOptions2 = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-              ),
+              html: generateProjectRequestEmailTemplate(userFName, pownerFName, pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
             };
 
             transporter.sendMail(mailOptions2, (error) => {
@@ -2971,7 +2892,7 @@ router.post("/project/duplicate-project", async (req, res) => {
 });
 
 //UpdateProjectLinks
-router.patch("/project/update-project-links", async (req, res) => {
+router.patch("/project/update-project-links", authMiddleware, async (req, res) => {
   const { pid, pcreated_by, ...otherFields } = req.body;
   try {
     const formattedDate = dateConversion();
@@ -2999,13 +2920,12 @@ router.patch("/project/update-project-links", async (req, res) => {
 
     res.status(200).json({ message: "updated successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //InsertProjectFiles
-router.post("/project/insert-project-files", async (req, res) => {
+router.post("/project/insert-project-files", authMiddleware, async (req, res) => {
   const { pid, pcreated_by, pfile } = req.body;
   try {
     const formattedDate = dateConversion();
@@ -3061,13 +2981,12 @@ router.post("/project/insert-project-files", async (req, res) => {
     }
     res.status(200).json({ message: "file added successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //DeleteProjectFiles
-router.patch("/project/delete-project-files/:pid/:pfile_id/:user_id", async (req, res) => {
+router.patch("/project/delete-project-files/:pid/:pfile_id/:user_id", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   const pfile_id = req.params.pfile_id;
   const user_id = req.params.user_id;
@@ -3114,13 +3033,12 @@ router.patch("/project/delete-project-files/:pid/:pfile_id/:user_id", async (req
 
     res.status(200).json({ message: "file deleted successfully" });
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //direct_remove_projectmanager
-router.patch("/project/direct-remove-project-manager/:pid/:pmember_id", async (req, res) => {
+router.patch("/project/direct-remove-project-manager/:pid/:pmember_id", authMiddleware, async (req, res) => {
   try {
     const pid = req.params.pid;
     const pmember_id = req.params.pmember_id;
@@ -3157,10 +3075,9 @@ router.patch("/project/direct-remove-project-manager/:pid/:pmember_id", async (r
 });
 
 //delete_pMember
-router.patch("/project/remove-project-member/:pm_id", async (req, res) => {
+router.patch("/project/remove-project-member/:pm_id", authMiddleware, async (req, res) => {
   try {
     const pm_id = req.params.pm_id;
-    console.log(pm_id);
 
     const [check_mem_idRes] = await pool.execute("CALL check_ProPMToClear(?)", [pm_id]);
 
@@ -3230,19 +3147,18 @@ router.patch("/project/remove-project-member/:pm_id", async (req, res) => {
 });
 
 //ProjectTeamMemberAccepted
-router.get("/project/project-team-member-accepted/:pid", async (req, res) => {
+router.get("/project/project-team-member-accepted/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
   try {
     const [rows] = await pool.execute("CALL ProjectTeamMemberAccepted(?)", [pid]);
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //project_open_work_new_assignee
-router.patch("/project/project-open-work-new-assignee", async (req, res) => {
+router.patch("/project/project-open-work-new-assignee", authMiddleware, async (req, res) => {
   const reg_id = req.body.reg_id;
   const new_reg_id = req.body.new_reg_id;
   const old_reg_id = req.body.old_reg_id;
@@ -3259,7 +3175,6 @@ router.patch("/project/project-open-work-new-assignee", async (req, res) => {
     const new_mem = check_new_mem[0][0];
 
     if (check) {
-      //console.log("check",check);
       const formattedDate = dateConversion();
 
       const pid = check.pid;
@@ -3363,13 +3278,12 @@ router.patch("/project/project-open-work-new-assignee", async (req, res) => {
       res.status(200).json({ message: "member not found" });
     }
   } catch (error) {
-    console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 //assign_projectmanager
-router.patch("/project/assign-project-manager/:pid/:pmember", async (req, res) => {
+router.patch("/project/assign-project-manager/:pid/:pmember", authMiddleware, async (req, res) => {
   try {
     const pid = req.params.pid;
     const pmember = req.params.pmember;
@@ -3406,7 +3320,7 @@ router.patch("/project/assign-project-manager/:pid/:pmember", async (req, res) =
 });
 
 //delete_iMember
-router.patch("/project/remove-project-invited-member", async (req, res) => {
+router.patch("/project/remove-project-invited-member", authMiddleware, async (req, res) => {
   try {
     const user_id = req.body.user_id;
     const im_id = req.body.im_id;
@@ -3447,7 +3361,7 @@ router.patch("/project/remove-project-invited-member", async (req, res) => {
 });
 
 //add_SuggestedPMember
-router.patch("/project/add-suggested-project-member/:user_id/:pid/:suggest_id", async (req, res) => {
+router.patch("/project/add-suggested-project-member/:user_id/:pid/:suggest_id", authMiddleware, async (req, res) => {
   try {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
@@ -3511,7 +3425,6 @@ router.patch("/project/add-suggested-project-member/:user_id/:pid/:suggest_id", 
 
       const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [suggest_id, pdetail.pid]);
       const pm_id = getpm_id[0][0]?.pm_id;
-      //console.log(pm_id);
 
       const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [pdetail.portfolio_id]);
       const PortfolioName = getPortfolio[0][0]?.portfolio_name;
@@ -3534,20 +3447,18 @@ router.patch("/project/add-suggested-project-member/:user_id/:pid/:suggest_id", 
 
       const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
       await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
-
+      const userFName = `${user.first_name} ${user.last_name}`;
+      const pownerFName = `${powner.first_name} ${powner.last_name}`;
+      const get_pdes = pdetail.pdes;
+      const short_pdes = get_pdes.substring(0, 100);
       const acceptRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/1`;
       const rejectRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/2`;
-
+      const position = "team member";
       const mailOptions2 = {
         from: process.env.SMTP_USER,
         to: user.email_address,
         subject: "Project Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-          `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-        ),
+        html: generateProjectRequestEmailTemplate(userFName, pownerFName, pdetail.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
       };
 
       transporter.sendMail(mailOptions2, (error) => {
@@ -3568,7 +3479,83 @@ router.patch("/project/add-suggested-project-member/:user_id/:pid/:suggest_id", 
 });
 
 //add_Suggested_IPMember
-router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", async (req, res) => {
+// router.patch(
+//   "/project/add-invited-suggested-project-member/:user_id/:pid",
+//   authMiddleware,
+//   async (req, res) => {
+//     try {
+//       const user_id = req.params.user_id;
+//       const pid = req.params.pid;
+//       const suggest_id = req.body.suggest_id;
+
+//       const formattedDate = dateConversion();
+
+//       const [check_powner] = await pool.execute("CALL getStudentById(?)", [
+//         user_id,
+//       ]);
+//       const powner = check_powner[0][0];
+
+//       const [pdetailRes] = await pool.execute("CALL getProjectById(?)", [pid]);
+//       const pdetail = pdetailRes[0][0];
+
+//       const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [
+//         pdetail.portfolio_id,
+//       ]);
+//       const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+
+//       const hdata5 = {
+//         pid: pdetail.pid,
+//         sid: pdetail.sid,
+//         gid: pdetail.gid,
+//         h_date: formattedDate,
+//         h_resource_id: powner.reg_id,
+//         h_resource: `${powner.first_name} ${powner.last_name}`,
+//         h_description: `${powner.first_name} ${powner.last_name} sent team member request to ${user.first_name} ${user.last_name}`,
+//         pmember_id: pm_id,
+//       };
+
+//       const paramNamesString5 = Object.keys(hdata5).join(", ");
+//       const paramValuesString5 = Object.values(hdata5)
+//         .map((value) => `'${value}'`)
+//         .join(", ");
+
+//       const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
+//       await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
+
+//       const acceptRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/1`;
+//       const rejectRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/2`;
+
+//       const mailOptions2 = {
+//         from: process.env.SMTP_USER,
+//         to: user.email_address,
+//         subject: "Project Request | Decision 168",
+//         html: generateEmailTemplate(
+//           `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
+//           Just click the appropriate button below to join the Project or request more information.
+//           Portfolio : ${PortfolioName}`,
+//           `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
+//         ),
+//       };
+
+//       transporter.sendMail(mailOptions2, (error) => {
+//         if (error) {
+//           res.status(500).json({
+//             error: "Failed to send portfolio invitation email.",
+//           });
+//         } else {
+//           res.status(201).json({
+//             message: "Project invitation sent to your email.",
+//           });
+//         }
+//       });
+//     }
+//    catch (error) {
+//     res.status(500).json({ error: "Internal Server Error", details: error.message });
+//   }
+// });
+
+//add_Suggested_IPMember
+router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", authMiddleware, async (req, res) => {
   try {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
@@ -3632,7 +3619,6 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
 
       const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [suggest_id, pdetail.pid]);
       const pm_id = getpm_id[0][0]?.pm_id;
-      //console.log(pm_id);
 
       const hdata5 = {
         pid: pdetail.pid,
@@ -3652,20 +3638,18 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
 
       const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
       await pool.execute(callProcedureSQL5, [paramNamesString5, paramValuesString5]);
-
+      const userFName = `${user.first_name} ${user.last_name}`;
+      const pownerFName = `${powner.first_name} ${powner.last_name}`;
+      const get_pdes = pdetail.pdes;
+      const short_pdes = get_pdes.substring(0, 100);
       const acceptRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/1`;
       const rejectRequest = `http://localhost:3000/project-request/${pdetail.pid}/${pm_id}/2`;
-
+      const position = "team member";
       const mailOptions2 = {
         from: process.env.SMTP_USER,
         to: user.email_address,
         subject: "Project Request | Decision 168",
-        html: generateEmailTemplate(
-          `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-          `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-        ),
+        html: generateProjectRequestEmailTemplate(userFName, pownerFName, pdetail.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
       };
 
       transporter.sendMail(mailOptions2, (error) => {
@@ -3722,7 +3706,6 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
 
         const [getim_id] = await pool.execute("CALL check_invited_email(?,?,?)", [pdetail.pid, pdetail.pcreated_by, im]);
         const im_id = getim_id[0][0]?.im_id;
-        //console.log(im_id);
 
         const hdata11 = {
           pid: pdetail.pid,
@@ -3742,20 +3725,17 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
 
         const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
         await pool.execute(callProcedureSQL11, [paramNamesString11, paramValuesString11]);
-
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const get_pdes = pdetail.pdes;
+        const short_pdes = get_pdes.substring(0, 100);
         const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/1`;
         const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/2`;
-
+        const position = "team member";
         const mailOptions2 = {
           from: process.env.SMTP_USER,
           to: im,
           subject: "Project Request | Decision 168",
-          html: generateEmailTemplate(
-            `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-            `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-          ),
+          html: generateProjectInviteRequestEmailTemplate(pownerFName, pdetail.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
         };
 
         transporter.sendMail(mailOptions2, (error) => {
@@ -3812,7 +3792,6 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
 
           const [getim_id] = await pool.execute("CALL check_invited_email(?,?,?)", [pdetail.pid, pdetail.pcreated_by, im]);
           const im_id = getim_id[0][0]?.im_id;
-          //console.log(im_id);
 
           const hdata11 = {
             pid: pdetail.pid,
@@ -3832,20 +3811,17 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
 
           const callProcedureSQL11 = `CALL InsertProjectHistory(?, ?)`;
           await pool.execute(callProcedureSQL11, [paramNamesString11, paramValuesString11]);
-
+          const pownerFName = `${powner.first_name} ${powner.last_name}`;
+          const get_pdes = pdetail.pdes;
+          const short_pdes = get_pdes.substring(0, 100);
           const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/1`;
           const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pdetail.pid}/${im_id}/2`;
-
+          const position = "team member";
           const mailOptions2 = {
             from: process.env.SMTP_USER,
             to: im,
             subject: "Project Request | Decision 168",
-            html: generateEmailTemplate(
-              `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${pdetail.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-              `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-            ),
+            html: generateProjectInviteRequestEmailTemplate(pownerFName, pdetail.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
           };
 
           transporter.sendMail(mailOptions2, (error) => {
@@ -3867,8 +3843,9 @@ router.patch("/project/add-invited-suggested-project-member/:user_id/:pid", asyn
   }
 });
 
+
 //pdetail_SuggestTMember
-router.post("/project/insert-project-suggest-team-member", async (req, res) => {
+router.post("/project/insert-project-suggest-team-member", authMiddleware, async (req, res) => {
   try {
     let { pid } = req.body;
     let { user_id } = req.body;
@@ -3911,7 +3888,6 @@ router.post("/project/insert-project-suggest-team-member", async (req, res) => {
 
             const [gets_id] = await pool.execute("CALL check_project_suggested_member(?,?)", [getProject.pid, t]);
             const s_id = gets_id[0][0]?.s_id;
-            //console.log(s_id);
 
             const hdata7 = {
               pid: getProject.pid,
@@ -3973,7 +3949,6 @@ router.post("/project/insert-project-suggest-team-member", async (req, res) => {
 
                 const [gets_id] = await pool.execute("CALL check_project_suggested_member(?,?)", [getProject.pid, t]);
                 const s_id = gets_id[0][0]?.s_id;
-                //console.log(s_id);
 
                 const hdata7 = {
                   pid: getProject.pid,
@@ -4020,7 +3995,6 @@ router.post("/project/insert-project-suggest-team-member", async (req, res) => {
 
                 const [gets_id] = await pool.execute("CALL check_project_suggested_member(?,?)", [getProject.pid, im]);
                 const s_id = gets_id[0][0]?.s_id;
-                //console.log(im_id);
 
                 const hdata11 = {
                   pid: getProject.pid,
@@ -4051,13 +4025,12 @@ router.post("/project/insert-project-suggest-team-member", async (req, res) => {
       message: "Member suggested successfully.",
     });
   } catch (error) {
-    console.error("Error", error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //request_as_member
-router.post("/project/insert-project-request-as-member", async (req, res) => {
+router.post("/project/insert-project-request-as-member", authMiddleware, async (req, res) => {
   try {
     let { pid } = req.body;
     let { user_id } = req.body;
@@ -4092,7 +4065,6 @@ router.post("/project/insert-project-request-as-member", async (req, res) => {
 
       const [getreq_id] = await pool.execute("CALL check_request_member(?,?)", [pid, user_id]);
       const req_id = getreq_id[0][0]?.req_id;
-      //console.log(im_id);
 
       const hdata11 = {
         pid: pid,
@@ -4118,13 +4090,12 @@ router.post("/project/insert-project-request-as-member", async (req, res) => {
       message: "Request Sent successfully.",
     });
   } catch (error) {
-    console.error("Error", error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
 
 //add_RequestedPMember
-router.patch("/project/add-requested-project-member/:user_id/:pid/:member", async (req, res) => {
+router.patch("/project/add-requested-project-member/:user_id/:pid/:member", authMiddleware, async (req, res) => {
   try {
     const user_id = req.params.user_id;
     const pid = req.params.pid;
@@ -4210,7 +4181,6 @@ router.patch("/project/add-requested-project-member/:user_id/:pid/:member", asyn
 
       const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [member, pdetail.pid]);
       const pm_id = getpm_id[0][0]?.pm_id;
-      //console.log(pm_id);
 
       const hdata5 = {
         pid: pdetail.pid,
@@ -4241,7 +4211,7 @@ router.patch("/project/add-requested-project-member/:user_id/:pid/:member", asyn
 });
 
 //getAccepted_PortTM_ProjectList
-router.get("/project/get-all-accepted-portfolio-team-member-project-list/:portfolio_id/:pid/:user_id", async (req, res) => {
+router.get("/project/get-all-accepted-portfolio-team-member-project-list/:portfolio_id/:pid/:user_id", authMiddleware, async (req, res) => {
   const { portfolio_id, pid, user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL getAccepted_PortTM(?)", [portfolio_id]);
@@ -4272,13 +4242,12 @@ router.get("/project/get-all-accepted-portfolio-team-member-project-list/:portfo
     const results = await Promise.all(promises);
     return res.status(200).json(results.filter(Boolean));
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Internal server error." });
   }
 });
 
 //getAccepted_GoalTM_ProjectList
-router.get("/project/get-all-accepted-goal-team-member-project-list/:portfolio_id/:pid/:gid/:user_id", async (req, res) => {
+router.get("/project/get-all-accepted-goal-team-member-project-list/:portfolio_id/:pid/:gid/:user_id", authMiddleware, async (req, res) => {
   const { portfolio_id, pid, gid, user_id } = req.params;
   try {
     const [rows] = await pool.execute("CALL GoalTeamMemberAccepted(?)", [gid]);
@@ -4300,18 +4269,25 @@ router.get("/project/get-all-accepted-goal-team-member-project-list/:portfolio_i
           };
         }
       }
+      if (getName[0][0].reg_id != check_pmem && getName[0][0].reg_id != user_id) {
+        const name = getName[0][0].first_name + " " + getName[0][0].last_name;
+        const id = getName[0][0].reg_id;
+        data = {
+          name,
+          id,
+        };
+      }
       return data;
     });
 
     const results = await Promise.all(promises);
     return res.status(200).json(results.filter(Boolean));
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Internal server error." });
   }
 });
 
-router.post("/project/insert-project-member", async (req, res) => {
+router.post("/project/insert-project-member", authMiddleware, async (req, res) => {
   try {
     const { pid, pcreated_by, team_member, imemail } = req.body;
 
@@ -4372,18 +4348,18 @@ router.post("/project/insert-project-member", async (req, res) => {
 
             const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [getProject.portfolio_id]);
             const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+            const userFName = `${user.first_name} ${user.last_name}`;
+            const pownerFName = `${powner.first_name} ${powner.last_name}`;
+            const get_pdes = getProject.pdes;
+            const short_pdes = get_pdes.substring(0, 100);
             const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
             const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
+            const position = "team member";
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: user.email_address,
               subject: "Project Request | Decision 168",
-              html: generateEmailTemplate(
-                `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
-          Just click the appropriate button below to join the Project or request more information.
-          Portfolio : ${PortfolioName}`,
-                `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-              ),
+              html: generateProjectRequestEmailTemplate(userFName, pownerFName, getProject.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
             };
 
             transporter.sendMail(mailOptions, (error) => {
@@ -4477,18 +4453,18 @@ router.post("/project/insert-project-member", async (req, res) => {
 
                 const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [getProject.portfolio_id]);
                 const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+                const userFName = `${user.first_name} ${user.last_name}`;
+                const pownerFName = `${powner.first_name} ${powner.last_name}`;
+                const get_pdes = getProject.pdes;
+                const short_pdes = get_pdes.substring(0, 100);
                 const acceptRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/1`;
                 const rejectRequest = `http://localhost:3000/project-request/${pid}/${pm_id}/2`;
+                const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
                   to: user.email_address,
                   subject: "Project Request | Decision 168",
-                  html: generateEmailTemplate(
-                    `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
-              Just click the appropriate button below to join the Project or request more information.
-              Portfolio : ${PortfolioName}`,
-                    `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-                  ),
+                  html: generateProjectRequestEmailTemplate(userFName, pownerFName, getProject.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
                 };
 
                 transporter.sendMail(mailOptions, (error) => {
@@ -4566,18 +4542,17 @@ router.post("/project/insert-project-member", async (req, res) => {
 
               const [getPortfolio] = await pool.execute("CALL getPortfolio2(?)", [getProject.portfolio_id]);
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
+              const pownerFName = `${powner.first_name} ${powner.last_name}`;
+              const get_pdes = getProject.pdes;
+              const short_pdes = get_pdes.substring(0, 100);
               const acceptRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/1`;
               const rejectRequest = `http://localhost:3000/project-invite-reject-request/${pid}/${im_id}/2`;
+              const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
                 to: im,
                 subject: "Project Request | Decision 168",
-                html: generateEmailTemplate(
-                  `Hello ${powner.first_name} ${powner.last_name} has requested you to join Project ${getProject.pname} as a team member.
-              Just click the appropriate button below to join the Project or request more information.
-              Portfolio : ${PortfolioName}`,
-                  `<a href="${acceptRequest}">Join Project</a> <a href="${rejectRequest}">Need More Info</a>`
-                ),
+                html: generateProjectInviteRequestEmailTemplate(pownerFName, getProject.pname, PortfolioName, short_pdes, acceptRequest, rejectRequest, position),
               };
 
               transporter.sendMail(mailOptions, (error) => {
@@ -4601,13 +4576,12 @@ router.post("/project/insert-project-member", async (req, res) => {
       message: "Project Member Added successfully.",
     });
   } catch (error) {
-    //console.log(error)
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
 
-//getGoalCreateDD
-router.get("/project/get-project-create-dd/:portfolio_id/:gid/:user_id", async (req, res) => {
+//get project Goal Create DD
+router.get("/project/get-project-create-dd/:portfolio_id/:gid/:user_id", authMiddleware, async (req, res) => {
   const { portfolio_id, gid, user_id } = req.params;
   try {
     let PortfolioResults = [];

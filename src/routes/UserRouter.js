@@ -4,7 +4,6 @@ const router = express.Router();
 const pool = require("../database/connection");
 const bcrypt = require("bcrypt");
 const { isEmail } = require("validator");
-const generateEmailTemplate = require("../utils/emailTemplate");
 const {
   generateVerificationToken,
   transporter,
@@ -12,6 +11,9 @@ const {
   dateConversion,
 } = require("../utils/common-functions");
 const generateToken = require("../utils/auth");
+const config = require("../../config");
+const generateAccountVerificationEmailTemplate = require("../utils/AccountVerificationEmailTemp");
+const generateForgotPasswordEmailTemplate = require("../utils/ForgotPasswordEmailTemp");
 
 //User Registration
 router.post("/user/register", async (req, res) => {
@@ -66,14 +68,15 @@ router.post("/user/register", async (req, res) => {
     const callProcedureSQL = `CALL InsertRegistration(?, ?)`;
     await pool.execute(callProcedureSQL, [paramNamesString, paramValuesString]);
 
-    const verificationLink = `http://localhost:5173/account-verification/${verificationToken}`;
+    const verificationLink = `${config.verificationLink}account-verification/${verificationToken}`;
+
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email_address,
-      subject: "Email Verification",
-      html: generateEmailTemplate(
-        `Hello ${full_name}! Your Decision168 account's verification link is provided below:`,
-        `Click <a href="${verificationLink}">here</a> to verify your email address.`
+      subject: "Account Verification | Decision 168",
+      html: generateAccountVerificationEmailTemplate(
+        full_name,
+        verificationLink
       ),
     };
 
@@ -163,24 +166,21 @@ router.post("/user/forgot-password", async (req, res) => {
     if (userFound) {
       const userId = rows[0][0]?.reg_id;
       const userName = rows[0][0]?.first_name;
-      const resetPasswordLink = `http://localhost:5173/change-password/${userId}`;
+      const resetPasswordLink = `${config.verificationLink}change-password/${userId}`;
       const mailOptions = {
         from: process.env.SMTP_USER,
         to: email_address,
-        subject: "Reset Password",
-        html: generateEmailTemplate(
-          `Hello ${userName}! Your Decision168 account's Reset Password link is provided below:`,
-          `Click <a href="${resetPasswordLink}">here</a> to Reset your password.`
-        ),
+        subject: "Reset Password | Decision 168",
+        html: generateForgotPasswordEmailTemplate(userName, resetPasswordLink),
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           res.status(500).json({ error: "Failed to send verification email." });
         } else {
-
           res.status(201).json({
-            message: "Reset Link has been sent to your Registered Email Address.",
+            message:
+              "Reset Link has been sent to your Registered Email Address.",
           });
         }
       });
