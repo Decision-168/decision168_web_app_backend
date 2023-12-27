@@ -4,7 +4,7 @@ require("dotenv").config();
 
 const config = {
   development: {
-    verificationLink: `http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com/`,
+    verificationLink: `https://prod.decision168.com/`,
   },
   local: {
     verificationLink: `http://localhost:5173/`,

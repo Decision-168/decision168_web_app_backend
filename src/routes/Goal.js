@@ -12,7 +12,7 @@ const authMiddleware = require("../middlewares/auth");
 const generateGoalRequestEmailTemplate = require("../utils/GoalRequestEmailTemp");
 const generateGoalInviteRequestEmailTemplate = require("../utils/GoalInviteRequestEmailTemp");
 const generateProjectRequestEmailTemplate = require("../utils/ProjectRequestEmailTemp");
-
+const config = require("../../config");
 // //GoalsList
 // router.get("/goal/get-goals-list/:user_id/:portfolio_id", authMiddleware , async (req, res) => {
 //   const user_id = req.params.user_id;
@@ -627,8 +627,8 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
         const userFName = `${user.first_name} ${user.last_name}`;
         const pownerFName = `${powner.first_name} ${powner.last_name}`;
         const short_gdes = get_gdes.substring(0, 100);
-        const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-        const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+        const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
         const position = "manager";
         const mailOptions = {
           from: process.env.SMTP_USER,
@@ -721,8 +721,8 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
           const userFName = `${user.first_name} ${user.last_name}`;
           const pownerFName = `${powner.first_name} ${powner.last_name}`;
           const short_gdes = get_gdes.substring(0, 100);
-          const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-          const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+          const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+          const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
           const position = "team member";
           const mailOptions = {
             from: process.env.SMTP_USER,
@@ -858,8 +858,8 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
                 const userFName = `${user.first_name} ${user.last_name}`;
                 const pownerFName = `${powner.first_name} ${powner.last_name}`;
                 const short_gdes = get_gdes.substring(0, 100);
-                const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-                const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+                const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+                const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
                 const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
@@ -975,8 +975,8 @@ router.post("/goal/insert-goal", authMiddleware, async (req, res) => {
               const PortfolioName = getPortfolio[0][0]?.portfolio_name;
               const pownerFName = `${powner.first_name} ${powner.last_name}`;
               const short_gdes = get_gdes.substring(0, 100);
-              const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
-              const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+              const acceptRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/1`;
+              const rejectRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/2`;
               const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
@@ -2410,8 +2410,8 @@ router.patch("/goal/update-goal", authMiddleware, async (req, res) => {
             const pownerFName = `${powner.first_name} ${powner.last_name}`;
             const get_gdes = gdetail.gdes;
             const short_gdes = get_gdes.substring(0, 100);
-            const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-            const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+            const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+            const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
             const position = "team member";
             const mailOptions = {
               from: process.env.SMTP_USER,
@@ -2587,8 +2587,8 @@ router.patch("/goal/update-goal", authMiddleware, async (req, res) => {
                 const pownerFName = `${powner.first_name} ${powner.last_name}`;
                 const get_gdes = gdetail.gdes;
                 const short_gdes = get_gdes.substring(0, 100);
-                const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-                const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+                const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+                const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
                 const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
@@ -2699,8 +2699,8 @@ router.patch("/goal/update-goal", authMiddleware, async (req, res) => {
               const pownerFName = `${powner.first_name} ${powner.last_name}`;
               const get_gdes = gdetail.gdes;
               const short_gdes = get_gdes.substring(0, 100);
-              const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
-              const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+              const acceptRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/1`;
+              const rejectRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/2`;
               const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
@@ -2906,8 +2906,8 @@ router.post("/goal/duplicate-goal", authMiddleware, async (req, res) => {
               const pownerFName = `${powner.first_name} ${powner.last_name}`;
               const get_gdes = getGoal.gdes;
               const short_gdes = get_gdes.substring(0, 100);
-              const acceptRequest = `http://localhost:3000/goal-request/${getGoal.gid}/${gmid}/1`;
-              const rejectRequest = `http://localhost:3000/goal-request/${getGoal.gid}/${gmid}/2`;
+              const acceptRequest = `${config.verificationLink}goal-request/${getGoal.gid}/${gmid}/1`;
+              const rejectRequest = `${config.verificationLink}goal-request/${getGoal.gid}/${gmid}/2`;
               const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
@@ -3130,8 +3130,8 @@ router.post("/goal/duplicate-goal", authMiddleware, async (req, res) => {
                   const pownerFName = `${powner.first_name} ${powner.last_name}`;
                   const get_pdes = getProject.pdes;
                   const short_pdes = get_pdes.substring(0, 100);
-                  const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
-                  const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
+                  const acceptRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/1`;
+                  const rejectRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/2`;
 
                   if (pm.pmember == sp.pmanager) {
                     const position = "manager";
@@ -4008,8 +4008,8 @@ router.post("/goal/insert-goal-member", authMiddleware, async (req, res) => {
             const get_gdes = gdetail.gdes;
             const short_gdes = get_gdes.substring(0, 100);
             const position = "team member";
-            const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-            const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+            const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+            const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
             const mailOptions = {
               from: process.env.SMTP_USER,
               to: user.email_address,
@@ -4148,8 +4148,8 @@ router.post("/goal/insert-goal-member", authMiddleware, async (req, res) => {
                 const pownerFName = `${powner.first_name} ${powner.last_name}`;
                 const get_gdes = gdetail.gdes;
                 const short_gdes = get_gdes.substring(0, 100);
-                const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-                const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+                const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+                const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
                 const position = "team member";
                 const mailOptions = {
                   from: process.env.SMTP_USER,
@@ -4266,8 +4266,8 @@ router.post("/goal/insert-goal-member", authMiddleware, async (req, res) => {
               const pownerFName = `${powner.first_name} ${powner.last_name}`;
               const get_gdes = gdetail.gdes;
               const short_gdes = get_gdes.substring(0, 100);
-              const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
-              const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+              const acceptRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/1`;
+              const rejectRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/2`;
               const position = "team member";
               const mailOptions = {
                 from: process.env.SMTP_USER,
@@ -5090,8 +5090,8 @@ router.patch(
         const pownerFName = `${powner.first_name} ${powner.last_name}`;
         const get_gdes = gdetail.gdes;
         const short_gdes = get_gdes.substring(0, 100);
-        const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-        const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+        const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
         const position = "team member";
         const mailOptions = {
           from: process.env.SMTP_USER,
@@ -5270,8 +5270,8 @@ router.patch(
         const pownerFName = `${powner.first_name} ${powner.last_name}`;
         const get_gdes = gdetail.gdes;
         const short_gdes = get_gdes.substring(0, 100);
-        const acceptRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/1`;
-        const rejectRequest = `http://localhost:3000/goal-request/${gid}/${gmid}/2`;
+        const acceptRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/1`;
+        const rejectRequest = `${config.verificationLink}goal-request/${gid}/${gmid}/2`;
         const position = "team member";
         const mailOptions = {
           from: process.env.SMTP_USER,
@@ -5417,8 +5417,8 @@ router.patch(
           const pownerFName = `${powner.first_name} ${powner.last_name}`;
           const get_gdes = gdetail.gdes;
           const short_gdes = get_gdes.substring(0, 100);
-          const acceptRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/1`;
-          const rejectRequest = `http://localhost:3000/goal-invite-reject-request/${gid}/${igm_id}/2`;
+          const acceptRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/1`;
+          const rejectRequest = `${config.verificationLink}goal-invite-reject-request/${gid}/${igm_id}/2`;
           const position = "team member";
           const mailOptions = {
             from: process.env.SMTP_USER,
@@ -5954,8 +5954,8 @@ router.post("/goal/duplicate-strategy", authMiddleware, async (req, res) => {
               const pownerFName = `${powner.first_name} ${powner.last_name}`;
               const get_pdes = getProject.pdes;
               const short_pdes = get_pdes.substring(0, 100);
-              const acceptRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/1`;
-              const rejectRequest = `http://localhost:3000/project-request/${getProject.pid}/${pm_id}/2`;
+              const acceptRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/1`;
+              const rejectRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/2`;
 
               if (pm.pmember == sp.pmanager) {
                 const position = "manager";

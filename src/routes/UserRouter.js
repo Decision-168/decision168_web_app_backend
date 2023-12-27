@@ -295,7 +295,7 @@ router.post("/user/register", async (req, res) => {
       ]);
     });
 
-    const verificationLink = `http://localhost:5173/account-verification/${verificationToken}`;
+    const verificationLink = `${config.verificationLink}account-verification/${verificationToken}`;
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email_address,
@@ -444,7 +444,6 @@ router.patch("/user/change-password/:id", async (req, res) => {
   }
 });
 
-
 //Auth User update Password inside the App
 router.patch("/user/update-password/:id", async (req, res) => {
   const { password } = req.body;
@@ -469,7 +468,5 @@ router.patch("/user/update-password/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 });
-
-
 
 module.exports = router;
