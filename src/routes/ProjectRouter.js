@@ -75,180 +75,203 @@ router.get("/project/get-project-list/:user_id/:portfolio_id", authMiddleware, a
 
         const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
 
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "created-project",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "created-project",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      if (acceptedListData) {
+        acceptedList_promises = acceptedListData.map(async (row) => {
+          let acceptedteamData = [];
+          let invitedteamData = [];
+          const [members] = await pool.execute("CALL ProjectTeamMember(?)", [
+            row.pid,
+          ]);
+          const membersData = members[0];
+          if (membersData) {
+            membersData.map((row1) => {
+              if (row1.status == "accepted") {
+                acceptedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+
+              if (row1.status == "send") {
+                invitedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+            });
+          }
+          let bell_icon = "no";
+          const [notify3] = await pool.execute(
+            "CALL check_notify_project_task(?,?)",
+            [row.pid, user_id]
+          );
+          const checkNotify3 = notify3[0][0];
+          if (checkNotify3) {
+            bell_icon = "yes";
+          }
+
+          if (row.gid == 0) {
+            project_type = 0;
+          } else {
+            project_type = 1;
+          }
+
+          const pdes =
+            row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
+
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "accepted-project",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      if (pendingListData) {
+        pendingList_promises = pendingListData.map(async (row) => {
+          let acceptedteamData = [];
+          let invitedteamData = [];
+          const [members] = await pool.execute("CALL ProjectTeamMember(?)", [
+            row.pid,
+          ]);
+          const membersData = members[0];
+          if (membersData) {
+            membersData.map((row1) => {
+              if (row1.status == "accepted") {
+                acceptedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+
+              if (row1.status == "send") {
+                invitedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+            });
+          }
+
+          let bell_icon = "no";
+
+          if (row.gid == 0) {
+            project_type = 0;
+          } else {
+            project_type = 1;
+          }
+
+          const pdes =
+            row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
+
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "pending-requests",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      if (readMoreListData) {
+        readMoreList_promises = readMoreListData.map(async (row) => {
+          let acceptedteamData = [];
+          let invitedteamData = [];
+          const [members] = await pool.execute("CALL ProjectTeamMember(?)", [
+            row.pid,
+          ]);
+          const membersData = members[0];
+          if (membersData) {
+            membersData.map((row1) => {
+              if (row1.status == "accepted") {
+                acceptedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+
+              if (row1.status == "send") {
+                invitedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+            });
+          }
+
+          let bell_icon = "no";
+
+          if (row.gid == 0) {
+            project_type = 0;
+          } else {
+            project_type = 1;
+          }
+
+          const pdes =
+            row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
+
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "more-info-requests",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      const [
+        regularListData_parent,
+        acceptedListData_parent,
+        pendingListData_parent,
+        readMoreListData_parent,
+      ] = await Promise.all([
+        Promise.all(regularList_promises),
+        Promise.all(acceptedList_promises),
+        Promise.all(pendingList_promises),
+        Promise.all(readMoreList_promises),
+      ]);
+
+      res.status(200).json({
+        projectRegularList: regularListData_parent.flat().filter(Boolean),
+        projectAcceptedList: acceptedListData_parent.flat().filter(Boolean),
+        projectPendingList: pendingListData_parent.flat().filter(Boolean),
+        projectReadMoreList: readMoreListData_parent.flat().filter(Boolean),
       });
     }
 
-    if (acceptedListData) {
-      acceptedList_promises = acceptedListData.map(async (row) => {
-        let acceptedteamData = [];
-        let invitedteamData = [];
-        const [members] = await pool.execute("CALL ProjectTeamMember(?)", [row.pid]);
-        const membersData = members[0];
-        if (membersData) {
-          membersData.map((row1) => {
-            if (row1.status == "accepted") {
-              acceptedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-
-            if (row1.status == "send") {
-              invitedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-          });
-        }
-        let bell_icon = "no";
-        const [notify3] = await pool.execute("CALL check_notify_project_task(?,?)", [row.pid, user_id]);
-        const checkNotify3 = notify3[0][0];
-        if (checkNotify3) {
-          bell_icon = "yes";
-        }
-
-        if (row.gid == 0) {
-          project_type = 0;
-        } else {
-          project_type = 1;
-        }
-
-        const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
-
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "accepted-project",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
-      });
-    }
-
-    if (pendingListData) {
-      pendingList_promises = pendingListData.map(async (row) => {
-        let acceptedteamData = [];
-        let invitedteamData = [];
-        const [members] = await pool.execute("CALL ProjectTeamMember(?)", [row.pid]);
-        const membersData = members[0];
-        if (membersData) {
-          membersData.map((row1) => {
-            if (row1.status == "accepted") {
-              acceptedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-
-            if (row1.status == "send") {
-              invitedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-          });
-        }
-
-        let bell_icon = "no";
-
-        if (row.gid == 0) {
-          project_type = 0;
-        } else {
-          project_type = 1;
-        }
-
-        const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
-
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "pending-requests",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
-      });
-    }
-
-    if (readMoreListData) {
-      readMoreList_promises = readMoreListData.map(async (row) => {
-        let acceptedteamData = [];
-        let invitedteamData = [];
-        const [members] = await pool.execute("CALL ProjectTeamMember(?)", [row.pid]);
-        const membersData = members[0];
-        if (membersData) {
-          membersData.map((row1) => {
-            if (row1.status == "accepted") {
-              acceptedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-
-            if (row1.status == "send") {
-              invitedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-          });
-        }
-
-        let bell_icon = "no";
-
-        if (row.gid == 0) {
-          project_type = 0;
-        } else {
-          project_type = 1;
-        }
-
-        const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
-
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "more-info-requests",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
-      });
-    }
-
-    const [regularListData_parent, acceptedListData_parent, pendingListData_parent, readMoreListData_parent] = await Promise.all([
-      Promise.all(regularList_promises),
-      Promise.all(acceptedList_promises),
-      Promise.all(pendingList_promises),
-      Promise.all(readMoreList_promises),
-    ]);
-
-    res.status(200).json({
-      projectRegularList: regularListData_parent.flat().filter(Boolean),
-      projectAcceptedList: acceptedListData_parent.flat().filter(Boolean),
-      projectPendingList: pendingListData_parent.flat().filter(Boolean),
-      projectReadMoreList: readMoreListData_parent.flat().filter(Boolean),
-    });
-  } catch (error) {
+   catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -320,180 +343,201 @@ router.get("/project/get-dashboard-project-list/:user_id/:portfolio_id", authMid
 
         const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
 
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "created-project",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "created-project",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      if (acceptedListData) {
+        acceptedList_promises = acceptedListData.map(async (row) => {
+          let acceptedteamData = [];
+          let invitedteamData = [];
+          const [members] = await pool.execute("CALL ProjectTeamMember(?)", [
+            row.pid,
+          ]);
+          const membersData = members[0];
+          if (membersData) {
+            membersData.map((row1) => {
+              if (row1.status == "accepted") {
+                acceptedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+
+              if (row1.status == "send") {
+                invitedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+            });
+          }
+          let bell_icon = "no";
+          const [notify3] = await pool.execute(
+            "CALL check_notify_project_task(?,?)",
+            [row.pid, user_id]
+          );
+          const checkNotify3 = notify3[0][0];
+          if (checkNotify3) {
+            bell_icon = "yes";
+          }
+
+          if (row.gid == 0) {
+            project_type = 0;
+          } else {
+            project_type = 1;
+          }
+
+          const pdes =
+            row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
+
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "accepted-project",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      if (pendingListData) {
+        pendingList_promises = pendingListData.map(async (row) => {
+          let acceptedteamData = [];
+          let invitedteamData = [];
+          const [members] = await pool.execute("CALL ProjectTeamMember(?)", [
+            row.pid,
+          ]);
+          const membersData = members[0];
+          if (membersData) {
+            membersData.map((row1) => {
+              if (row1.status == "accepted") {
+                acceptedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+
+              if (row1.status == "send") {
+                invitedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+            });
+          }
+
+          let bell_icon = "no";
+
+          if (row.gid == 0) {
+            project_type = 0;
+          } else {
+            project_type = 1;
+          }
+
+          const pdes =
+            row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
+
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "pending-requests",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      if (readMoreListData) {
+        readMoreList_promises = readMoreListData.map(async (row) => {
+          let acceptedteamData = [];
+          let invitedteamData = [];
+          const [members] = await pool.execute("CALL ProjectTeamMember(?)", [
+            row.pid,
+          ]);
+          const membersData = members[0];
+          if (membersData) {
+            membersData.map((row1) => {
+              if (row1.status == "accepted") {
+                acceptedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+
+              if (row1.status == "send") {
+                invitedteamData.push({
+                  [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
+                });
+              }
+            });
+          }
+
+          let bell_icon = "no";
+
+          if (row.gid == 0) {
+            project_type = 0;
+          } else {
+            project_type = 1;
+          }
+
+          const pdes =
+            row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
+
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "more-info-requests",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      const [
+        regularListData_parent,
+        acceptedListData_parent,
+        pendingListData_parent,
+        readMoreListData_parent,
+      ] = await Promise.all([
+        Promise.all(regularList_promises),
+        Promise.all(acceptedList_promises),
+        Promise.all(pendingList_promises),
+        Promise.all(readMoreList_promises),
+      ]);
+
+      res.status(200).json({
+        projectRegularList: regularListData_parent.flat().filter(Boolean),
+        projectAcceptedList: acceptedListData_parent.flat().filter(Boolean),
+        projectPendingList: pendingListData_parent.flat().filter(Boolean),
+        projectReadMoreList: readMoreListData_parent.flat().filter(Boolean),
       });
-    }
-
-    if (acceptedListData) {
-      acceptedList_promises = acceptedListData.map(async (row) => {
-        let acceptedteamData = [];
-        let invitedteamData = [];
-        const [members] = await pool.execute("CALL ProjectTeamMember(?)", [row.pid]);
-        const membersData = members[0];
-        if (membersData) {
-          membersData.map((row1) => {
-            if (row1.status == "accepted") {
-              acceptedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-
-            if (row1.status == "send") {
-              invitedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-          });
-        }
-        let bell_icon = "no";
-        const [notify3] = await pool.execute("CALL check_notify_project_task(?,?)", [row.pid, user_id]);
-        const checkNotify3 = notify3[0][0];
-        if (checkNotify3) {
-          bell_icon = "yes";
-        }
-
-        if (row.gid == 0) {
-          project_type = 0;
-        } else {
-          project_type = 1;
-        }
-
-        const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
-
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "accepted-project",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
-      });
-    }
-
-    if (pendingListData) {
-      pendingList_promises = pendingListData.map(async (row) => {
-        let acceptedteamData = [];
-        let invitedteamData = [];
-        const [members] = await pool.execute("CALL ProjectTeamMember(?)", [row.pid]);
-        const membersData = members[0];
-        if (membersData) {
-          membersData.map((row1) => {
-            if (row1.status == "accepted") {
-              acceptedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-
-            if (row1.status == "send") {
-              invitedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-          });
-        }
-
-        let bell_icon = "no";
-
-        if (row.gid == 0) {
-          project_type = 0;
-        } else {
-          project_type = 1;
-        }
-
-        const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
-
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "pending-requests",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
-      });
-    }
-
-    if (readMoreListData) {
-      readMoreList_promises = readMoreListData.map(async (row) => {
-        let acceptedteamData = [];
-        let invitedteamData = [];
-        const [members] = await pool.execute("CALL ProjectTeamMember(?)", [row.pid]);
-        const membersData = members[0];
-        if (membersData) {
-          membersData.map((row1) => {
-            if (row1.status == "accepted") {
-              acceptedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-
-            if (row1.status == "send") {
-              invitedteamData.push({
-                [row1.reg_id]: `${row1.first_name} ${row1.last_name}`,
-              });
-            }
-          });
-        }
-
-        let bell_icon = "no";
-
-        if (row.gid == 0) {
-          project_type = 0;
-        } else {
-          project_type = 1;
-        }
-
-        const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
-
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "more-info-requests",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
-      });
-    }
-
-    const [regularListData_parent, acceptedListData_parent, pendingListData_parent, readMoreListData_parent] = await Promise.all([
-      Promise.all(regularList_promises),
-      Promise.all(acceptedList_promises),
-      Promise.all(pendingList_promises),
-      Promise.all(readMoreList_promises),
-    ]);
-
-    res.status(200).json({
-      projectRegularList: regularListData_parent.flat().filter(Boolean),
-      projectAcceptedList: acceptedListData_parent.flat().filter(Boolean),
-      projectPendingList: pendingListData_parent.flat().filter(Boolean),
-      projectReadMoreList: readMoreListData_parent.flat().filter(Boolean),
-    });
-  } catch (error) {
+    } catch (error) {
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -554,27 +598,33 @@ router.get("/project/get-portfolio-projects-list/:user_id/:portfolio_id", authMi
 
         const pdes = row.pdes.length > 50 ? `${row.pdes.substring(0, 50)}...` : row.pdes;
 
-        return {
-          project: {
-            id: row.pid,
-            name: row.pname,
-            description: pdes,
-          },
-          acceptedTeam: acceptedteamData,
-          invitedTeam: invitedteamData,
-          type: "created-project",
-          projectType: project_type,
-          bellIcon: bell_icon,
-        };
+          return {
+            project: {
+              id: row.pid,
+              name: row.pname,
+              description: pdes,
+            },
+            acceptedTeam: acceptedteamData,
+            invitedTeam: invitedteamData,
+            type: "created-project",
+            projectType: project_type,
+            bellIcon: bell_icon,
+            portfolio_id: row.portfolio_id
+          };
+        });
+      }
+
+      const [regularListData_parent] = await Promise.all([
+        Promise.all(regularList_promises),
+      ]);
+
+      res.status(200).json({
+        projectRegularList: regularListData_parent.flat().filter(Boolean),
       });
     }
 
-    const [regularListData_parent] = await Promise.all([Promise.all(regularList_promises)]);
-
-    res.status(200).json({
-      projectRegularList: regularListData_parent.flat().filter(Boolean),
-    });
-  } catch (error) {
+  
+  catch (error) {
     console.log(error);
     console.error("Error executing stored procedure:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -594,7 +644,7 @@ router.get("/project/get-project-member-data/:pid/:user_id", authMiddleware, asy
 });
 
 //project-request
-router.patch("/project-request/:pid/:pm_id/:flag", authMiddleware, async (req, res) => {
+router.get("/project-request/:pid/:pm_id/:flag",authMiddleware, async (req, res) => {
   const { pid, pm_id, flag } = req.params;
   try {
     const formattedDate = dateConversion();
@@ -1033,42 +1083,6 @@ router.get("/project/mention-list/:pid", authMiddleware, async (req, res) => {
   }
 });
 
-//AcceptedProjectListByPortfolioRegular
-router.get("/project/get-accepted-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
-  const user_id = req.params.user_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows] = await pool.execute("CALL AcceptedProjectListByPortfolioRegular(?,?)", [portfolio_id, user_id]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//PendingProjectListByPortfolioRegular
-router.get("/project/get-pending-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
-  const user_id = req.params.user_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows] = await pool.execute("CALL PendingProjectListByPortfolioRegular(?,?)", [portfolio_id, user_id]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-//ReadMoreProjectListByPortfolioRegular
-router.get("/project/get-readmore-project-list/:user_id/:portfolio_id", authMiddleware, async (req, res) => {
-  const user_id = req.params.user_id;
-  const portfolio_id = req.params.portfolio_id;
-  try {
-    const [rows] = await pool.execute("CALL ReadMoreProjectListByPortfolioRegular(?,?)", [portfolio_id, user_id]);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
 //ProjectTeamMember
 router.get("/project/project-team-members/:pid", authMiddleware, async (req, res) => {
   const pid = req.params.pid;
@@ -1098,6 +1112,109 @@ router.get("/project/project-detail/:user_id/:pid", authMiddleware, async (req, 
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+//Project Notifications
+router.get(
+  "/project/project-notifications/:pid/:user_id",
+  async (req, res) => {
+    const { pid, user_id } = req.params;
+    try {
+      const [pFile_row] = await pool.execute("CALL ProjectFile(?)", [pid]);
+      const pfileData = pFile_row[0];
+      pfileData?.map(async (row) => {
+        const fileId = row.pfile_id;
+        let pFilesNotifyArr = row.pfnotify.split(",");
+        const user_index = pFilesNotifyArr.indexOf(user_id);
+        if (user_index !== -1) {
+          pFilesNotifyArr.splice(user_index, 1);
+        }
+        const finalMem = pFilesNotifyArr.join(",");
+        const otherFields = {
+          pfnotify: finalMem,
+          pfnotify_clear: finalMem,
+        };
+        const formattedParams = convertObjectToProcedureParams(otherFields);
+        const storedProcedure = `CALL UpdateProjectFiles('${formattedParams}', 'pfile_id = ${fileId}')`;
+        await pool.execute(storedProcedure);
+      });
+
+      const [pMember_row] = await pool.execute("CALL ProjectTeamMember(?)", [
+        pid,
+      ]);
+      const pMemberData = pMember_row[0];
+      pMemberData?.map(async (row) => {
+        const pmId = row.pm_id;
+        const [pNotify_row] = await pool.execute(
+          "CALL get_project_accepted_notification(?,?)",
+          [user_id, pmId]
+        );
+        const pNotifyData = pNotify_row[0];
+        pNotifyData?.map(async (row2) => {
+          const pmId2 = row2.pm_id;
+          const updateFieldsValues = `status_notify = 'seen'`;
+          const upid = `pm_id  = '${pmId2}'`;
+          await pool.execute("CALL UpdateProjectMembers(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
+        });
+      });
+
+      const [pIMember_row] = await pool.execute("CALL InvitedProjectMember(?)", [
+        pid,
+      ]);
+      const pIMemberData = pIMember_row[0];
+      pIMemberData?.map(async (row) => {
+        if(row.status == "accepted" && row.status_notify == "yes")
+        {
+          const imId = row.im_id;
+          const updateFieldsValues = `status_notify = 'seen'`;
+          const upid = `im_id  = '${imId}'`;
+          await pool.execute("CALL UpdateProjectInvitedMembers(?, ?)", [
+            updateFieldsValues,
+            upid,
+          ]);
+        }
+      });
+
+      const [pMembership_row] = await pool.execute("CALL check_project_membership_notify(?,?)",[user_id, pid]);
+      const pMembershipData = pMembership_row[0];
+      pMembershipData?.map(async (row) => {
+        const reqId = row.req_id;
+        const otherFields = {
+          mreq_notify: "seen",
+          mreq_notify_clear: "yes",
+        };
+        const formattedParams = convertObjectToProcedureParams(otherFields);
+        const storedProcedure = `CALL UpdateProjectRequestMember('${formattedParams}', 'req_id  = ${reqId}')`;
+        await pool.execute(storedProcedure);
+      })
+
+      const [pComment_row] = await pool.execute("CALL getProjectComments(?)", [pid]);
+      const pCommentData = pComment_row[0];
+      pCommentData?.map(async (row) => {
+        const commentId = row.cid;
+        let pCommentNotifyArr = row.c_notify.split(",");
+        const user_index = pCommentNotifyArr.indexOf(user_id);
+        if (user_index !== -1) {
+          pCommentNotifyArr.splice(user_index, 1);
+        }
+        const finalMem = pCommentNotifyArr.join(",");
+        const otherFields = {
+          c_notify: finalMem,
+          c_notify_clear: finalMem,
+        };
+        const formattedParams = convertObjectToProcedureParams(otherFields);
+        const storedProcedure = `CALL UpdateComments('${formattedParams}', 'cid = ${commentId}')`;
+        await pool.execute(storedProcedure);
+      });
+      res.status(200).json({ message: "Updated successfully" });
+    } catch (error) {
+      console.error("Error executing stored procedure:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
 
 //edit_project_files_notify
 router.patch("/project/edit-project-files-notify/:pfile_id", authMiddleware, async (req, res) => {

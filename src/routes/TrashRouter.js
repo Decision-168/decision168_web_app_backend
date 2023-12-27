@@ -3741,4 +3741,236 @@ router.patch(
   }
 );
 
+// Delete All Trash after 30 days
+router.get("/trash/delete-all", async (req, res) => {
+  try {
+    const currentDate = moment().format("YYYY-MM-DD");
+    const [portfolio_row] = await pool.execute("CALL get_portfolio_trash_date(?)", [currentDate]);
+    const [goal_row] = await pool.execute("CALL get_goal_trash_date(?)", [currentDate]);
+    const [strategy_row] = await pool.execute("CALL get_strategies_trash_date(?)", [currentDate]);
+    const [project_row] = await pool.execute("CALL get_project_trash_date(?)", [currentDate]);
+    const [task_row] = await pool.execute("CALL get_task_trash_date(?)", [currentDate]);
+    const [subtask_row] = await pool.execute("CALL get_subtask_trash_date(?)", [currentDate]);
+    const [projectFile_row] = await pool.execute("CALL get_pfile_trash(?)", [currentDate]);
+    const [taskFile_row] = await pool.execute("CALL get_tfile_trash(?)", [currentDate]);
+    const [subtaskFile_row] = await pool.execute("CALL get_stfile_trash(?)", [currentDate]);
+
+    const portfolio_trash = portfolio_row[0];
+    const goal_trash = goal_row[0];
+    const strategy_trash = strategy_row[0];
+    const project_trash = project_row[0];
+    const task_trash = task_row[0];
+    const subtask_trash = subtask_row[0];
+    const projectFile_trash = projectFile_row[0];
+    const taskFile_trash = taskFile_row[0];
+    const subtaskFile_trash = subtaskFile_row[0];
+
+    portfolio_trash?.map(async (pf) => {
+      const portfolioId = pf.portfolio_id; 
+      const [rows1] = await pool.execute("CALL portfolio_goalsTrash(?)", [portfolioId]);
+      const [rows2] = await pool.execute("CALL portfolio_strategiesTrash(?)", [portfolioId]);
+      const [rows3] = await pool.execute("CALL get_PortfolioAllDepartment(?)", [portfolioId]);
+      const [rows4] = await pool.execute("CALL portfolio_projectsTrash(?)", [portfolioId]);
+      const [rows5] = await pool.execute("CALL getPortfolioAllTaskTrash(?)", [portfolioId]);
+      const [rows6] = await pool.execute("CALL getPortfolioAllSubtaskTrash(?)", [portfolioId]);
+      if(rows1[0]){
+        await pool.execute("CALL DeleteGoals(?)", [`portfolio_id = '${portfolioId}'`]);
+      }
+      if(rows2[0]){
+        await pool.execute("CALL DeleteStrategies(?)", [`portfolio_id = '${portfolioId}'`]);
+      }
+      if(rows3[0]){
+        await pool.execute("CALL DeleteProjectPortfolioDepartment(?)", [`portfolio_id = '${portfolioId}'`]);
+      }
+      if(rows4[0]){
+        const projectTrash = rows4[0];
+        projectTrash?.map(async (row) => {
+          const projectId = row.pid;
+          await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${projectId}'`]);
+        })
+        await pool.execute("CALL DeleteProject(?)", [`portfolio_id = '${portfolioId}'`]);
+      }
+      if(rows5[0]){
+        const taskTrash = rows5[0];
+        taskTrash?.map(async (row) => {
+          const taskId = row.tid;
+          await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${taskId}'`]);
+        })
+        await pool.execute("CALL DeleteTask(?)", [`portfolio_id = '${portfolioId}'`]);
+      }
+      if(rows6[0]){
+        const subtaskTrash = rows6[0];
+        subtaskTrash?.map(async (row) => {
+          const subtaskId = row.stid;
+          await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${subtaskId}'`]);
+        })
+        await pool.execute("CALL DeleteSubtask(?)", [`portfolio_id = '${portfolioId}'`]);
+      }
+      await pool.execute("CALL DeleteProjectPortfolioMember(?)", [`portfolio_id = '${portfolioId}'`]);
+      await pool.execute("CALL DeleteProjectPortfolio(?)", [`portfolio_id = '${portfolioId}'`]);
+    });
+
+    goal_trash?.map(async (gl) => {
+      const goalId = gl.gid; 
+      const [rows1] = await pool.execute("CALL GoalsAllStrategiesList_to_delete(?)", [goalId]);
+      if(rows1[0]){
+        const strategyTrash = rows1[0];
+        strategyTrash?.map(async (row) => {
+          const strategyId = row.sid;
+          const [rows1] = await pool.execute("CALL StrategyAllProjectsList_to_delete(?)", [strategyId]);
+          if(rows1[0]){
+            const projectTrash = rows1[0];
+            projectTrash?.map(async (row) => {
+              const projectId = row.pid;
+              await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${projectId}'`]);
+              await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${projectId}'`]);
+
+              const [row1] = await pool.execute("CALL getProjectAllTaskTrash(?)", [projectId]);
+              if(row1[0]){
+                const taskTrash = row1[0];
+                taskTrash?.map(async (item) => {
+                  const taskId = item.tid;
+                  await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${taskId}'`]);
+                })
+                await pool.execute("CALL DeleteTask(?)", [`tproject_assign = '${projectId}'`]);
+              }
+              const [row2] = await pool.execute("CALL getProjectAllSubtaskTrash(?)", [projectId]);
+              if(row2[0]){
+                const subtaskTrash = row2[0];
+                subtaskTrash?.map(async (item) => {
+                  const subtaskId = item.stid;
+                  await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${subtaskId}'`]);
+                })
+                await pool.execute("CALL DeleteSubtask(?)", [`stproject_assign = '${projectId}'`]);
+              }
+              await pool.execute("CALL DeleteProject(?)", [`pid = '${projectId}'`]);
+            })
+          }
+          await pool.execute("CALL DeleteStrategies(?)", [`sid = '${strategyId}'`]);
+        })
+      }
+      await pool.execute("CALL DeleteGoals(?)", [`gid = '${goalId}'`]);
+    });
+
+    strategy_trash?.map(async (kpi) => {
+      const strategyId = kpi.sid;
+      const [rows1] = await pool.execute("CALL StrategyAllProjectsList_to_delete(?)", [strategyId]);
+      if(rows1[0]){
+        const projectTrash = rows1[0];
+        projectTrash?.map(async (row) => {
+          const projectId = row.pid;
+          await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${projectId}'`]);
+          await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${projectId}'`]);
+
+          const [row1] = await pool.execute("CALL getProjectAllTaskTrash(?)", [projectId]);
+          if(row1[0]){
+            const taskTrash = row1[0];
+            taskTrash?.map(async (item) => {
+              const taskId = item.tid;
+              await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${taskId}'`]);
+            })
+            await pool.execute("CALL DeleteTask(?)", [`tproject_assign = '${projectId}'`]);
+          }
+          const [row2] = await pool.execute("CALL getProjectAllSubtaskTrash(?)", [projectId]);
+          if(row2[0]){
+            const subtaskTrash = row2[0];
+            subtaskTrash?.map(async (item) => {
+              const subtaskId = item.stid;
+              await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${subtaskId}'`]);
+            })
+            await pool.execute("CALL DeleteSubtask(?)", [`stproject_assign = '${projectId}'`]);
+          }
+          await pool.execute("CALL DeleteProject(?)", [`pid = '${projectId}'`]);
+        })
+      }
+      await pool.execute("CALL DeleteStrategies(?)", [`sid = '${strategyId}'`]);
+    })
+
+    project_trash?.map(async (pj) => {
+      const projectId = pj.pid;
+      await pool.execute("CALL DeleteProjectFiles(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectInvitedMembers(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectManagement(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectManagementFields(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectMembers(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectSuggestedMembers(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectHistory(?)", [`pid = '${projectId}'`]);
+      await pool.execute("CALL DeleteProjectRequestMember(?)", [`pid = '${projectId}'`]);
+
+      const [row1] = await pool.execute("CALL getProjectAllTaskTrash(?)", [projectId]);
+      if(row1[0]){
+        const taskTrash = row1[0];
+        taskTrash?.map(async (item) => {
+          const taskId = item.tid;
+          await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${taskId}'`]);
+        })
+        await pool.execute("CALL DeleteTask(?)", [`tproject_assign = '${projectId}'`]);
+      }
+      const [row2] = await pool.execute("CALL getProjectAllSubtaskTrash(?)", [projectId]);
+      if(row2[0]){
+        const subtaskTrash = row2[0];
+        subtaskTrash?.map(async (item) => {
+          const subtaskId = item.stid;
+          await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${subtaskId}'`]);
+        })
+        await pool.execute("CALL DeleteSubtask(?)", [`stproject_assign = '${projectId}'`]);
+      }
+      await pool.execute("CALL DeleteProject(?)", [`pid = '${projectId}'`]);
+    })
+
+    task_trash?.map(async (tk) => {
+      const taskId = tk.tid;
+      await pool.execute("CALL DeleteSubtask(?)", [`tid = '${taskId}'`]);
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [`tid = '${taskId}'`]);
+      await pool.execute("CALL DeleteTaskTrash(?)", [`tid = '${taskId}'`]);
+      await pool.execute("CALL DeleteTask(?)", [`tid = '${taskId}'`]);
+    })
+
+    subtask_trash?.map(async (stk) => {
+      const subtaskId = stk.stid;
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [`stid = '${subtaskId}'`]);
+      await pool.execute("CALL DeleteSubtask(?)", [`stid = '${subtaskId}'`]);
+    })
+
+    projectFile_trash?.map(async (pft) => {
+      const pfileId = pft.pfile_id;
+      await pool.execute("CALL DeleteProjectFiles(?)", [`pfile_id = '${pfileId}'`]);
+    })
+
+    taskFile_trash?.map(async (tft) => {
+      const trashId = tft.trash_id;
+      await pool.execute("CALL DeleteTaskTrash(?)", [`trash_id = '${trashId}'`]);
+    })
+
+    subtaskFile_trash?.map(async (stft) => {
+      const strashId = stft.strash_id;
+      await pool.execute("CALL DeleteSubtaskTrash(?)", [`strash_id = '${strashId}'`]);
+    })
+
+    return res.status(200).json({ message: "Deleted permanently" });
+  } catch (error) {
+    console.error("Error executing stored procedure:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
