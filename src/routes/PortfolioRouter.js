@@ -822,7 +822,7 @@ router.get("/portfolio-invite-request/:portfolio_id/:pim_id/:flag", authMiddlewa
           } else {
             res.status(400).json({ user_status: "not_registered" });
           }
-        } else if (status === "accepted") {
+        } else if (status == "accepted") {
           res.status(400).json({ user_status: "already_accepted" });
         } else {
           res.status(400).json({ user_status: status });
@@ -840,7 +840,7 @@ router.get("/portfolio-invite-request/:portfolio_id/:pim_id/:flag", authMiddlewa
           const id = `pim_id  = '${pim_id}'`;
           await pool.execute("CALL UpdateProjectPortfolioMember(?, ?)", [dynamicFieldsValues, id]);
           res.status(200).json({ user_status: "rejected_request" });
-        } else if (status === "rejected") {
+        } else if (status == "rejected") {
           res.status(400).json({ user_status: "already_rejected" });
         } else {
           // console.log("status 850",status)  //To Do we have to check this condition  while user tries to reject the request aftert accepting
