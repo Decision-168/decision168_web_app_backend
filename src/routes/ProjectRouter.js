@@ -786,8 +786,10 @@ router.get(
             ]);
 
             res.status(200).json({ user_status: "accepted" });
+          } else if (status === "accepted") {
+            res.status(200).json({ user_status: "already_accepted" });
           } else {
-            res.status(400).json({ user_status: status });
+            res.status(200).json({ user_status: status });
           }
         } else {
           res.status(400).json({ user_status: "pages-404" });
@@ -833,8 +835,10 @@ router.get(
             ]);
 
             res.status(200).json({ user_status: "read_more" });
+          } else if (status === "read_more") {
+            res.status(200).json({ user_status: "already_read_more" });
           } else {
-            res.status(400).json({ user_status: status });
+            res.status(200).json({ user_status: status });
           }
         } else {
           res.status(400).json({ user_status: "pages-404" });
@@ -2647,7 +2651,9 @@ router.get(
     const { pid, im_id, flag } = req.params;
     try {
       const formattedDate = dateConversion();
-
+      if (flag == 1) {
+        res.status(200).json({ user_status: "registration" });
+      }
       if (flag == 2) {
         const [result] = await pool.execute("CALL check_ProIPMToClear(?)", [
           im_id,
@@ -2684,8 +2690,10 @@ router.get(
             ]);
 
             res.status(200).json({ user_status: "rejected" });
+          } else if (status === "rejected") {
+            res.status(200).json({ user_status: "already_rejected" });
           } else {
-            res.status(400).json({ user_status: status });
+            res.status(200).json({ user_status: status });
           }
         } else {
           res.status(400).json({ user_status: "pages-404" });

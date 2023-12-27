@@ -4911,7 +4911,6 @@ router.patch(
       }
     } catch (error) {
       res.status(500).json({ error: "Internal Server Error" });
-      copy_detailDuplicate;
     }
   }
 );
