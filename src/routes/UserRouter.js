@@ -14,6 +14,34 @@ const generateToken = require("../utils/auth");
 const config = require("../../config");
 const generateAccountVerificationEmailTemplate = require("../utils/AccountVerificationEmailTemp");
 const generateForgotPasswordEmailTemplate = require("../utils/ForgotPasswordEmailTemp");
+const { default: axios } = require("axios");
+const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
+
+//verify recaptcha
+router.post("/user/verify-recaptcha", async (req, res) => {
+  const { recaptchaToken } = req.body;
+  try {
+    const response = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: recaptchaSecretKey,
+          response: recaptchaToken,
+        },
+      }
+    );
+    if (response.data.success === true) {
+      res.status(200).json({ success: true });
+    } else {
+      res.status(200).json({ success: false });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+});
 
 //User Registration
 router.post("/user/register", async (req, res) => {

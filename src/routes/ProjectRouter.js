@@ -2224,95 +2224,97 @@ router.post("/project/insert-project", authMiddleware, async (req, res) => {
     }
 
     //insert project manager
-    if (getProject.pmanager != pcreated_by) {
-      const data4 = {
-        pid: getProject.pid,
-        portfolio_id: getProject.portfolio_id,
-        pmember: getProject.pmanager,
-        status: "send",
-        pcreated_by: pcreated_by,
-        sent_date: formattedDate,
-        sent_notify_clear: "no",
-      };
+    if (getProject.pmanager != 0) {
+      if (getProject.pmanager != pcreated_by) {
+        const data4 = {
+          pid: getProject.pid,
+          portfolio_id: getProject.portfolio_id,
+          pmember: getProject.pmanager,
+          status: "send",
+          pcreated_by: pcreated_by,
+          sent_date: formattedDate,
+          sent_notify_clear: "no",
+        };
 
-      const paramNamesString4 = Object.keys(data4).join(", ");
-      const paramValuesString4 = Object.values(data4)
-        .map((value) => `'${value}'`)
-        .join(", ");
+        const paramNamesString4 = Object.keys(data4).join(", ");
+        const paramValuesString4 = Object.values(data4)
+          .map((value) => `'${value}'`)
+          .join(", ");
 
-      const callProcedureSQL4 = `CALL InsertProjectMembers(?, ?)`;
-      await pool.execute(callProcedureSQL4, [
-        paramNamesString4,
-        paramValuesString4,
-      ]);
+        const callProcedureSQL4 = `CALL InsertProjectMembers(?, ?)`;
+        await pool.execute(callProcedureSQL4, [
+          paramNamesString4,
+          paramValuesString4,
+        ]);
 
-      const [check_user] = await pool.execute("CALL getStudentById(?)", [
-        getProject.pmanager,
-      ]);
-      const user = check_user[0][0];
+        const [check_user] = await pool.execute("CALL getStudentById(?)", [
+          getProject.pmanager,
+        ]);
+        const user = check_user[0][0];
 
-      const [getpm_id] = await pool.execute("CALL check_ProjectMToClear(?,?)", [
-        getProject.pmanager,
-        getProject.pid,
-      ]);
-      const pm_id = getpm_id[0][0]?.pm_id;
+        const [getpm_id] = await pool.execute(
+          "CALL check_ProjectMToClear(?,?)",
+          [getProject.pmanager, getProject.pid]
+        );
+        const pm_id = getpm_id[0][0]?.pm_id;
 
-      const hdata5 = {
-        pid: getProject.pid,
-        sid: getProject.sid,
-        gid: getProject.gid,
-        h_date: formattedDate,
-        h_resource_id: powner.reg_id,
-        h_resource: `${powner.first_name} ${powner.last_name}`,
-        h_description: `${powner.first_name} ${powner.last_name} sent team member request to ${user.first_name} ${user.last_name}`,
-        pmember_id: pm_id,
-      };
+        const hdata5 = {
+          pid: getProject.pid,
+          sid: getProject.sid,
+          gid: getProject.gid,
+          h_date: formattedDate,
+          h_resource_id: powner.reg_id,
+          h_resource: `${powner.first_name} ${powner.last_name}`,
+          h_description: `${powner.first_name} ${powner.last_name} sent team member request to ${user.first_name} ${user.last_name}`,
+          pmember_id: pm_id,
+        };
 
-      const paramNamesString5 = Object.keys(hdata5).join(", ");
-      const paramValuesString5 = Object.values(hdata5)
-        .map((value) => `'${value}'`)
-        .join(", ");
+        const paramNamesString5 = Object.keys(hdata5).join(", ");
+        const paramValuesString5 = Object.values(hdata5)
+          .map((value) => `'${value}'`)
+          .join(", ");
 
-      const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
-      await pool.execute(callProcedureSQL5, [
-        paramNamesString5,
-        paramValuesString5,
-      ]);
+        const callProcedureSQL5 = `CALL InsertProjectHistory(?, ?)`;
+        await pool.execute(callProcedureSQL5, [
+          paramNamesString5,
+          paramValuesString5,
+        ]);
 
-      const userFName = `${user.first_name} ${user.last_name}`;
-      const pownerFName = `${powner.first_name} ${powner.last_name}`;
-      const get_pdes = getProject.pdes;
-      const short_pdes = get_pdes.substring(0, 100);
-      const acceptRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/1`;
-      const rejectRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/2`;
-      const position = "manager";
-      const mailOptions2 = {
-        from: process.env.SMTP_USER,
-        to: user.email_address,
-        subject: "Project Request | Decision 168",
-        html: generateProjectRequestEmailTemplate(
-          userFName,
-          pownerFName,
-          pname,
-          PortfolioName,
-          short_pdes,
-          acceptRequest,
-          rejectRequest,
-          position
-        ),
-      };
+        const userFName = `${user.first_name} ${user.last_name}`;
+        const pownerFName = `${powner.first_name} ${powner.last_name}`;
+        const get_pdes = getProject.pdes;
+        const short_pdes = get_pdes.substring(0, 100);
+        const acceptRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/1`;
+        const rejectRequest = `${config.verificationLink}project-request/${getProject.pid}/${pm_id}/2`;
+        const position = "manager";
+        const mailOptions2 = {
+          from: process.env.SMTP_USER,
+          to: user.email_address,
+          subject: "Project Request | Decision 168",
+          html: generateProjectRequestEmailTemplate(
+            userFName,
+            pownerFName,
+            pname,
+            PortfolioName,
+            short_pdes,
+            acceptRequest,
+            rejectRequest,
+            position
+          ),
+        };
 
-      transporter.sendMail(mailOptions2, (error) => {
-        if (error) {
-          res.status(500).json({
-            error: "Failed to send portfolio invitation email.",
-          });
-        } else {
-          res.status(201).json({
-            message: "Project invitation sent to your email.",
-          });
-        }
-      });
+        transporter.sendMail(mailOptions2, (error) => {
+          if (error) {
+            res.status(500).json({
+              error: "Failed to send portfolio invitation email.",
+            });
+          } else {
+            res.status(201).json({
+              message: "Project invitation sent to your email.",
+            });
+          }
+        });
+      }
     }
 
     //insert team member
