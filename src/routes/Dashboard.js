@@ -22,10 +22,31 @@ router.get("/user/get-user/:reg_id", authMiddleware, async (req, res) => {
 router.get("/user/get-package/:pack_id", authMiddleware, async (req, res) => {
   const { pack_id } = req.params;
   try {
-    const [rows, fields] = await pool.execute("CALL getPackDetail(?)", [
-      pack_id,
-    ]);
-    res.status(200).json(rows[0][0]);
+    const [rows] = await pool.execute("CALL getPackDetail(?)", [pack_id]);
+    const pack = rows[0][0];
+    let validity;
+    if (!isNaN(pack?.pack_validity)) {
+      if (pack?.pack_validity == "30") {
+        validity = "monthly";
+      } else if (pack?.pack_validity == "90") {
+        validity = "3 Months";
+      } else if (pack?.pack_validity == "180") {
+        validity = "6 Months";
+      } else if (pack?.pack_validity == "270") {
+        validity = "9 Months";
+      } else if (pack?.pack_validity == "365") {
+        validity = "yearly";
+      } else {
+        validity = `${pack?.pack_validity} Days`;
+      }
+    } else {
+      validity = pack?.pack_validity;
+    }
+    const data = {
+      ...rows[0][0],
+      validity,
+    };
+    res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
