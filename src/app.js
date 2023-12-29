@@ -22,6 +22,17 @@ app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
+
+// Enable CORS with specific options
+app.use(
+  cors({
+    origin: "http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
+
 app.use(cors());
 app.use(User);
 app.use(Dashboard);
