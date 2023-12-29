@@ -34,4 +34,17 @@ app.use(Tasks);
 app.use(Project);
 app.use(UpgradePlan);
 
+// Static API endpoint for /api/users
+app.get("/api/users", (req, res) => {
+  // Static user data (replace this with your actual data)
+  const users = [
+    { id: 1, name: "John Doe", email: "john.doe@example.com" },
+    { id: 2, name: "Jane Doe", email: "jane.doe@example.com" },
+    // Add more users as needed
+  ];
+
+  // Send the static user data as JSON
+  res.json(users);
+});
+
 app.listen(PORT, () => console.log(`Server Started at PORT:${PORT}`));
