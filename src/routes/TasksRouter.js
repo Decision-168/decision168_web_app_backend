@@ -6,6 +6,7 @@ const { dateConversion, transporter } = require("../utils/common-functions");
 const authMiddleware = require("../middlewares/auth");
 const generateProjectRequestEmailTemplate = require("../utils/ProjectRequestEmailTemp");
 const config = require("../../config");
+
 //Dashboard (Grid view) All tasks
 router.get("/task/all-tasks-subtasks-grid-view/:reg_id", authMiddleware, async (req, res) => {
   const { reg_id } = req.params;
@@ -1328,7 +1329,7 @@ router.patch("/task/change-status/:user_id", authMiddleware, async (req, res) =>
 
     const [getMydetail] = await pool.execute("CALL getStudentById(?)", [tassignee]);
     const student = getMydetail[0][0];
-
+    let updatedStatus;
     let status = "";
     if (status_but == "to_do" || status_but == "in_progress") {
       (status_but == "to_do" && (status = "To Do")) || (status_but == "in_progress" && (status = "In Progress"));
@@ -1358,9 +1359,7 @@ router.patch("/task/change-status/:user_id", authMiddleware, async (req, res) =>
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
         await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
       }
-      return res.status(200).json({
-        message: "Status Changed Successfully.",
-      });
+      return res.status(200).json({ updatedStatus: status_but, message: "Status Changed Successfully." });
     } else if (status_but == "in_review" || status_but == "done") {
       const [check_st] = await pool.execute("CALL subtask_progress_total(?)", [tid]);
       const [check_stdone] = await pool.execute("CALL subtask_progress_done(?)", [tid]);
@@ -1392,7 +1391,13 @@ router.patch("/task/change-status/:user_id", authMiddleware, async (req, res) =>
             portfolio_owner_id = check_Portfolio_owner_id[0][0]?.portfolio_createdby;
           }
 
+          // console.log("project_createdby:", project_createdby);
+          // console.log("project_manager:", project_manager);
+          // console.log("portfolio_owner_id:", portfolio_owner_id);
+          // console.log("user_id:", user_id);
+
           if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
+            updatedStatus = "in_review";
             const statusFieldsValues = `tstatus = 'in_review', review = 'sent', review_clear = 'no', review_notify= 'sent_yes', po_review_clear = 'no', po_review_notify = 'sent_yes', review_notdate = '${formattedDate}', tstatus_date = '${formattedDate}'`;
             const task_id = `tid = '${tid}'`;
 
@@ -1417,10 +1422,9 @@ router.patch("/task/change-status/:user_id", authMiddleware, async (req, res) =>
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
               await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
-            return res.status(200).json({
-              message: "Status Changed Successfully.",
-            });
+            return res.status(200).json({ updatedStatus: updatedStatus, message: "Status Changed Successfully." });
           } else {
+            updatedStatus = "done";
             const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
             const task_id = `tid = '${tid}'`;
 
@@ -1445,18 +1449,15 @@ router.patch("/task/change-status/:user_id", authMiddleware, async (req, res) =>
               const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
               await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
             }
-            return res.status(200).json({
-              message: "Status Changed Successfully.",
-            });
+            return res.status(200).json({ updatedStatus: updatedStatus, message: "Status Changed Successfully." });
           }
         } else {
+          updatedStatus = "done";
           const statusFieldsValues = `tstatus = 'done', tstatus_date = '${formattedDate}'`;
           const task_id = `tid = '${tid}'`;
 
           await pool.execute("CALL UpdateTask(?,?)", [statusFieldsValues, task_id]);
-          return res.status(200).json({
-            message: "Status Changed Successfully.",
-          });
+          return res.status(200).json({ updatedStatus: updatedStatus, message: "Status Changed Successfully." });
         }
       } else {
         return res.status(400).json({
@@ -1647,7 +1648,7 @@ router.patch("/subtask/change-status/:user_id", authMiddleware, async (req, res)
 
     const [getMydetail] = await pool.execute("CALL getStudentById(?)", [stassignee]);
     const student = getMydetail[0][0];
-
+    let updatedStatus;
     let status = "";
     if ((status_but == "to_do" && (status = "To Do")) || (status_but == "in_progress" && (status = "In Progress"))) {
       const statusFieldsValues = `ststatus = '${status_but}', sreview = '', sreview_clear = '', sreview_notify = '', po_sreview_clear = '', po_sreview_notify = '', ststatus_date = '${formattedDate}' `;
@@ -1675,9 +1676,7 @@ router.patch("/subtask/change-status/:user_id", authMiddleware, async (req, res)
         const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
         await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
       }
-      return res.status(200).json({
-        message: "Status Changed Successfully.",
-      });
+      return res.status(200).json({ updatedStatus: status_but, message: "Status Changed Successfully." });
     } else if (status_but == "in_review" || status_but == "done") {
       if (subtask_detail.stproject_assign) {
         const [getPcreated_by] = await pool.execute("CALL getProjectById(?)", [subtask_detail.stproject_assign]);
@@ -1691,6 +1690,7 @@ router.patch("/subtask/change-status/:user_id", authMiddleware, async (req, res)
         }
 
         if (project_createdby != user_id && project_manager != user_id && portfolio_owner_id != user_id) {
+          updatedStatus = "in_review";
           const statusFieldsValues = `ststatus = 'in_review', sreview = 'sent', sreview_clear = 'no', sreview_notify= 'sent_yes', po_sreview_clear = 'no', po_sreview_notify = 'sent_yes', sreview_notdate = '${formattedDate}', ststatus_date = '${formattedDate}'`;
           const subtask_id = `stid = '${stid}'`;
 
@@ -1715,10 +1715,9 @@ router.patch("/subtask/change-status/:user_id", authMiddleware, async (req, res)
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
             await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
           }
-          return res.status(200).json({
-            message: "Status Changed Successfully.",
-          });
+          return res.status(200).json({ updatedStatus: updatedStatus, message: "Status Changed Successfully." });
         } else {
+          updatedStatus = "done";
           const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
           const subtask_id = `stid = '${stid}'`;
 
@@ -1743,18 +1742,15 @@ router.patch("/subtask/change-status/:user_id", authMiddleware, async (req, res)
             const callProcedureSQL1 = `CALL InsertProjectHistory(?, ?)`;
             await pool.execute(callProcedureSQL1, [paramNamesString1, paramValuesString1]);
           }
-          return res.status(200).json({
-            message: "Status Changed Successfully.",
-          });
+          return res.status(200).json({ updatedStatus: updatedStatus, message: "Status Changed Successfully." });
         }
       } else {
+        updatedStatus = "done";
         const statusFieldsValues = `ststatus = 'done', ststatus_date = '${formattedDate}'`;
         const subtask_id = `stid = '${stid}'`;
 
         await pool.execute("CALL UpdateSubtask(?,?)", [statusFieldsValues, subtask_id]);
-        return res.status(200).json({
-          message: "Status Changed Successfully.",
-        });
+        return res.status(200).json({ updatedStatus: updatedStatus, message: "Status Changed Successfully." });
       }
     }
   } catch (error) {
@@ -1917,23 +1913,111 @@ router.patch("/subtask/checkbox-change-status/:user_id", authMiddleware, async (
 });
 
 //  Team Member Task list
+// router.get("/task/team-member-tasks-list/:project_id/:task_assignee", authMiddleware, async (req, res) => {
+//   const { project_id, task_assignee } = req.params;
+//   try {
+//     const [ProjectDetailCheck] = await pool.execute("CALL ProjectDetailCheck(?)", [project_id]);
+//     const [team_member_tasks_listNew] = await pool.execute("CALL team_member_tasks_listNew(?,?)", [project_id, task_assignee]);
+//     const [team_member_subtasks_listNew] = await pool.execute("CALL team_member_subtasks_listNew(?,?)", [project_id, task_assignee]);
+//     res.status(200).json({
+//       pid: project_id,
+//       tassignee: task_assignee,
+//       pdetail: ProjectDetailCheck[0][0],
+//       tlist: team_member_tasks_listNew[0],
+//       stlist: team_member_subtasks_listNew[0],
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+
+//  Team Member Task list (Modified)
 router.get("/task/team-member-tasks-list/:project_id/:task_assignee", authMiddleware, async (req, res) => {
   const { project_id, task_assignee } = req.params;
   try {
     const [ProjectDetailCheck] = await pool.execute("CALL ProjectDetailCheck(?)", [project_id]);
     const [team_member_tasks_listNew] = await pool.execute("CALL team_member_tasks_listNew(?,?)", [project_id, task_assignee]);
     const [team_member_subtasks_listNew] = await pool.execute("CALL team_member_subtasks_listNew(?,?)", [project_id, task_assignee]);
+
+    // Use Promise.all to concurrently fetch subtasks for each task
+    const promisesTask = team_member_tasks_listNew[0].map(async (item) => {
+      const { tid } = item;
+      try {
+        const [subtasks] = await pool.execute("CALL  Check_Task_Subtasks2(?)", [tid]);
+        const subTasks = subtasks[0];
+
+        // Combine task and subtask data
+        const data = {
+          ...item,
+          subTasks,
+        };
+
+        return data;
+      } catch (subtaskError) {
+        // Return task with an empty subtask array in case of an error
+        return {
+          ...item,
+          subTasks: [],
+        };
+      }
+    });
+
+
+       // Use Promise.all to concurrently fetch subtasks for each task
+       const promisesMainTask = team_member_subtasks_listNew[0].map(async (item) => {
+        const { tid } = item;
+        try {
+          const [taskDetails] = await pool.execute("CALL getTasksDetail(?)", [tid]);
+          const [subtasks] = await pool.execute("CALL  Check_Task_Subtasks2(?)", [tid]);
+          const subTasks = subtasks[0];
+          const task = taskDetails[0][0];
+  
+          // Combine task and subtask data
+          const data = {
+            ...task,
+            subTasks,
+          };
+  
+          return data;
+        } catch (subtaskError) {
+          // Return task with an empty subtask array in case of an error
+          return {
+            ...item,
+            subTasks: [],
+          };
+        }
+      });
+
+    // Wait for all promises to resolve
+    const tasklistResults = await Promise.all(promisesTask);
+      const getMainTaskResults = await Promise.all(promisesMainTask);
+  
+      const result = [...tasklistResults, ...getMainTaskResults];
+  
+      // Function to remove duplicates based on the 'tid' property
+      const removeDuplicates = (result) => {
+        return result.filter((item, index, array) => {
+          // Return true for the first occurrence of each 'tid'
+          return array.findIndex((element) => element.tid === item.tid) === index;
+        });
+      };
+  
+    const filteredData = removeDuplicates(result);
+
+
+
     res.status(200).json({
       pid: project_id,
       tassignee: task_assignee,
       pdetail: ProjectDetailCheck[0][0],
-      tlist: team_member_tasks_listNew[0],
-      stlist: team_member_subtasks_listNew[0],
+      tlist: filteredData,
     });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 //  Task details for edit page
 router.get("/task/portfolios-edit-task/:user_id", authMiddleware, async (req, res) => {
