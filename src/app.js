@@ -18,7 +18,6 @@ const PORT = process.env.PORT || 3000;
 
 require("./database/connection");
 
-app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
