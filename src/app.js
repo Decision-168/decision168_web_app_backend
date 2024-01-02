@@ -22,7 +22,28 @@ app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
-app.use(cors());
+
+// Configure CORS
+const allowedOrigins = [
+  "http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com",
+  // Add more allowed origins as needed
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
+
 app.use(User);
 app.use(Dashboard);
 app.use(Portfolio);

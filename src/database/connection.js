@@ -12,7 +12,6 @@ const pool = mysql.createPool({
   port: 3306,
 });
 
-
 //for local
 // const pool = mysql.createPool({
 //   host: "localhost",
