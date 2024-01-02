@@ -14,21 +14,16 @@ const Tasks = require("./routes/TasksRouter");
 const Project = require("./routes/ProjectRouter");
 const UpgradePlan = require("./routes/UpgradePlanRouter");
 const PORT = process.env.PORT || 3000;
-// console.log(process.env.PORT);
-
 require("./database/connection");
-
 app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
-
 // Configure CORS
 const allowedOrigins = [
   "http://decesion168-s3-cicd.s3-website-us-east-1.amazonaws.com",
   // Add more allowed origins as needed
 ];
-
 app.use(
   cors({
     origin: function (origin, callback) {
