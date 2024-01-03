@@ -18,7 +18,7 @@ router.post("/super-admin/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials." });
     }
     // const passwordMatch = await bcrypt.compare(password, rows[0][0]?.password);
-    if (password === "superadmin") {
+    if (password === "Admin@123") {
       const token = generateToken(rows[0][0].sa_id);
       await pool.execute("CALL SAcheckLogin(?,?)", [username, password]);
       res.status(201).json({ message: "Login successful.", token });
