@@ -13,6 +13,7 @@ const Goal = require("./routes/Goal");
 const Tasks = require("./routes/TasksRouter");
 const Project = require("./routes/ProjectRouter");
 const UpgradePlan = require("./routes/UpgradePlanRouter");
+const Calendar = require("./routes/CalendarRouter");
 const PORT = process.env.PORT || 3000;
 require("./database/connection");
 app.use("/d168-app-webhooks", express.raw({ type: "*/*" }));
@@ -49,6 +50,7 @@ app.use(Goal);
 app.use(Tasks);
 app.use(Project);
 app.use(UpgradePlan);
+app.use(Calendar);
 
 // Static API endpoint for /api/users
 app.get("/api/users", (req, res) => {
