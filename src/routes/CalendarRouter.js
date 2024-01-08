@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../database/connection"); // Import the database connection
 const uniqid = require("uniqid");
-const authMiddleware = require("../middlewares/auth");
+// const authMiddleware = require("../middlewares/auth");
 const {
   dateConversion,
   convertObjectToProcedureParams,
@@ -46,64 +46,292 @@ router.get("/calendar/get-calendar-events", async (req, res) => {
   try {
     const { user_id, month_year } = req.body;
 
-    const get_month_year = [month_year];
-    const monthYearString = JSON.stringify(get_month_year);
+    const get_month_year = month_year;
 
-    const [getCalendarMonthEventsRes] = await pool.execute(
-      "CALL getCalendarMonthEvents(?, ?)",
-      [user_id, monthYearString]
-    );
+    const words = get_month_year.split(" ");
+    const wordsCount = words.length;
 
-    const getCalendarMonthEventsResults = getCalendarMonthEventsRes[0];
+    if (wordsCount == 2) {
+      const converted_month_year = moment(get_month_year, "MMMM YYYY").format(
+        "YYYY-MM"
+      );
+      const resultString = `"${converted_month_year}"`;
+      const [getCalendarEventsRes] = await pool.execute(
+        "CALL getCalendarMonthEvents(?, ?)",
+        [user_id, resultString]
+      );
 
-    const promisesCalendarMonthEvents = getCalendarMonthEventsResults.map(
-      async (item) => {
-        const { id } = item;
-        try {
-          const [tasks] = await pool.execute("CALL getEventTodo(?,?)", [
-            user_id,
-            id,
-          ]);
-          const TODOs = tasks[0];
-          const task_count = tasks[0].length;
+      const getCalendarEventsResults = getCalendarEventsRes[0];
 
-          const [comp_tasks] = await pool.execute(
-            "CALL getCompleteEventTodoCount(?,?)",
-            [user_id, id]
+      const promisesCalendarEvents = getCalendarEventsResults.map(
+        async (item) => {
+          const { id } = item;
+          try {
+            const [tasks] = await pool.execute("CALL getEventTodo(?,?)", [
+              user_id,
+              id,
+            ]);
+            const TODOs = tasks[0];
+            const task_count = tasks[0].length;
+
+            const [comp_tasks] = await pool.execute(
+              "CALL getCompleteEventTodoCount(?,?)",
+              [user_id, id]
+            );
+
+            const comp_tasks_count = comp_tasks[0][0]?.complete_count;
+            let todo_percent = 0;
+            todo_percent = Math.round((comp_tasks_count / task_count) * 100);
+
+            if (todo_percent == null || isNaN(todo_percent)) {
+              todo_percent = 0;
+            }
+
+            const data = {
+              ...item,
+              TODOs,
+              todo_percent,
+            };
+
+            return data;
+          } catch (error) {
+            return {
+              ...item,
+              TODOs: [],
+              todo_percent: 0,
+            };
+          }
+        }
+      );
+
+      const promisesCalendarEventsResults = await Promise.all(
+        promisesCalendarEvents
+      );
+
+      res.status(200).json({
+        CalendarEvents: promisesCalendarEventsResults,
+      });
+    } else if (wordsCount == 3) {
+      const parsedDate = moment(get_month_year, "MMMM D, YYYY");
+      const result = parsedDate.format("YYYY-MM-DD");
+      const [getCalendarEventsRes] = await pool.execute(
+        "CALL getCalendarDlEvents(?, ?)",
+        [user_id, result]
+      );
+
+      const getCalendarEventsResults = getCalendarEventsRes[0];
+
+      const promisesCalendarEvents = getCalendarEventsResults.map(
+        async (item) => {
+          const { id } = item;
+          try {
+            const [tasks] = await pool.execute("CALL getEventTodo(?,?)", [
+              user_id,
+              id,
+            ]);
+            const TODOs = tasks[0];
+            const task_count = tasks[0].length;
+
+            const [comp_tasks] = await pool.execute(
+              "CALL getCompleteEventTodoCount(?,?)",
+              [user_id, id]
+            );
+
+            const comp_tasks_count = comp_tasks[0][0]?.complete_count;
+            let todo_percent = 0;
+            todo_percent = Math.round((comp_tasks_count / task_count) * 100);
+
+            if (todo_percent == null || isNaN(todo_percent)) {
+              todo_percent = 0;
+            }
+
+            const data = {
+              ...item,
+              TODOs,
+              todo_percent,
+            };
+
+            return data;
+          } catch (error) {
+            return {
+              ...item,
+              TODOs: [],
+              todo_percent: 0,
+            };
+          }
+        }
+      );
+
+      const promisesCalendarEventsResults = await Promise.all(
+        promisesCalendarEvents
+      );
+
+      res.status(200).json({
+        CalendarEvents: promisesCalendarEventsResults,
+      });
+    } else if (wordsCount == 5) {
+      if (get_month_year && typeof get_month_year === "string") {
+        const parts = get_month_year.split(" – ");
+        if (parts.length === 2) {
+          const [start, end] = parts;
+          const [monthStart, dayStart] = start.split(" ");
+          const [dayEnd, year] = end.split(", ");
+
+          const date1 = `${monthStart} ${dayStart} ${year}`;
+          const date2 = `${monthStart} ${dayEnd} ${year}`;
+
+          const formattedStartDate = moment(date1, "MMM D YYYY").format(
+            "YYYY-MM-DD"
+          );
+          const formattedEndDate = moment(date2, "MMM D YYYY").format(
+            "YYYY-MM-DD"
           );
 
-          const comp_tasks_count = comp_tasks[0][0]?.complete_count;
-          let todo_percent = 0;
-          todo_percent = Math.round((comp_tasks_count / task_count) * 100);
+          const [getCalendarEventsRes] = await pool.execute(
+            "CALL getCalendarWeekEvents(?, ?, ?)",
+            [user_id, formattedStartDate, formattedEndDate]
+          );
 
-          if (todo_percent == null || isNaN(todo_percent)) {
-            todo_percent = 0;
-          }
+          const getCalendarEventsResults = getCalendarEventsRes[0];
 
-          const data = {
-            ...item,
-            TODOs,
-            todo_percent,
-          };
+          const promisesCalendarEvents = getCalendarEventsResults.map(
+            async (item) => {
+              const { id } = item;
+              try {
+                const [tasks] = await pool.execute("CALL getEventTodo(?,?)", [
+                  user_id,
+                  id,
+                ]);
+                const TODOs = tasks[0];
+                const task_count = tasks[0].length;
 
-          return data;
-        } catch (error) {
-          return {
-            ...item,
-            TODOs: [],
-            todo_percent: 0,
-          };
+                const [comp_tasks] = await pool.execute(
+                  "CALL getCompleteEventTodoCount(?,?)",
+                  [user_id, id]
+                );
+
+                const comp_tasks_count = comp_tasks[0][0]?.complete_count;
+                let todo_percent = 0;
+                todo_percent = Math.round(
+                  (comp_tasks_count / task_count) * 100
+                );
+
+                if (todo_percent == null || isNaN(todo_percent)) {
+                  todo_percent = 0;
+                }
+
+                const data = {
+                  ...item,
+                  TODOs,
+                  todo_percent,
+                };
+
+                return data;
+              } catch (error) {
+                return {
+                  ...item,
+                  TODOs: [],
+                  todo_percent: 0,
+                };
+              }
+            }
+          );
+
+          const promisesCalendarEventsResults = await Promise.all(
+            promisesCalendarEvents
+          );
+
+          res.status(200).json({
+            CalendarEvents: promisesCalendarEventsResults,
+          });
+        } else {
+          console.error("Invalid format for get_month_year:", get_month_year);
         }
+      } else {
+        console.error("get_month_year is not a valid string:", get_month_year);
       }
-    );
+    } else {
+      if (get_month_year && typeof get_month_year === "string") {
+        const parts = get_month_year.split(" – ");
+        if (parts.length === 2) {
+          const [start, end] = parts;
+          const [monthStart, dayStart, yearStart] = start.split(" ");
+          const [monthEnd, dayEnd, yearEnd] = end.split(", ");
 
-    const promisesCalendarMonthEventsResults = await Promise.all(
-      promisesCalendarMonthEvents
-    );
+          const date1 = `${monthStart} ${dayStart} ${yearStart}`;
+          const date2 = `${monthEnd} ${dayEnd} ${yearEnd}`;
 
-    res.status(200).json({
-      CalendarMonthEvents: promisesCalendarMonthEventsResults,
-    });
+          const formattedStartDate = moment(date1, "MMM D YYYY").format(
+            "YYYY-MM-DD"
+          );
+          const formattedEndDate = moment(date2, "MMM D YYYY").format(
+            "YYYY-MM-DD"
+          );
+
+          const [getCalendarEventsRes] = await pool.execute(
+            "CALL getCalendarWeekEvents(?, ?, ?)",
+            [user_id, formattedStartDate, formattedEndDate]
+          );
+
+          const getCalendarEventsResults = getCalendarEventsRes[0];
+
+          const promisesCalendarEvents = getCalendarEventsResults.map(
+            async (item) => {
+              const { id } = item;
+              try {
+                const [tasks] = await pool.execute("CALL getEventTodo(?,?)", [
+                  user_id,
+                  id,
+                ]);
+                const TODOs = tasks[0];
+                const task_count = tasks[0].length;
+
+                const [comp_tasks] = await pool.execute(
+                  "CALL getCompleteEventTodoCount(?,?)",
+                  [user_id, id]
+                );
+
+                const comp_tasks_count = comp_tasks[0][0]?.complete_count;
+                let todo_percent = 0;
+                todo_percent = Math.round(
+                  (comp_tasks_count / task_count) * 100
+                );
+
+                if (todo_percent == null || isNaN(todo_percent)) {
+                  todo_percent = 0;
+                }
+
+                const data = {
+                  ...item,
+                  TODOs,
+                  todo_percent,
+                };
+
+                return data;
+              } catch (error) {
+                return {
+                  ...item,
+                  TODOs: [],
+                  todo_percent: 0,
+                };
+              }
+            }
+          );
+
+          const promisesCalendarEventsResults = await Promise.all(
+            promisesCalendarEvents
+          );
+
+          res.status(200).json({
+            CalendarEvents: promisesCalendarEventsResults,
+          });
+        } else {
+          console.error("Invalid format for get_month_year:", get_month_year);
+        }
+      } else {
+        console.error("get_month_year is not a valid string:", get_month_year);
+      }
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
