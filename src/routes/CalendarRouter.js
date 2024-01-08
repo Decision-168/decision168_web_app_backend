@@ -13,11 +13,11 @@ const moment = require("moment");
 router.get("/calendar/get-calendar-data/:user_id", async (req, res) => {
   const user_id = req.params.user_id;
   try {
-    // const [getActiveEventsRes] = await pool.execute("CALL getActiveEvents(?)", [
-    //   user_id,
-    // ]);
+    const [getActiveEventsRes] = await pool.execute("CALL getActiveEvents(?)", [
+      user_id,
+    ]);
 
-    // const getActiveEventsResults = getActiveEventsRes[0];
+    const getActiveEventsResults = getActiveEventsRes[0];
 
     const [getDraggableEventsRes] = await pool.execute(
       "CALL getDraggableEvents(?)",
@@ -31,7 +31,7 @@ router.get("/calendar/get-calendar-data/:user_id", async (req, res) => {
     const time_12hrsResults = time_12hrsRes[0];
 
     res.status(200).json({
-      // events: getActiveEventsResults,
+      events: getActiveEventsResults,
       draggable_events: getDraggableEventsResults,
       time_12hrs: time_12hrsResults,
     });
